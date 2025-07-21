@@ -1,6 +1,6 @@
 # iitdh-doctor-app
 
-##Discussion 1 summary:
+## Discussion 1 summary:
   1. confidentiality: head, dean SW, academics: can view whether someoe visited or not. CANNOT view details. Deans notes should be visible only to him e.g. when student drops out.
   2. details:
      i. name,date,time of visit, phone call, (last medication]
