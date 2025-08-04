@@ -67,5 +67,5 @@
 ###  Data Safety & Confidentiality
 - Students can view **only their own records**
 - No peer access
-- Dean/Authorities see only **anonymized statistics**, not personal details
+- Dean/Authorities see only **certain statistics**, not all personal details. 
 
