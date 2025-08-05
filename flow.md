@@ -24,8 +24,7 @@
   - Place of Residence (e.g., hostel name / area)
   - Mode of Referral: Self / Dean / Faculty / Peer / Others
 
-> Data stored securely — initiates contract between **Student Welfare Cell** and the student (not directly with a doctor)
-
+> Data stored securely — initiates contract between **Student Welfare Cell** and the student 
 ---
 
 ### Dashboard
