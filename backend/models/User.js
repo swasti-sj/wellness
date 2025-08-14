@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const UserSchema = new mongoose.Schema({
   roll: { type: String, required: true, unique: true }, // renamed from username
   password: { type: String, required: true },
-  role: { type: String, enum: ['student', 'doctor', 'admin'], default: 'student' },
+  role: { type: String, enum: ['patient', 'doctor', 'admin'], default: 'patient' },
   name: String,
   age: Number,
   sex: String,

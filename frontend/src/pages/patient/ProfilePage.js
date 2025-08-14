@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import '../../styles/ProfilePage.css';
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -15,16 +16,25 @@ function ProfilePage() {
       .catch(() => setProfile(null));
   }, []);
 
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
+
   if (!profile) return <div>Loading profile...</div>;
 
   return (
-    <div>
+    <div className="profile-container">
       <h2>My Profile</h2>
       <p><strong>Name:</strong> {profile.name}</p>
       <p><strong>Age:</strong> {profile.age}</p>
       <p><strong>Sex:</strong> {profile.sex}</p>
       <p><strong>Phone:</strong> {profile.phone}</p>
       <p><strong>Roll:</strong> {profile.roll}</p>
+
+      <button className="signout-btn" onClick={handleSignOut}>
+        Sign Out
+      </button>
     </div>
   );
 }

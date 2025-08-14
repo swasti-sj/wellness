@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import '../../styles/HomeCards.css';
 
 function HomeCards() {
   const navigate = useNavigate();
@@ -8,20 +9,15 @@ function HomeCards() {
   const [lastVisit, setLastVisit] = useState(null);
 
   useEffect(() => {
-    axios
-      .get('http://localhost:5000/api/appointments/my-appointments', {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      })
-      .then((res) => {
-        setUpcoming(res.data.upcoming);
-        setLastVisit(res.data.lastVisit);
-      })
-      .catch((err) => {
-        console.error('Error fetching appointment info:', err);
-      });
-  }, []);
+  axios.get('http://localhost:5000/api/appointments/my-appointments', {
+    headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+  })
+  .then((res) => {
+    setUpcoming(res.data.upcoming);
+    setLastVisit(res.data.lastVisit);
+  })
+  .catch((err) => console.error('Error fetching appointment info:', err));
+}, []);
 
   const handleBookNow = () => {
     navigate('/dashboard/book');
@@ -32,7 +28,7 @@ function HomeCards() {
       <div className="card purple">
         {upcoming ? (
           <>
-            Upcoming Appointment:<br />
+            <strong>Upcoming Appointment:</strong><br />
             Dr. {upcoming.doctorName} <br />
             {upcoming.date}, {upcoming.time}
           </>
@@ -44,7 +40,7 @@ function HomeCards() {
       <div className="card white">
         {lastVisit ? (
           <>
-            Last Visit:<br />
+            <strong>Last Visit:</strong><br />
             Dr. {lastVisit.doctorName} <br />
             Notes: {lastVisit.notes || 'No notes'}
           </>
@@ -54,7 +50,7 @@ function HomeCards() {
       </div>
 
       <div className="card purple">
-        Quick Book: <button onClick={handleBookNow}>Book Now</button>
+        <strong>Quick Book:</strong> <button onClick={handleBookNow}>Book Now</button>
       </div>
     </div>
   );

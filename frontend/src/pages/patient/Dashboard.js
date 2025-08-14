@@ -6,7 +6,7 @@ import AppointmentBooking from './AppointmentBooking';
 import VisitHistory from './VisitHistory';
 import { Routes, Route, Link } from 'react-router-dom';
 import ProfilePage from './ProfilePage';
-
+import '../../styles/Dashboard.css';
 function Dashboard() {
   const [profileFilled, setProfileFilled] = useState(null);
 

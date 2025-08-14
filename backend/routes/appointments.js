@@ -44,19 +44,37 @@ router.post('/book', authMiddleware, async (req, res) => {
 
 router.get('/my-appointments', authMiddleware, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ userId: req.user.id }).sort({ date: 1, time: 1 });
+    const appointments = await Appointment.find({ userId: req.user.id });
 
-    const future = appointments.find(a => new Date(`${a.date}T${a.time}`) > new Date());
-    const past = [...appointments].reverse().find(a => new Date(`${a.date}T${a.time}`) <= new Date());
-
-    res.json({
-      upcoming: future || null,
-      lastVisit: past || null,
+    // Convert to full Date objects for proper sorting
+    const sorted = appointments.sort((a, b) => {
+      const dateA = new Date(`${a.date}T${a.time}`);
+      const dateB = new Date(`${b.date}T${b.time}`);
+      return dateA - dateB;
     });
+
+    const now = new Date();
+
+    // Find the nearest upcoming appointment
+    const upcoming = sorted.find(appt => {
+      return new Date(`${appt.date}T${appt.time}`) > now;
+    }) || null;
+
+    // Find the most recent past appointment
+    const pastAppointments = sorted.filter(appt => {
+      return new Date(`${appt.date}T${appt.time}`) <= now;
+    });
+    const lastVisit = pastAppointments.length > 0
+      ? pastAppointments[pastAppointments.length - 1]
+      : null;
+
+    res.json({ upcoming, lastVisit });
   } catch (err) {
+    console.error('Error fetching appointments:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 router.get('/history', authMiddleware, async (req, res) => {
   try {

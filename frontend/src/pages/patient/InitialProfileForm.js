@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import '../../styles/InitialProfileForm.css';
 
 function InitialProfileForm({ onComplete }) {
   const [form, setForm] = useState({ name: '', sex: '', age: '', phone: '' });

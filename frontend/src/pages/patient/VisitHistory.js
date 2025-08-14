@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import '../../styles/VisitHistory.css';
 
 function VisitHistory() {
   const [appointments, setAppointments] = useState([]);
@@ -31,17 +32,15 @@ function VisitHistory() {
             <th>Specialization</th>
             <th>Date</th>
             <th>Time</th>
-            <th>Notes</th>
           </tr>
         </thead>
         <tbody>
           {appointments.map((appt) => (
             <tr key={appt._id}>
-              <td>{appt.doctor || '-'}</td>
-              <td>{appt.specialization || '-'}</td> {/* Add this field in backend if needed */}
-              <td>{new Date(appt.date).toLocaleDateString()}</td>
-              <td>{appt.time}</td>
-              <td>{appt.notes || '-'}</td>
+              <td data-label="Doctor">{appt.doctor || '-'}</td>
+              <td data-label="Specialization">{appt.specialization || '-'}</td>
+              <td data-label="Date">{new Date(appt.date).toLocaleDateString()}</td>
+              <td data-label="Time">{appt.time}</td>
             </tr>
           ))}
         </tbody>

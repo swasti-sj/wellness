@@ -1,0 +1,49 @@
+.dashboard-container {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  padding: 20px;
+  background-color: #f9fafc;
+}
+
+/* Top Navigation Bar */
+.dashboard-container nav {
+  background: #012970; /* Preferred blue */
+  padding: 12px 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-container nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dashboard-container nav a:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #a5d6ff; /* Lighter blue */
+}
+
+/* Content spacing */
+.dashboard-container .content {
+  margin-top: 25px;
+}
+
+/* Responsive Navigation */
+@media (max-width: 600px) {
+  .dashboard-container nav {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .dashboard-container nav a {
+    width: 100%;
+    padding: 8px 12px;
+  }
+}
