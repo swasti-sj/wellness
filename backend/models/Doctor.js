@@ -5,10 +5,20 @@ const DoctorSchema = new mongoose.Schema({
   specialization: String,
   availableSlots: [
     {
-      date: String, // e.g. '2025-08-07'
-      times: [String], // e.g. ['14:30', '15:30']
-    },
-  ],
+      date: String, // '2025-08-07'
+      times: [
+        {
+          time: String, // '14:30'
+          status: {
+            type: String,
+            enum: ['available', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'walk in'],
+            default: 'available'
+          },
+          appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', default: null }
+        }
+      ]
+    }
+  ]
 });
 
 module.exports = mongoose.model('Doctor', DoctorSchema);

@@ -3,40 +3,105 @@
     "name": "Dr. Kavita Deshmukh",
     "specialization": "Psychiatrist",
     "availableSlots": [
-      { "date": "2025-08-07", "times": ["10:00", "11:00", "14:00"] },
-      { "date": "2025-08-08", "times": ["09:30", "12:30"] }
+      {
+        "date": "2025-08-17",
+        "times": [
+          { "time": "10:00", "status": "available" },
+          { "time": "11:00", "status": "available" },
+          { "time": "14:00", "status": "available" }
+        ]
+      },
+      {
+        "date": "2025-08-18",
+        "times": [
+          { "time": "09:30", "status": "available" },
+          { "time": "12:30", "status": "available" }
+        ]
+      }
     ]
   },
   {
     "name": "Dr. Sameer Kulkarni",
     "specialization": "Psychiatrist",
     "availableSlots": [
-      { "date": "2025-08-07", "times": ["15:00", "16:00"] },
-      { "date": "2025-08-09", "times": ["10:30", "11:30", "13:00"] }
+      {
+        "date": "2025-08-17",
+        "times": [
+          { "time": "15:00", "status": "available" },
+          { "time": "16:00", "status": "available" }
+        ]
+      },
+      {
+        "date": "2025-08-17",
+        "times": [
+          { "time": "10:30", "status": "available" },
+          { "time": "11:30", "status": "available" },
+          { "time": "13:00", "status": "available" }
+        ]
+      }
     ]
   },
   {
     "name": "Dr. Ananya Rao",
     "specialization": "Psychiatrist",
     "availableSlots": [
-      { "date": "2025-08-08", "times": ["11:00", "12:00"] },
-      { "date": "2025-08-10", "times": ["09:00", "10:00", "11:30"] }
+      {
+        "date": "2025-08-18",
+        "times": [
+          { "time": "11:00", "status": "available" },
+          { "time": "12:00", "status": "available" }
+        ]
+      },
+      {
+        "date": "2025-08-17",
+        "times": [
+          { "time": "09:00", "status": "available" },
+          { "time": "10:00", "status": "available" },
+          { "time": "11:30", "status": "available" }
+        ]
+      }
     ]
   },
   {
     "name": "Dr. Rishi Sharma",
     "specialization": "Psychiatrist",
     "availableSlots": [
-      { "date": "2025-08-09", "times": ["10:00", "11:00", "12:00"] },
-      { "date": "2025-08-11", "times": ["14:00", "15:00"] }
+      {
+        "date": "2025-08-15",
+        "times": [
+          { "time": "18:00", "status": "available" },
+          { "time": "20:00", "status": "available" },
+          { "time": "21:00", "status": "available" }
+        ]
+      },
+      {
+        "date": "2025-08-16",
+        "times": [
+          { "time": "14:00", "status": "available" },
+          { "time": "15:00", "status": "available" }
+        ]
+      }
     ]
   },
   {
     "name": "Dr. Meera Iyer",
     "specialization": "Psychiatrist",
     "availableSlots": [
-      { "date": "2025-08-10", "times": ["09:30", "10:30"] },
-      { "date": "2025-08-12", "times": ["13:00", "14:00", "15:30"] }
+      {
+        "date": "2025-08-20",
+        "times": [
+          { "time": "09:30", "status": "available" },
+          { "time": "10:30", "status": "available" }
+        ]
+      },
+      {
+        "date": "2025-08-18",
+        "times": [
+          { "time": "13:00", "status": "available" },
+          { "time": "14:00", "status": "available" },
+          { "time": "15:30", "status": "available" }
+        ]
+      }
     ]
   }
 ]

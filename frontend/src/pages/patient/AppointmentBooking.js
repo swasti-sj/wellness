@@ -15,18 +15,21 @@ function AppointmentBooking() {
   }, []);
 
   const handleDoctorChange = (e) => {
-  const doc = doctors.find(d => d._id === e.target.value);
-  setSelectedDoctor(doc);
-  setSelectedDate('');
-  setSelectedTime('');
-  setAvailableTimes([]);
-};
+    const doc = doctors.find(d => d._id === e.target.value);
+    setSelectedDoctor(doc);
+    setSelectedDate('');
+    setSelectedTime('');
+    setAvailableTimes([]);
+  };
 
   const handleDateChange = (e) => {
     const date = e.target.value;
     setSelectedDate(date);
+
     const slot = selectedDoctor?.availableSlots?.find(s => s.date === date);
-    setAvailableTimes(slot ? slot.times : []);
+    // Only include times that are available
+    const times = slot ? slot.times.filter(t => t.status === 'available') : [];
+    setAvailableTimes(times);
   };
 
   const handleSubmit = (e) => {
@@ -34,26 +37,34 @@ function AppointmentBooking() {
     if (!selectedDoctor || !selectedDate || !selectedTime) return;
 
     const payload = {
-    doctorId: selectedDoctor._id,
-    date: selectedDate,
-    time: selectedTime,
-  };
+      doctorId: selectedDoctor._id,
+      date: selectedDate,
+      time: selectedTime
+    };
 
     axios.post('http://localhost:5000/api/appointments/book', payload, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     })
-      .then(() => alert('Appointment booked successfully!'))
+      .then(() => {
+        alert('Appointment booked successfully!');
+        // Reset form
+        setSelectedDoctor(null);
+        setSelectedDate('');
+        setSelectedTime('');
+        setAvailableTimes([]);
+      })
       .catch(() => alert('Failed to book.'));
   };
+
 
   return (
     <div>
       <h2>Book an Appointment</h2>
       <form onSubmit={handleSubmit}>
         <label>Doctor:</label>
-        <select onChange={handleDoctorChange} required>
+        <select value={selectedDoctor?._id || ''} onChange={handleDoctorChange} required>
           <option value="">Select Doctor</option>
           {doctors.map(doc => (
             <option key={doc._id} value={doc._id}>
@@ -84,7 +95,9 @@ function AppointmentBooking() {
             >
               <option value="">Select Time</option>
               {availableTimes.map((t, idx) => (
-                <option key={idx} value={t}>{t}</option>
+                <option key={t._id || idx} value={t.time}>
+                  {t.time}
+                </option>
               ))}
             </select>
           </>

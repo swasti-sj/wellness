@@ -1,127 +1,38 @@
 [{
   "_id": {
-    "$oid": "6892334e8080c659a529ae5c"
+    "$oid": "689f2a9320951855958077a9"
   },
   "userId": {
     "$oid": "6891fb47057b05c56606191c"
   },
   "doctorId": {
-    "$oid": "6892045d8d7d7948d6316301"
-  },
-  "doctorName": "Dr. Kavita Deshmukh",
-  "date": "2025-08-07",
-  "time": "11:00",
-  "notes": "Book for a follow up next week.",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "689234458080c659a529ae98"
-  },
-  "userId": {
-    "$oid": "6891fb47057b05c56606191c"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316304"
-  },
-  "doctorName": "Dr. Rishi Sharma",
-  "date": "2025-08-09",
-  "time": "11:00",
-  "notes": "",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "689349dc8080c659a529af2b"
-  },
-  "userId": {
-    "$oid": "6891fb47057b05c56606191c"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316301"
-  },
-  "doctorName": "Dr. Kavita Deshmukh",
-  "date": "2025-08-07",
-  "time": "10:00",
-  "notes": "",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "68939ab38080c659a529b072"
-  },
-  "userId": {
-    "$oid": "6891fb47057b05c56606191c"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316303"
-  },
-  "doctorName": "Dr. Ananya Rao",
-  "date": "2025-08-08",
-  "time": "12:00",
-  "notes": "",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "689b8c7df3ee40dbb9d1a076"
-  },
-  "userId": {
-    "$oid": "6891fb47057b05c56606191c"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316302"
+    "$oid": "689f2a75e2be6576bd552e67"
   },
   "doctorName": "Dr. Sameer Kulkarni",
-  "date": "2025-08-09",
-  "time": "10:30",
-  "notes": "",
+  "date": "2025-08-17",
+  "time": "16:00",
+  "bookedAt": {
+    "$date": "2025-08-15T12:39:47.171Z"
+  },
+  "status": "cancelled by user",
   "__v": 0
 },
 {
   "_id": {
-    "$oid": "689b8f87f3ee40dbb9d1a2c4"
+    "$oid": "689f2bc705442554ccf5eabd"
   },
   "userId": {
     "$oid": "6891fb47057b05c56606191c"
   },
   "doctorId": {
-    "$oid": "6892045d8d7d7948d6316301"
-  },
-  "doctorName": "Dr. Kavita Deshmukh",
-  "date": "2025-08-07",
-  "time": "14:00",
-  "notes": "",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "689b906af3ee40dbb9d1a320"
-  },
-  "userId": {
-    "$oid": "6891fb47057b05c56606191c"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316304"
+    "$oid": "689f2a75e2be6576bd552e69"
   },
   "doctorName": "Dr. Rishi Sharma",
-  "date": "2025-08-11",
-  "time": "15:00",
-  "notes": "",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "689dd7c6456985d070ebb3cf"
+  "date": "2025-08-15",
+  "time": "20:00",
+  "bookedAt": {
+    "$date": "2025-08-15T12:44:55.039Z"
   },
-  "userId": {
-    "$oid": "689dd7b1456985d070ebb3b5"
-  },
-  "doctorId": {
-    "$oid": "6892045d8d7d7948d6316303"
-  },
-  "doctorName": "Dr. Ananya Rao",
-  "date": "2025-08-10",
-  "time": "09:00",
+  "status": "booked",
   "__v": 0
 }]
