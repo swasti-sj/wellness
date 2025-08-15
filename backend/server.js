@@ -1,21 +1,24 @@
-// server.js
+// Entry point for Express backend
 const express = require('express');
-const app = express();
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config();
 
-// Import routes
+const app = express();
+
+//Import routes
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
 const doctorRoutes = require('./routes/doctors');
 const userRoutes = require('./routes/users');
+const trialreadRoutes=require('./routes/trialread'); 
 
-// Middleware
+//Middleware
 app.use(cors());
 app.use(express.json());
 
-// Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/medapp', {
+// Connect to MongoDB 
+mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/medapp', {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
@@ -25,8 +28,9 @@ app.use('/api/auth', authRoutes);         // <-- required for /api/auth/signup a
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/users', userRoutes);        // optional depending on your need
+app.use('/api/trialread', trialreadRoutes);
 
-// Start server
-app.listen(5000, () => {
-  console.log('Server running on http://localhost:5000');
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`Backend server running on port ${PORT}`);
 });
