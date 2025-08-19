@@ -1,21 +1,28 @@
 const express = require('express');
-const router = express.Router();
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const router = express.Router();
 const authMiddleware = require('../middleware/auth');
-
 router.post('/profile', authMiddleware, async (req, res) => {
-  const { name, age, sex, phone } = req.body;
   try {
-    await User.updateOne({ roll: req.user.roll }, { name, age, sex, phone });
-    res.send('Profile updated');
+    const { name, roll, sex, age, phone } = req.body;
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, roll, sex, age, phone },
+      { new: true }
+    );
+    res.json(user);
   } catch (err) {
-    res.status(500).send('Error saving profile');
+    res.status(500).json({ error: 'Failed to update profile' });
   }
 });
 
+
+
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    const user = await User.findOne({ roll: req.user.roll }).select('-password');
+    const user = await User.findById(req.user.id).select("-password");
+
     res.json(user);
   } catch {
     res.status(500).send('Error fetching profile');

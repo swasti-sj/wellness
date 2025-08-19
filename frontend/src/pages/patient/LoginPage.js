@@ -1,83 +1,53 @@
-import { useState } from 'react';
-import axios from 'axios';
-import '../../styles/LoginPage.css'; 
-function LoginPage() {
-  const [roll, setRoll] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('patient'); // default role
-  const [isSignup, setIsSignup] = useState(false);
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import InitialProfileForm from './InitialProfileForm'; 
 
-  const handleSubmit = async () => {
-  const endpoint = isSignup
-    ? 'http://localhost:5000/api/auth/signup'
-    : 'http://localhost:5000/api/auth/login';
+export default function LoginPage() {
+  const [token, setToken] = useState('');
+  const [firstLogin, setFirstLogin] = useState(false);
+  const navigate = useNavigate();
 
-  const payload = isSignup
-    ? { roll, password, role }
-    : { roll, password };
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('token');
+    const isFirstLogin = urlParams.get('firstLogin') === 'true';
 
-  try {
-    const res = await axios.post(endpoint, payload);
-    
-    localStorage.setItem('token', res.data.token);
-    localStorage.setItem('role', res.data.role); // store role for later use
-
-    // Redirect based on role
-    if (res.data.role === 'patient') {
-      window.location.href = '/dashboard';
-    } else if (res.data.role === 'doctor') {
-      window.location.href = '/docdashboard';
-    } else if (res.data.role === 'admin') {
-      window.location.href = '/admindashboard';
-    } else {
-      alert('Unknown role');
+    if (accessToken) {
+      setToken(accessToken);
+      setFirstLogin(isFirstLogin);
+      localStorage.setItem('token', accessToken);
     }
-  } catch (err) {
-    alert(err.response?.data?.message || 'Error occurred');
-  }
-};
+  }, []);
 
+  useEffect(() => {
+    if (token && !firstLogin) {
+      navigate('/dashboard');
+    }
+  }, [token, firstLogin, navigate]);
 
-  return (
-    <div className="login-container">
-      <h2>{isSignup ? 'Student Signup' : 'Student Login (LDAP)'}</h2>
-
-      <input
-        placeholder="Roll No"
-        value={roll}
-        onChange={(e) => setRoll(e.target.value)}
-      />
-
-      <input
-        placeholder="Password"
-        type="password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
-
-      {isSignup && (
-        <select value={role} onChange={(e) => setRole(e.target.value)}>
-          <option value="patient">Patient</option>
-          <option value="doctor">Doctor</option>
-          <option value="admin">Admin</option>
-        </select>
-      )}
-
-      <button onClick={handleSubmit}>
-        {isSignup ? 'Signup' : 'Login'}
-      </button>
-
-      <p>
-        {isSignup ? 'Already have an account?' : "Don't have an account?"}{' '}
-        <span
-          onClick={() => setIsSignup(!isSignup)}
-          style={{ color: 'blue', cursor: 'pointer' }}
+  if (!token) {
+    // Not logged in → show Google login button
+    return (
+      <div style={{ maxWidth: '500px', margin: '100px auto', textAlign: 'center' }}>
+        <a
+          href="http://localhost:5000/auth/google"
+          style={{
+            background: '#4285F4',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none'
+          }}
         >
-          {isSignup ? 'Login' : 'Signup'}
-        </span>
-      </p>
-    </div>
-  );
-}
+          Login with Google
+        </a>
+      </div>
+    );
+  }
 
-export default LoginPage;
+  if (firstLogin) {
+    return <InitialProfileForm />;
+  }
+
+  return <div>Redirecting...</div>;
+}

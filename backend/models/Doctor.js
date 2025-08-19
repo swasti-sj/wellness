@@ -3,15 +3,27 @@ const mongoose = require('mongoose');
 const DoctorSchema = new mongoose.Schema({
   name: String,
   specialization: String,
-  availableSlots: [
+  weeklySlots: [
     {
-      date: String, // '2025-08-07'
+      day: {
+        type: String,
+        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+        required: true
+      },
       times: [
         {
-          time: String, // '14:30'
+          time: String, 
           status: {
             type: String,
-            enum: ['available', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'walk in'],
+            enum: [
+              'available',
+              'booked',
+              'attended',
+              'no show',
+              'cancelled by user',
+              'cancelled by doctor',
+              'walk in'
+            ],
             default: 'available'
           },
           appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', default: null }

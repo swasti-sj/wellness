@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 
-function InitialProfileForm({ onComplete }) {
-  const [form, setForm] = useState({ name: '', sex: '', age: '', phone: '' });
+function InitialProfileForm() {
+  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '' });
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -18,7 +20,7 @@ function InitialProfileForm({ onComplete }) {
         },
       });
       alert('Profile saved');
-      if (onComplete) onComplete(); 
+      navigate('/dashboard');
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
@@ -26,10 +28,14 @@ function InitialProfileForm({ onComplete }) {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form onSubmit={handleSubmit} className="profile-form">
       <label>
         Name:
         <input name="name" value={form.name} onChange={handleChange} required />
+      </label>
+      <label>
+        Roll Number:
+        <input name="roll" value={form.roll} onChange={handleChange} required />
       </label>
       <label>
         Sex:

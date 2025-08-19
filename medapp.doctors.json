@@ -1,12 +1,25 @@
 [{
   "_id": {
-    "$oid": "689f2a75e2be6576bd552e66"
+    "$oid": "68a4dd1a35c70273a8c7f2a8"
   },
   "name": "Dr. Kavita Deshmukh",
   "specialization": "Psychiatrist",
-  "availableSlots": [
+  "weeklySlots": [
     {
-      "date": "2025-08-17",
+      "day": "Monday",
+      "times": [
+        {
+          "time": "09:30",
+          "status": "available"
+        },
+        {
+          "time": "12:30",
+          "status": "available"
+        }
+      ]
+    },
+    {
+      "day": "Sunday",
       "times": [
         {
           "time": "10:00",
@@ -21,31 +34,18 @@
           "status": "available"
         }
       ]
-    },
-    {
-      "date": "2025-08-18",
-      "times": [
-        {
-          "time": "09:30",
-          "status": "available"
-        },
-        {
-          "time": "12:30",
-          "status": "available"
-        }
-      ]
     }
   ]
 },
 {
   "_id": {
-    "$oid": "689f2a75e2be6576bd552e67"
+    "$oid": "68a4dd1a35c70273a8c7f2a9"
   },
   "name": "Dr. Sameer Kulkarni",
   "specialization": "Psychiatrist",
-  "availableSlots": [
+  "weeklySlots": [
     {
-      "date": "2025-08-17",
+      "day": "Sunday",
       "times": [
         {
           "time": "15:00",
@@ -53,13 +53,12 @@
         },
         {
           "time": "16:00",
-          "status": "available",
-          "appointmentId": null
+          "status": "available"
         }
       ]
     },
     {
-      "date": "2025-08-17",
+      "day": "Monday",
       "times": [
         {
           "time": "10:30",
@@ -79,18 +78,17 @@
 },
 {
   "_id": {
-    "$oid": "689f2a75e2be6576bd552e68"
+    "$oid": "68a4dd1a35c70273a8c7f2aa"
   },
   "name": "Dr. Ananya Rao",
   "specialization": "Psychiatrist",
-  "availableSlots": [
+  "weeklySlots": [
     {
-      "date": "2025-08-18",
+      "day": "Monday",
       "times": [
         {
           "time": "11:00",
-          "status": "available",
-          "appointmentId": null
+          "status": "available"
         },
         {
           "time": "12:00",
@@ -99,7 +97,7 @@
       ]
     },
     {
-      "date": "2025-08-17",
+      "day": "Sunday",
       "times": [
         {
           "time": "09:00",
@@ -119,25 +117,21 @@
 },
 {
   "_id": {
-    "$oid": "689f2a75e2be6576bd552e69"
+    "$oid": "68a4dd1a35c70273a8c7f2ab"
   },
   "name": "Dr. Rishi Sharma",
   "specialization": "Psychiatrist",
-  "availableSlots": [
+  "weeklySlots": [
     {
-      "date": "2025-08-15",
+      "day": "Friday",
       "times": [
         {
           "time": "18:00",
-          "status": "available",
-          "appointmentId": null
+          "status": "available"
         },
         {
           "time": "20:00",
-          "status": "booked",
-          "appointmentId": {
-            "$oid": "689f2bc705442554ccf5eabd"
-          }
+          "status": "available"
         },
         {
           "time": "21:00",
@@ -146,7 +140,7 @@
       ]
     },
     {
-      "date": "2025-08-16",
+      "day": "Saturday",
       "times": [
         {
           "time": "14:00",
@@ -162,13 +156,13 @@
 },
 {
   "_id": {
-    "$oid": "689f2a75e2be6576bd552e6a"
+    "$oid": "68a4dd1a35c70273a8c7f2ac"
   },
   "name": "Dr. Meera Iyer",
   "specialization": "Psychiatrist",
-  "availableSlots": [
+  "weeklySlots": [
     {
-      "date": "2025-08-20",
+      "day": "Wednesday",
       "times": [
         {
           "time": "09:30",
@@ -181,7 +175,7 @@
       ]
     },
     {
-      "date": "2025-08-18",
+      "day": "Monday",
       "times": [
         {
           "time": "13:00",

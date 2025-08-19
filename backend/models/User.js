@@ -1,13 +1,17 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const UserSchema = new mongoose.Schema({
-  roll: { type: String, required: true, unique: true }, // renamed from username
-  password: { type: String, required: true },
-  role: { type: String, enum: ['patient', 'doctor', 'admin'], default: 'patient' },
+const userSchema = new mongoose.Schema({
+  googleId: { type: String, required: true },
   name: String,
+  email: { type: String },
+  roll: String,
+  picture: String,
+  sex: { type: String, enum: ["Male", "Female", "Other"] },
   age: Number,
-  sex: String,
-  phone: String
-});
+  phone: String,
 
-module.exports = mongoose.model('User', UserSchema);
+  googleAccessToken: { type: String },
+  googleRefreshToken: { type: String },
+}, { timestamps: true });
+
+module.exports = mongoose.model("User", userSchema);
