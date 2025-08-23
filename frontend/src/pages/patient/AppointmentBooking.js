@@ -92,7 +92,13 @@ export default function AppointmentBooking() {
   };
 
   const cancelEvent = async (ev) => {
-  if (!window.confirm('Cancel this appointment?')) return;
+  if (
+    !window.confirm(
+      "Are you sure you want to cancel?\n\n Reminder: If you cancel within 15 minutes of booking, the appointment will be fully deleted. Otherwise, it will be marked as 'Cancelled by user'."
+    )
+  ) {
+    return;
+  }
   try {
     await axios.delete(`http://localhost:5000/api/appointments/${ev.calendarEventId}/cancel`, {
       data: { 
@@ -103,7 +109,7 @@ export default function AppointmentBooking() {
       }
     });
 
-    alert('Cancelled!');
+    alert('Cancellation request processed!');
     fetchEvents();
     fetchAvailableSlots();
   } catch (err) {
@@ -169,15 +175,19 @@ export default function AppointmentBooking() {
               <strong>{ev.doctor?.name} ({ev.doctor?.specialization})</strong><br/>
               {new Date(ev.startDateTime).toLocaleString()} - {new Date(ev.endDateTime).toLocaleString()}<br/>
               Status: {ev.status}
-              <button 
-                onClick={() => cancelEvent(ev)} 
-                style={{ marginTop: '5px', padding: '5px', backgroundColor: '#EA4335', color: 'white' }}
-              >
-                Cancel
-              </button>
-
+              
+              {/* Only show cancel if status === booked */}
+              {ev.status === "booked" && (
+                <button 
+                  onClick={() => cancelEvent(ev)} 
+                  style={{ marginTop: '5px', padding: '5px', backgroundColor: '#EA4335', color: 'white' }}
+                >
+                  Cancel
+                </button>
+              )}
             </li>
           ))}
+
 
         </ul>
       )}
