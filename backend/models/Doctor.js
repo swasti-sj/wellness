@@ -18,11 +18,6 @@ const DoctorSchema = new mongoose.Schema({
             enum: [
               'available',
               'booked',
-              'attended',
-              'no show',
-              'cancelled by user',
-              'cancelled by doctor',
-              'walk in'
             ],
             default: 'available'
           },

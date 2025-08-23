@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 
+const Appointment = require('../models/Appointment');
 // Book appointment
 router.post("/book", async (req, res) => {
   try {
@@ -27,12 +28,22 @@ router.post("/book", async (req, res) => {
       location: "Wellness Center, IIT Dharwad",
       start: { dateTime: startDateTime },
       end: { dateTime: endDateTime },
-      extendedProperties: {
-        private: { doctorId, slotDay, slotTime, startDateTime }
-      }
     };
 
     const response = await calendar.events.insert({ calendarId: "primary", requestBody: event });
+
+    // Save appointment in DB
+    const appointment = new Appointment({
+      doctor: doctor._id,
+      user: user._id,
+      calendarEventId: response.data.id,
+      startDateTime,
+      endDateTime,
+      slotDay,
+      slotTime,
+      status: "booked"
+    });
+    await appointment.save();
 
     // Update DB
     const daySlot = doctor.weeklySlots.find(d => d.day === slotDay);
@@ -40,18 +51,18 @@ router.post("/book", async (req, res) => {
       const timeSlot = daySlot.times.find(t => t.time === slotTime);
       if (timeSlot) {
         timeSlot.status = "booked";
-        await doctor.save();
+        timeSlot.appointmentId = appointment._id;
       }
     }
-
-    res.json({ event: response.data });
+    await doctor.save();
+     res.json({ event: response.data, appointment });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Get appointments
+// Get user's appointments
 router.get("/my-appointments", async (req, res) => {
   try {
     const { token } = req.query;
@@ -61,18 +72,11 @@ router.get("/my-appointments", async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-    oAuth2Client.setCredentials({ access_token: user.googleAccessToken, refresh_token: user.googleRefreshToken });
+    const appointments = await Appointment.find({ user: user._id })
+      .populate("doctor", "name specialization")
+      .sort({ startDateTime: 1 });
 
-    const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
-    const response = await calendar.events.list({
-      calendarId: 'primary',
-      timeMin: new Date().toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime',
-    });
-
-    res.json({ events: response.data.items });
+    res.json({ appointments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -81,7 +85,7 @@ router.get("/my-appointments", async (req, res) => {
 // Cancel appointment
 router.delete("/:eventId/cancel", async (req, res) => {
   try {
-    const { token, doctorId, slotDay, slotTime, startDateTime } = req.body;
+    const { token, doctorId, slotDay, slotTime } = req.body;
     const { eventId } = req.params;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
@@ -89,27 +93,52 @@ router.delete("/:eventId/cancel", async (req, res) => {
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_CLIENT_SECRET);
-    oAuth2Client.setCredentials({ access_token: user.googleAccessToken, refresh_token: user.googleRefreshToken });
+    // Find appointment in DB
+    const appointment = await Appointment.findOne({ calendarEventId: eventId, user: user._id });
+    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+
+    // Check booking age
+    const now = new Date();
+    const diffMinutes = Math.floor((now - appointment.createdAt) / (1000 * 60)); // minutes since booking
+
+    // Google Calendar setup
+    const oAuth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+    oAuth2Client.setCredentials({ 
+      access_token: user.googleAccessToken, 
+      refresh_token: user.googleRefreshToken 
+    });
 
     const calendar = google.calendar({ version: 'v3', auth: oAuth2Client });
     await calendar.events.delete({ calendarId: 'primary', eventId });
 
-    // Reset DB
+    // Reset doctor slot
     const doctor = await Doctor.findById(doctorId);
-if (doctor) {
-  const daySlot = doctor.weeklySlots.find(d => d.day === slotDay);
-  if (daySlot) {
-    const timeSlot = daySlot.times.find(t => t.time === slotTime);
-    if (timeSlot) {
-      timeSlot.status = "available";  
+    if (doctor) {
+      const daySlot = doctor.weeklySlots.find(d => d.day === slotDay);
+      if (daySlot) {
+        const timeSlot = daySlot.times.find(t => t.time === slotTime);
+        if (timeSlot) {
+          timeSlot.status = "available";
+          timeSlot.appointmentId = null;
+        }
+      }
       await doctor.save();
     }
-  }
-}
 
+    if (diffMinutes <= 15) {
+      // Cancel within 15 minutes → delete appointment
+      await Appointment.findByIdAndDelete(appointment._id);
+      return res.json({ success: true, message: "Appointment deleted (cancelled within 15 minutes)" });
+    } else {
+      // After 15 minutes → mark as cancelled
+      appointment.status = "cancelled by user";
+      await appointment.save();
+      return res.json({ success: true, message: "Appointment marked as cancelled by user" });
+    }
 
-    res.json({ success: true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });

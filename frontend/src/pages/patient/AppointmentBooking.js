@@ -44,7 +44,7 @@ export default function AppointmentBooking() {
       const res = await axios.get('http://localhost:5000/api/appointments/my-appointments', {
         params: { token },
       });
-      setEvents(res.data.events || []);
+      setEvents(res.data.appointments || []); 
     } catch (err) {
       console.error('Error fetching events:', err);
     }
@@ -91,23 +91,27 @@ export default function AppointmentBooking() {
     }
   };
 
-  const cancelEvent = async (event) => {
-    if (!window.confirm('Cancel this appointment?')) return;
-    try {
-      const { doctorId, slotDay, slotTime, startDateTime } = event.extendedProperties.private;
+  const cancelEvent = async (ev) => {
+  if (!window.confirm('Cancel this appointment?')) return;
+  try {
+    await axios.delete(`http://localhost:5000/api/appointments/${ev.calendarEventId}/cancel`, {
+      data: { 
+        token,
+        doctorId: ev.doctor._id,
+        slotDay: ev.slotDay,
+        slotTime: ev.slotTime
+      }
+    });
 
-      await axios.delete(`http://localhost:5000/api/appointments/${event.id}/cancel`, { 
-        data: { token, doctorId, slotDay, slotTime, startDateTime }
-      });
+    alert('Cancelled!');
+    fetchEvents();
+    fetchAvailableSlots();
+  } catch (err) {
+    console.error(err);
+    alert('Failed to cancel.');
+  }
+};
 
-      alert('Cancelled!');
-      fetchEvents();
-      fetchAvailableSlots();
-    } catch (err) {
-      console.error(err);
-      alert('Failed to cancel.');
-    }
-  };
 
   const selectedDoc = doctors.find(d => d._id === selectedDoctor);
   const availableSlots = selectedDoc?.availableSlots || [];
@@ -161,12 +165,20 @@ export default function AppointmentBooking() {
       {events.length === 0 ? <p>No appointments</p> : (
         <ul>
           {events.map(ev => (
-            <li key={ev.id} style={{ marginBottom: '15px', padding: '10px', border: '1px solid #ddd' }}>
-              <strong>{ev.summary || 'Appointment'}</strong><br/>
-              {new Date(ev.start.dateTime || ev.start.date).toLocaleString()} - {new Date(ev.end.dateTime || ev.end.date).toLocaleString()}<br/>
-              <button onClick={() => cancelEvent(ev)} style={{ marginTop: '5px', padding: '5px', backgroundColor: '#EA4335', color: 'white' }}>Cancel</button>
+            <li key={ev._id} style={{ marginBottom: '15px', padding: '10px', border: '1px solid #ddd' }}>
+              <strong>{ev.doctor?.name} ({ev.doctor?.specialization})</strong><br/>
+              {new Date(ev.startDateTime).toLocaleString()} - {new Date(ev.endDateTime).toLocaleString()}<br/>
+              Status: {ev.status}
+              <button 
+                onClick={() => cancelEvent(ev)} 
+                style={{ marginTop: '5px', padding: '5px', backgroundColor: '#EA4335', color: 'white' }}
+              >
+                Cancel
+              </button>
+
             </li>
           ))}
+
         </ul>
       )}
     </div>
