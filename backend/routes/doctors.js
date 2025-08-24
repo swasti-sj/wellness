@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Doctor = require('../models/Doctor');
 const moment = require('moment');
+const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/auth');
 
 // Get doctors with available weekly slots for the next 7 days
 router.get('/available', async (req, res) => {
@@ -47,5 +49,33 @@ router.get('/available', async (req, res) => {
     res.status(500).send('Error fetching available slots');
   }
 });
+
+// Update doctor profile
+router.post('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, specialization, phone, weeklySlots } = req.body;
+    // You may want to validate weeklySlots structure here if allowing updates
+
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.user.id,
+      { name, specialization, phone, weeklySlots },
+      { new: true }
+    );
+    res.json(doctor);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update doctor profile' });
+  }
+});
+
+// Get doctor profile
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.user.id).select("-googleAccessToken -googleRefreshToken");
+    res.json(doctor);
+  } catch {
+    res.status(500).send('Error fetching doctor profile');
+  }
+});
+
 
 module.exports = router;
