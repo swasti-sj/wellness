@@ -51,11 +51,9 @@ function LoginRedirect() {
 }
 
 function App() {
-  console.log("🚀 App component rendering");
 
   return (
     <Router>
-      {console.log("🛣️ Defining routes")}
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginRedirect />} /> 
