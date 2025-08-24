@@ -1,7 +1,10 @@
 const mongoose = require('mongoose');
 
 const DoctorSchema = new mongoose.Schema({
+  googleId: { type: String },
   name: String,
+  email: String,
+  picture: String,
   specialization: String,
   weeklySlots: [
     {
@@ -18,6 +21,11 @@ const DoctorSchema = new mongoose.Schema({
             enum: [
               'available',
               'booked',
+              'attended',
+              'no show',
+              'cancelled by user',
+              'cancelled by doctor',
+              'walk in'
             ],
             default: 'available'
           },
@@ -25,7 +33,12 @@ const DoctorSchema = new mongoose.Schema({
         }
       ]
     }
-  ]
-});
+  ],
+
+  googleAccessToken: String,
+
+  googleRefreshToken: String,
+
+}, { timestamps: true });
 
 module.exports = mongoose.model('Doctor', DoctorSchema);
