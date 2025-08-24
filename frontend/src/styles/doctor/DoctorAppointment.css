@@ -1,0 +1,78 @@
+.appointments-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.appointments-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 25px;
+}
+
+.appointment-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.appointment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  border-left: 5px solid #007bff; /* Default blue border */
+  margin-bottom: 15px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+
+.appointment-details p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.appointment-details strong {
+  color: #333;
+}
+
+.appointment-status {
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-weight: bold;
+  font-size: 0.9em;
+  color: #fff;
+  background-color: #6c757d; /* Default gray */
+  text-transform: capitalize;
+}
+
+/* Status-specific styles */
+.appointment-item.status-booked {
+  border-left-color: #007bff; /* Blue */
+}
+.status-booked .appointment-status {
+  background-color: #007bff;
+}
+
+.appointment-item.status-attended {
+  border-left-color: #28a745; /* Green */
+}
+.status-attended .appointment-status {
+  background-color: #28a745;
+}
+
+.appointment-item.status-cancelled {
+  border-left-color: #dc3545; /* Red */
+  opacity: 0.7;
+}
+.status-cancelled .appointment-status {
+  background-color: #dc3545;
+}
+
+.error-message {
+  color: #d9534f;
+  text-align: center;
+}
