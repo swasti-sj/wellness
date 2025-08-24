@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
-import LoginPage from './pages/patient/LoginPage';
+import LoginPage from './pages/LoginPage';
 import Dashboard from './pages/patient/Dashboard';
 import Trial from './pages/doctor/trial';
 import './App.css';
@@ -9,6 +9,10 @@ import AppointmentBooking from './pages/patient/AppointmentBooking';
 import InitialProfile from './pages/patient/InitialProfileForm';
 import ProfilePage from './pages/patient/ProfilePage';
 import InitialDoctorProfile from './pages/doctor/InitialDoctorProfileForm';
+import DoctorNote from './pages/doctor/DoctorNote';
+import DoctorDashboard from './pages/doctor/DoctorDashboard';
+import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
+import DoctorAppointment from './pages/doctor/DoctorAppointment';
 
 function LoginRedirect() {
   const navigate = useNavigate();
@@ -16,6 +20,8 @@ function LoginRedirect() {
 
   useEffect(() => {
     console.log("🔄 LoginRedirect useEffect triggered");
+    console.log("📍 Current location:", location);
+    console.log("📍 Location search string:", location.search);
 
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
@@ -43,7 +49,8 @@ function LoginRedirect() {
       }
     } else {
       console.log("➡️ Not first login. Redirecting to dashboard...");
-      navigate("/dashboard");
+      if (role==="doctor") {navigate("/docdashboard");}
+      else {navigate("/dashboard");}
     }
   }, [location, navigate]);
 
@@ -51,9 +58,11 @@ function LoginRedirect() {
 }
 
 function App() {
+  console.log("🚀 App component rendering");
 
   return (
     <Router>
+      {console.log("🛣️ Defining routes")}
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginRedirect />} /> 
@@ -62,8 +71,12 @@ function App() {
           <Route path="book" element={<AppointmentBooking />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
-        <Route path="/docdashboard" element={<Trial />} />
-        <Route path="/initial-doctor-profile" element={<InitialDoctorProfile />} />
+        <Route path="/docdashboard" element={<DoctorDashboard />} >
+        <Route path="initial-doctor-profile" element={<InitialDoctorProfile />} />
+        <Route path="notes" element={<DoctorNote />} />
+        <Route path="doctor-appointment" element={<DoctorAppointment />} />
+        <Route path="doctor-profile" element={<DoctorProfilePage />} />
+        </Route>
       </Routes>
     </Router>
   );

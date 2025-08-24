@@ -43,6 +43,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Passport Google OAuth
+console.log("🔑 Configuring Google OAuth Strategy...");
 passport.use(new GoogleStrategy({
   clientID: process.env.GOOGLE_CLIENT_ID,
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -123,6 +124,7 @@ app.get("/auth/google/callback",
       console.log("📤 Redirecting doctor to frontend with token...");
       res.redirect(`http://localhost:3000/login?token=${token}&role=doctor&firstLogin=${firstLogin}`);
     } else {
+      console.log("🙋 Handling patient login/signup...");
       let user = await User.findOne({ email });
 
       if (!user) {
@@ -165,6 +167,7 @@ app.get("/auth/google/callback",
 );
 
 // Routes
+console.log("🛣️ Mounting API routes...");
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/doctors', doctorRoutes);
 app.use('/api/users', userRoutes);      
