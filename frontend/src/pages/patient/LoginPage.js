@@ -62,10 +62,22 @@ export default function LoginPage() {
     return (
       <div className="login-container">
         <h2>Login</h2>
-        <a href="http://localhost:5000/auth/google?role=patient">
+        <a href="http://localhost:5000/auth/google?role=patient" style={{
+            background: '#4285F4',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none'
+          }}>
           <button>Login as Patient</button>
         </a>
-        <a href="http://localhost:5000/auth/google?role=doctor">
+        <a href="http://localhost:5000/auth/google?role=doctor" style={{
+            background: '#4285F4',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '5px',
+            textDecoration: 'none'
+          }}>
           <button>Login as Doctor</button>
         </a>
       </div>
