@@ -149,6 +149,37 @@ router.get("/my-appointments", async (req, res) => {
   }
 });
 
+// Get a doctor's appointments
+router.get("/doctor-appointments", async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ error: "Missing token" });
+    }
+
+    // Verify the token to get the doctor's ID
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'doctor') {
+      return res.status(403).json({ error: "Access denied. Not a doctor." });
+    }
+
+    const doctor = await Doctor.findById(decoded.id);
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    // Find all appointments for this doctor and populate patient details
+    const appointments = await Appointment.find({ doctor: doctor._id })
+      .populate("user", "name email phone") // Select which user fields to show
+      .sort({ startDateTime: -1 }); // Sort by most recent first
+
+    res.json({ appointments });
+  } catch (err) {
+    console.error("Error fetching doctor's appointments:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Cancel appointment
 router.delete("/:eventId/cancel", async (req, res) => {
   try {
