@@ -76,12 +76,79 @@ router.get("/my-appointments", async (req, res) => {
       .populate("doctor", "name specialization")
       .sort({ startDateTime: 1 });
 
+    // setup calendar client ONCE
+    const oAuth2Client = new google.auth.OAuth2(
+      process.env.GOOGLE_CLIENT_ID,
+      process.env.GOOGLE_CLIENT_SECRET
+    );
+    oAuth2Client.setCredentials({
+      access_token: user.googleAccessToken,
+      refresh_token: user.googleRefreshToken,
+    });
+    const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
+
+    // check each appointment → update status if calendar event missing or cancelled
+    for (const appt of appointments) {
+      if (appt.calendarEventId) {
+        try {
+          const event = await calendar.events.get({
+            calendarId: "primary",
+            eventId: appt.calendarEventId,
+          });
+
+          if (event.data.status === "cancelled") {
+            // Event exists but is cancelled → update DB
+            console.log("Event cancelled in calendar:", appt.calendarEventId);
+            appt.status = "cancelled by user";
+            appt.calendarEventId = null;
+            await appt.save();
+            // Free the doctor's slot
+            const doctor = await Doctor.findById(appt.doctor);  // use appt.doctor
+            if (doctor) {
+              const daySlot = doctor.weeklySlots.find(d => d.day === appt.slotDay); // use appt.slotDay
+              if (daySlot) {
+                const timeSlot = daySlot.times.find(t => t.time === appt.slotTime); // use appt.slotTime
+                if (timeSlot) {
+                  timeSlot.status = "available";
+                  timeSlot.appointmentId = null;
+                }
+              }
+              await doctor.save();
+            }
+          } else {
+            // Event still active
+            console.log(
+              "Event exists:",
+              appt.calendarEventId,
+              event.data.summary,
+              event.data.start
+            );
+          }
+        } catch (err) {
+          const isNotFound =
+            err?.code === 404 ||
+            err?.errors?.some(e => e.reason === "notFound");
+
+          if (isNotFound) {
+            console.log("Event missing, cancelling:", appt.calendarEventId);
+            appt.status = "cancelled by user";
+            appt.calendarEventId = null;
+            await appt.save();
+            
+          } else {
+            console.error("Calendar API error:", err);
+          }
+        }
+      }
+    }
+
     res.json({ appointments });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
 });
+
 // Cancel appointment
 router.delete("/:eventId/cancel", async (req, res) => {
   try {
