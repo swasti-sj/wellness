@@ -1,0 +1,76 @@
+.doctor-prescription {
+  border-top: 2px solid #e0e0e0;
+  margin-top: 15px;
+  padding-top: 15px;
+}
+
+.doctor-prescription h4 {
+  margin-top: 0;
+  color: #0056b3;
+}
+
+.previous-prescriptions {
+  margin-bottom: 20px;
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 5px;
+}
+
+.previous-prescriptions h5 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.checkbox-item input[type="checkbox"] {
+  margin-right: 10px;
+}
+
+.prescription-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.prescription-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+}
+
+.prescription-row input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.remove-btn, .add-btn, .save-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+}
+
+.add-btn {
+  background-color: #28a745;
+  align-self: flex-start;
+}
+
+.save-btn {
+  background-color: #007bff;
+  font-size: 1rem;
+  padding: 10px 15px;
+}
