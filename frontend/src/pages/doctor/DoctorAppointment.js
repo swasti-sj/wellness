@@ -3,12 +3,16 @@ import axios from 'axios';
 import '../../styles/doctor/DoctorAppointment.css';
 import DoctorNote from './DoctorNote';
 
+import DoctorPrescription from './DoctorPrescription'; 
+
 function DoctorAppointment() {
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
+  const [selectedNotesApptId, setSelectedNotesApptId] = useState(null);
+  const [selectedRxApptId, setSelectedRxApptId] = useState(null); // 👈 New state for prescriptions
 
+  // ... (keep the useEffect for fetching appointments as is)
   useEffect(() => {
     const fetchAppointments = async () => {
       try {
@@ -36,20 +40,17 @@ function DoctorAppointment() {
   }, []);
 
   const handleToggleNotes = (appointmentId) => {
-    if (selectedAppointmentId === appointmentId) {
-      setSelectedAppointmentId(null); // Hide if already showing
-    } else {
-      setSelectedAppointmentId(appointmentId); // Show notes for this appointment
-    }
+    setSelectedNotesApptId(prevId => (prevId === appointmentId ? null : appointmentId));
+    setSelectedRxApptId(null); // Close prescription when opening notes
   };
 
-  if (isLoading) {
-    return <div className="appointments-container">Loading appointments...</div>;
-  }
+  const handleTogglePrescriptions = (appointmentId) => {
+    setSelectedRxApptId(prevId => (prevId === appointmentId ? null : appointmentId));
+    setSelectedNotesApptId(null); // Close notes when opening prescription
+  };
 
-  if (error) {
-    return <div className="appointments-container error-message">{error}</div>;
-  }
+  if (isLoading) return <div className="appointments-container">Loading appointments...</div>;
+  if (error) return <div className="appointments-container error-message">{error}</div>;
 
   return (
     <div className="appointments-container">
@@ -67,16 +68,25 @@ function DoctorAppointment() {
                 </div>
                 <div className="appointment-actions">
                   <span className="appointment-status">{appt.status}</span>
-                  <button onClick={() => handleToggleNotes(appt._id)} className="notes-toggle-btn">
-                    {selectedAppointmentId === appt._id ? 'Hide Notes' : 'View/Add Notes'}
+                  <button onClick={() => handleToggleNotes(appt._id)} className="action-btn">
+                    {selectedNotesApptId === appt._id ? 'Hide Notes' : 'Notes'}
+                  </button>
+                  <button onClick={() => handleTogglePrescriptions(appt._id)} className="action-btn">
+                    {selectedRxApptId === appt._id ? 'Hide Rx' : 'Prescription'}
                   </button>
                 </div>
               </div>
 
-              {/* Conditionally render the notes component */}
-              {selectedAppointmentId === appt._id && (
-                <div className="notes-section">
+              {/* Conditional rendering for Notes */}
+              {selectedNotesApptId === appt._id && (
+                <div className="content-section">
                   <DoctorNote appointmentId={appt._id} />
+                </div>
+              )}
+
+              {selectedRxApptId === appt._id && (
+                <div className="content-section">
+                  <DoctorPrescription appointmentId={appt._id} patientId={appt.user._id} />
                 </div>
               )}
             </li>
