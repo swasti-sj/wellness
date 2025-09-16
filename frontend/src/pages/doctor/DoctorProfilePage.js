@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../../styles/ProfilePage.css'; // Reusing the same styles as the user profile
 
-function DoctorProfilePage() {
+function DoctorProfilePage({apiBaseUrl}) {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState('');
-
   useEffect(() => {
+    if (!apiBaseUrl) return; // wait until loaded
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
@@ -15,7 +15,7 @@ function DoctorProfilePage() {
           return;
         }
         
-        const res = await axios.get('http://localhost:5000/api/doctors/profile', {
+        const res = await axios.get(`${apiBaseUrl}/doctors/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
