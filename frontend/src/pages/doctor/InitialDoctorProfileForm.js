@@ -15,7 +15,7 @@ function emptyWeeklySlots() {
   }));
 }
 
-function InitialDoctorProfileForm() {
+function InitialDoctorProfileForm({apiBaseUrl}) {
   const [form, setForm] = useState({
     name: '',
     specialization: '',
@@ -57,7 +57,7 @@ function InitialDoctorProfileForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/doctors/profile', form, {
+      await axios.post(`${apiBaseUrl}/doctors/profile`, form, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
