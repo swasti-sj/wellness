@@ -70,7 +70,7 @@ router.post('/profile', authMiddleware, async (req, res) => {
 // Get doctor profile
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    const doctor = await Doctor.findById(req.user.id).select("-googleAccessToken -googleRefreshToken");
+    const doctor = await Doctor.findById(req.user.id).select("-password");
     res.json(doctor);
   } catch {
     res.status(500).send('Error fetching doctor profile');

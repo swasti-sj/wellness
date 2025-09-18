@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 
 import LoginPage from './pages/LoginPage';
@@ -42,7 +42,7 @@ function LoginRedirect() {
 
       if (role === "doctor") {
         console.log("👨‍⚕️ Redirecting doctor to initial doctor profile setup...");
-        navigate("/initial-doctor-profile");
+        navigate("/docdashboard/initial-doctor-profile");
       } else {
         console.log("🙋 Redirecting patient to initial profile setup...");
         navigate("/initial-profile");
@@ -59,7 +59,23 @@ function LoginRedirect() {
 
 function App() {
   console.log("🚀 App component rendering");
+  const [apiBaseUrl, setApiBaseUrl] = useState('');
 
+  useEffect(() => {
+    fetch('http://localhost:5000/config') // This will hit your backend's /config route
+      .then(res => res.json())
+      .then(cfg => {
+        console.log('Config from backend:', cfg);
+        setApiBaseUrl(cfg.apiBaseUrl);
+      })
+      .catch(err => console.error('Failed to load config:', err));
+  }, []);
+  // --- SOLUTION ---
+  // If we don't have the base URL yet, don't render the app.
+  // Show a loading screen instead.
+  if (!apiBaseUrl) {
+    return <div>Loading Application...</div>;
+  }
   return (
     <Router>
       {console.log("🛣️ Defining routes")}
@@ -72,10 +88,10 @@ function App() {
           <Route path="profile" element={<ProfilePage />} />
         </Route>
         <Route path="/docdashboard" element={<DoctorDashboard />} >
-        <Route path="initial-doctor-profile" element={<InitialDoctorProfile />} />
-        <Route path="notes" element={<DoctorNote />} />
-        <Route path="doctor-appointment" element={<DoctorAppointment />} />
-        <Route path="doctor-profile" element={<DoctorProfilePage />} />
+        <Route path="initial-doctor-profile" element={<InitialDoctorProfile apiBaseUrl={apiBaseUrl}/>} />
+        <Route path="notes" element={<DoctorNote apiBaseUrl={apiBaseUrl}/>} />
+        <Route path="doctor-appointment" element={<DoctorAppointment apiBaseUrl={apiBaseUrl}/>} />
+        <Route path="doctor-profile" element={<DoctorProfilePage apiBaseUrl={apiBaseUrl}/>} />
         </Route>
       </Routes>
     </Router>
