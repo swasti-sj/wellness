@@ -692,51 +692,6 @@ router.get("/doctor-appointments", async (req, res) => {
     const appointments = await Appointment.find({ doctor: doctor._id })
       .populate("user", "name email phone")
       .sort({ startDateTime: -1 });
-      // Setup Google Calendar API
-    const oAuth2Client = new google.auth.OAuth2(
-      process.env.GOOGLE_CLIENT_ID,
-      process.env.GOOGLE_CLIENT_SECRET
-    );
-    oAuth2Client.setCredentials({
-      access_token: doctor.googleAccessToken,
-      refresh_token: doctor.googleRefreshToken,
-    });
-
-    const calendar = google.calendar({ version: "v3", auth: oAuth2Client });
-
-    // Loop through each appointment → check if Google Calendar event exists
-    for (const appt of appointments) {
-      if (appt.calendarEventId) {
-        try {
-          const event = await calendar.events.get({
-            calendarId: "primary",
-            eventId: appt.calendarEventId,
-          });
-
-          if (event.data.status === "cancelled") {
-            // Event exists but marked cancelled in Google Calendar
-            console.log("Doctor event cancelled in calendar:", appt.calendarEventId);
-            appt.status = "cancelled by doctor";
-            appt.calendarEventId = null;
-            await appt.save();
-          }
-        } catch (err) {
-          // If Google Calendar says event not found → mark it cancelled
-          const isNotFound =
-            err?.code === 404 ||
-            err?.errors?.some(e => e.reason === "notFound");
-
-          if (isNotFound) {
-            console.log("Doctor event missing in calendar:", appt.calendarEventId);
-            appt.status = "cancelled by doctor";
-            appt.calendarEventId = null;
-            await appt.save();
-          } else {
-            console.error("Doctor Calendar API error:", err.message);
-          }
-        }
-      }
-    }
 
     res.json({ appointments });
   } catch (err) {
