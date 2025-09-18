@@ -6,7 +6,7 @@ body, html {
   margin: 0;
   font-family: 'Roboto', sans-serif;
   position: relative; /* for ::before */
-  overflow: hidden;
+  overflow: auto;
   /* display:flex; */
   /* justify-content: center; */
 }
