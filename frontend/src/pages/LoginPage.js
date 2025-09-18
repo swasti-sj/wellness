@@ -18,31 +18,66 @@ export default function LoginPage() {
     };
   }, []);
 
+
   useEffect(() => {
+    console.log('LoginPage: Component mounted.');
     const urlParams = new URLSearchParams(window.location.search);
     const accessToken = urlParams.get('token');
     const isFirstLogin = urlParams.get('firstLogin') === 'true';
-    const role = urlParams.get('role');
+
+    console.log('LoginPage: URL params processed.', { accessToken, isFirstLogin });
 
     if (accessToken) {
+      console.log('LoginPage: Access token found, updating state.');
       setToken(accessToken);
       setFirstLogin(isFirstLogin);
       localStorage.setItem('token', accessToken);
-      if (role) localStorage.setItem('role', role);
+      // Store role in localStorage
+      const role = urlParams.get('role');
+      if (role) {
+        localStorage.setItem('role', role);
+      }
+    } else {
+      console.log('LoginPage: No access token found in URL.');
     }
   }, []);
 
   useEffect(() => {
-    const role = localStorage.getItem('role');
+    console.log('LoginPage: Token or firstLogin state changed.', { token, firstLogin });
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
     if (token && !firstLogin) {
-      if (role === 'doctor') navigate('/docdashboard');
-      else navigate('/dashboard');
+      console.log('LoginPage: Token exists and not first login, navigating to dashboard.');
+      if(role==='doctor'){
+        console.log('LoginPage: Role is doctor, navigating to doctor dashboard.');
+        navigate('/docdashboard');
+      }
+      else{
+        console.log('LoginPage: Role is patient, navigating to patient dashboard.');
+        navigate('/dashboard');
+      }
+    } else {
+      console.log('LoginPage: Conditions for dashboard navigation not met.');
     }
   }, [token, firstLogin, navigate]);
 
-  if (firstLogin) return <InitialProfileForm />;
+  if (firstLogin) {
+    console.log('LoginPage: First login detected, checking role.', { role });
+    const urlParams = new URLSearchParams(window.location.search);
+    const role = urlParams.get('role');
+    if (role === 'doctor') {
+      console.log('LoginPage: Role is doctor, navigating to initial doctor profile.');
+      navigate('/initial-doctor-profile');
+      return <div>Redirecting to doctor profile...</div>;
+    }
+    
+    console.log('LoginPage: Role is not doctor, rendering InitialProfileForm.');
+    return <InitialProfileForm />;
+  }
 
   if (!token) {
+    console.log('LoginPage: No token, rendering login buttons.');
+    // Not logged in → show Google login buttons
     return (
       <div className="login-container-horizontal">
         <div className="login-left">
@@ -71,5 +106,6 @@ export default function LoginPage() {
     );
   }
 
+  console.log('LoginPage: Token exists, rendering redirecting message.');
   return <div>Redirecting...</div>;
 }
