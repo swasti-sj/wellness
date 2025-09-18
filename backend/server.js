@@ -177,6 +177,12 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 
 const PORT = process.env.PORT || 5000;
+app.get("/config", (req, res) => {
+  res.json({
+    apiBaseUrl: process.env.LOCALHOST_URL
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
