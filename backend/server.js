@@ -177,6 +177,13 @@ app.use('/api/notes', noteRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
 
 const PORT = process.env.PORT || 5000;
+// 👇 Config endpoint for frontend
+app.get("/config", (req, res) => {
+  res.json({
+    apiBaseUrl: "http://localhost:5000/api"  // adjust if your API prefix is different
+  });
+});
+
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });
