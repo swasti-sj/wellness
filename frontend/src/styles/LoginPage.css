@@ -1,59 +1,157 @@
-.login-container {
-  max-width: 350px;
+/* Import elegant fonts */
+/* Import elegant fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap');
+
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  position: relative; /* for ::before */
+  overflow: hidden;
+  /* display:flex; */
+  /* justify-content: center; */
+}
+
+/* Background with opacity */
+body.login-page::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/public/admin.jpg') no-repeat center center fixed;
+  background-size: cover;
+  opacity: 1;
+  z-index: -1;
+}
+
+body.login-page, body.login-page html {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  position: relative;
+  overflow: hidden;
+}
+
+
+/* Main container */
+.login-container-horizontal {
+  display: flex;
+  max-width: 70%;
   margin: 80px auto;
-  padding: 25px;
-  background: #ffffff;
+  border-radius: 20px;
+  overflow: hidden;
+  justify-content: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+  /* backdrop-filter: blur(10px); */
+   /* blur background behind panels */
+}
+
+
+/* Left panel */
+.login-left {
+  flex: 1;
+  background: rgba(245, 240, 240, 0.945); /* elegant dark transparent */
+  color: #080808;
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+/* Logo */
+.login-logo {
+  width:250px;
+  height: auto;
+  margin-bottom: 25px;
   border-radius: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  font-family: Arial, sans-serif;
+  /* box-shadow: 0 0 20px rgba(108, 27, 133, 0.6); highlight glow */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.login-container h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #012970; /* your preferred blue */
+/* .login-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(108, 27, 133, 0.8);
+} */
+
+/* Headline */
+.login-left h2 {
+  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-size: 2.2rem;
+  margin: 10px 10px;
+  color: #2f0b5e; /* highlight text with college accent */
+  /* text-shadow: 1px 1px 8px rgba(0,0,0,0.5); */
 }
 
-.login-container input,
-.login-container select {
-  width: 100%;
-  padding: 10px 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 14px;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease;
-}
-
-.login-container input:focus,
-.login-container select:focus {
-  border-color: #012970;
-  outline: none;
-}
-
-.login-container button {
-  width: 100%;
-  padding: 10px;
-  background: #012970; /* your blue */
+/* Subtitle */
+.login-left .login-subtitle {
+  font-size: 1rem;
+  /* line-height: 1.2; */
   color: #fff;
-  font-size: 15px;
-  font-weight: bold;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  /* text-shadow: 1px 1px 6px rgba(0,0,0,0.6); */
+  max-width: 320px;
+  margin-top: 25px;
+  font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif
 }
 
-.login-container button:hover {
-  background: #014bb7; /* darker blue */
+/* Right panel */
+.login-right {
+  flex: 1;
+  background: rgba(192, 190, 190, 0.4); /* very transparent, see background */
+  padding: 60px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
-.login-container p {
-  text-align: center;
-  font-size: 14px;
+/* Buttons with college colors */
+.google-btn {
+  display: inline-block;
+  width: 80%;
+  padding: 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  text-decoration: none;
+  color: white;
+  margin-bottom: 20px;
+  transition: transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 15px rgba(2, 2, 2, 0.8);
 }
 
-.login-container span {
-  font-weight: bold;
+.google-btn.doc {
+  background-color: #6c1b85;
+}
+
+.google-btn.pat {
+  background-color: #ffad4a;
+  /* color: #000; black text for contrast */
+}
+
+.google-btn:hover {
+  transform: translateY(-3px);
+  opacity: 0.95;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .login-container-horizontal {
+    flex-direction: column;
+    margin: 50px 20px;
+    backdrop-filter: blur(8px);
+  }
+  .login-left, .login-right {
+    padding: 30px 20px;
+  }
+  .login-left .login-subtitle {
+    max-width: 100%;
+  }
+  .google-btn {
+    width: 100%;
+  }
 }
