@@ -31,7 +31,7 @@ function PatientDashboardLayout() {
   return (
     <>
       <LayoutWithNavbar />
-      <Outlet /> {/* renders child patient pages */}
+      
     </>
   );
 }
