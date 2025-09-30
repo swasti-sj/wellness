@@ -4,6 +4,18 @@ const Doctor = require('../models/Doctor');
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
+router.get('/list', async (req, res) => {
+  console.log("Fetching doctors...");
+  try {
+    const doctors = await Doctor.find().select("name specialization email picture").lean();
+    console.log(doctors);  // ✅ log the actual data
+    res.set('Cache-Control', 'no-store'); // prevent 304 caching
+    res.json(doctors.map(d => ({ ...d, _id: d._id.toString() })));
+  } catch (err) {
+    console.error("Error fetching doctors:", err);
+    res.status(500).json({ error: "Error fetching doctors" });
+  }
+});
 
 // Get doctors with available weekly slots for the next 7 days
 router.get('/available', async (req, res) => {

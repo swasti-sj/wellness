@@ -1,49 +1,111 @@
+/* Dashboard.css */
 .dashboard-container {
-  font-family: 'Segoe UI', Arial, sans-serif;
-  padding: 20px;
-  background-color: #f9fafc;
-}
-
-/* Top Navigation Bar */
-.dashboard-container nav {
-  background: #012970; /* Preferred blue */
-  padding: 12px 20px;
-  border-radius: 10px;
   display: flex;
-  align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  flex-direction: column !important;
+  max-width: 1120px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background: #f2f2f2;
+  min-height: 100vh;
+  border-radius: 1rem;
 }
-
-.dashboard-container nav a {
-  color: #ffffff;
-  text-decoration: none;
+.visiting-doctors-title {
+  padding-left: 1.25rem;
+  font-size: 2rem;
   font-weight: 600;
-  padding: 6px 10px;
-  border-radius: 6px;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  color: #89288f;
+  margin-bottom: 1rem;
 }
-
-.dashboard-container nav a:hover {
-  background-color: rgba(255, 255, 255, 0.15);
-  color: #a5d6ff; /* Lighter blue */
+.visiting-doctors-list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 1.5rem;
 }
-
-/* Content spacing */
-.dashboard-container .content {
-  margin-top: 25px;
+.doctor-card {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-top: 4px solid #89288f;
+  text-align: center;
+  width: 100%;
+  max-width: 20rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: max-height 1.2s;
 }
-
-/* Responsive Navigation */
-@media (max-width: 600px) {
-  .dashboard-container nav {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+.doctor-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #89288f;
+}
+.doctor-card-btn {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #89288f;
+  color: #fff;
+  border-radius: 0.375rem;
+  transition: background 0.2s;
+  border: none;
+  cursor: pointer;
+}
+.doctor-card-btn:hover {
+  background: #6a1b6f;
+}
+.upcoming-section,
+.lastvisit-section {
+  margin-bottom: 2rem;
+  margin-top: 2rem;
+  background: #fff;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  border-left: 8px solid #faa519;
+}
+.upcoming-title,
+.lastvisit-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #89288f;
+  margin-bottom: 1rem;
+}
+.faculty-title {
+  font-size: 2rem;
+  font-weight: 600;
+  color: #89288f;
+  border-bottom: 4px solid #faa519;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+.faculty-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+@media (min-width: 640px) {
+  .faculty-list {
+    grid-template-columns: 1fr 1fr;
   }
-
-  .dashboard-container nav a {
-    width: 100%;
-    padding: 8px 12px;
+}
+@media (min-width: 768px) {
+  .faculty-list {
+    grid-template-columns: 1fr 1fr 1fr;
   }
+}
+.faculty-card {
+  background: #fff;
+  padding: 1.25rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-top: 4px solid #faa519;
+}
+.faculty-card-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #89288f;
+}
+.faculty-card-email {
+  color: #89288f;
+  text-decoration: underline;
 }
