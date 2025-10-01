@@ -4,22 +4,18 @@ import "../../styles/AppointmentBooking.css";
 
 // Helper to get next date for a weekday (Mon-Sun)
 const getNextDateForDay = (dayName) => {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const today = new Date();
   const dayIndex = days.indexOf(dayName);
   const diff = (dayIndex + 7 - today.getDay()) % 7 || 7;
+
   const nextDate = new Date();
   nextDate.setDate(today.getDate() + diff);
-  return nextDate.toISOString().split("T")[0];
+
+  // Use local date
+  return nextDate.toLocaleDateString('en-CA'); // "YYYY-MM-DD" format
 };
+
 
 export default function AppointmentBooking() {
   const [doctors, setDoctors] = useState([]);
