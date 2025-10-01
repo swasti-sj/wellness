@@ -157,7 +157,7 @@ app.get("/auth/google/callback",
 
       console.log("🔑 Issuing JWT for patient...");
       const token = jwt.sign(
-        { id: user._id, email: user.email },
+        { id: user._id, email: user.email, role: "user" },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );

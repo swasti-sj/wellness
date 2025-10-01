@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const AppointmentSchema = new mongoose.Schema({
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  calendarEventId: { type: String }, // Google Calendar eventId (usually doctor's calendar)
-  patientCalendarEventId: { type: String }, // Optional: Patient's calendar event ID
+  doctorCalendarEventId: { type: String, default: null }, // doctor’s Google event id
+  patientCalendarEventId: { type: String, default: null }, // patient’s Google event id
   startDateTime: { type: Date, required: true },
   endDateTime: { type: Date, required: true },
   slotDay: { type: String },

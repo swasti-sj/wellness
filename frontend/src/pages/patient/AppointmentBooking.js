@@ -75,67 +75,62 @@ export default function AppointmentBooking() {
   }, [selectedDoctorId, selectedDate, doctors]);
 
   const bookAppointment = async () => {
-    if (!selectedDoctorId || !selectedDate || !selectedTime) {
-      alert("Please select doctor, date, and time");
-      return;
-    }
+  if (!selectedDoctorId || !selectedDate || !selectedTime) {
+    alert("Please select doctor, date, and time");
+    return;
+  }
 
-    const selectedDoc = doctors.find(d => d._id === selectedDoctorId);
-    const slotDay = selectedDoc?.availableSlots?.find(s => getNextDateForDay(s.day) === selectedDate)?.day;
+  setIsBooking(true);
 
-    if (!slotDay) {
-      alert("Invalid slot selected.");
-      return;
-    }
+  const startDateTime = new Date(`${selectedDate}T${selectedTime}`);
+  const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
 
-    setIsBooking(true);
+  try {
+    const res = await axios.post("http://localhost:5000/api/appointments/book", {
+      token,
+      doctorId: selectedDoctorId,
+      slotDay: new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" }),
+      slotTime: selectedTime,
+      startDateTime: startDateTime.toISOString(),
+      endDateTime: endDateTime.toISOString(),
+    });
 
-    const startDateTime = new Date(`${selectedDate}T${selectedTime}`);
-    const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
-
-    try {
-      const res = await axios.post("http://localhost:5000/api/appointments/book", {
-        token,
-        doctorId: selectedDoctorId,
-        slotDay,
-        slotTime: selectedTime,
-        startDateTime: startDateTime.toISOString(),
-        endDateTime: endDateTime.toISOString(),
-      });
-
-      alert("Booked! Event ID: " + res.data.event.id);
+    if (res.data?.success) {
+      alert("Booked! Appointment saved successfully.");
       fetchEvents();
       fetchAvailableSlots();
       setSelectedDate("");
       setSelectedTime("");
       setSelectedDoctorId("");
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.error || "Failed to book.");
-    } finally {
-      setIsBooking(false);
+    } else {
+      alert(res.data?.error || "Booking failed.");
     }
-  };
+
+  } catch (err) {
+    console.error("Booking failed:", err.response?.data?.error || err.message);
+    alert(err.response?.data?.error || "Booking failed. Please try again.");
+  } finally {
+    setIsBooking(false);
+  }
+};
 
   const cancelEvent = async (ev) => {
-    if (!window.confirm("Are you sure you want to cancel?")) return;
-    try {
-      await axios.delete(`http://localhost:5000/api/appointments/${ev.calendarEventId}/cancel`, {
-        data: {
-          token,
-          doctorId: ev.doctor._id,
-          slotDay: ev.slotDay,
-          slotTime: ev.slotTime,
-        },
-      });
-      alert("Cancellation request processed!");
-      fetchEvents();
-      fetchAvailableSlots();
-    } catch (err) {
-      console.error(err);
-      alert("Failed to cancel.");
-    }
-  };
+  if (!window.confirm("Are you sure you want to cancel?")) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/api/appointments/${ev._id}/cancel`, {
+      data: { token },
+    });
+
+    alert("Cancellation request processed!");
+    fetchEvents();
+    fetchAvailableSlots();
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.error || "Failed to cancel.");
+  }
+};
+
 
   return (
     <div className="appointment-container">
