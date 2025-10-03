@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 
 function InitialProfileForm() {
+  console.log("hi");
   const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '' });
   const navigate = useNavigate();
 
@@ -20,7 +21,7 @@ function InitialProfileForm() {
         },
       });
       alert('Profile saved');
-      navigate('/dashboard');
+      navigate('patdashboard');
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');

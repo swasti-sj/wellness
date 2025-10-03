@@ -79,7 +79,9 @@ app.get('/auth/google', (req, res, next) => {
   const role = req.query.role || "patient";
   console.log(`🌐 /auth/google hit. Role requested: ${role}`);
   passport.authenticate('google', {
-    state: role // Pass role as state
+    state: role,
+    accessType: 'offline', 
+    prompt: 'consent'       
   })(req, res, next);
 });
 

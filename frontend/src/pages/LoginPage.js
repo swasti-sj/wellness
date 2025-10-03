@@ -62,9 +62,9 @@ export default function LoginPage() {
   }, [token, firstLogin, navigate]);
 
   if (firstLogin) {
-    console.log('LoginPage: First login detected, checking role.', { role });
     const urlParams = new URLSearchParams(window.location.search);
     const role = urlParams.get('role');
+    console.log('LoginPage: First login detected, checking role.', { role });
     if (role === 'doctor') {
       console.log('LoginPage: Role is doctor, navigating to initial doctor profile.');
       navigate('/initial-doctor-profile');

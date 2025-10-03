@@ -20,7 +20,6 @@ router.post("/book", async (req, res) => {
 
   try {
     const { token, startDateTime, endDateTime, doctorId, slotDay, slotTime } = req.body;
-
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,10 +31,14 @@ router.post("/book", async (req, res) => {
     doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-    // --- Create patient event first ---
+    // --- Ensure fresh OAuth clients ---
     patientOAuth2Client = await ensureFreshAccessToken(user, "user");
-    const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+    doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
 
+    const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+    const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+
+    // --- Create patient event ---
     patientResponse = await patientCalendar.events.insert({
       calendarId: "primary",
       requestBody: {
@@ -50,9 +53,6 @@ router.post("/book", async (req, res) => {
 
     // --- Create doctor event ---
     try {
-      doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
-      const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
-
       doctorResponse = await doctorCalendar.events.insert({
         calendarId: "primary",
         requestBody: {
@@ -64,7 +64,6 @@ router.post("/book", async (req, res) => {
         },
       });
       console.log("Doctor event created:", doctorResponse.data.id);
-
     } catch (doctorErr) {
       console.warn("Doctor calendar booking failed:", doctorErr.message);
 
@@ -124,7 +123,7 @@ router.post("/book", async (req, res) => {
   } catch (err) {
     console.error("Booking error:", err);
 
-    // Rollback patient if created
+    // Rollback patient event if it exists
     if (patientResponse?.data?.id && patientOAuth2Client) {
       try {
         const rollbackCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
@@ -132,13 +131,13 @@ router.post("/book", async (req, res) => {
           calendarId: "primary",
           eventId: patientResponse.data.id,
         });
-        console.log("Rolled back patient calendar event");
+        console.log("Rolled back patient calendar event due to booking failure");
       } catch (rollbackErr) {
         console.error("Failed to rollback patient event:", rollbackErr);
       }
     }
 
-    // Rollback doctor if created
+    // Rollback doctor event if it exists
     if (doctorResponse?.data?.id && doctorOAuth2Client) {
       try {
         const rollbackCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
@@ -146,7 +145,7 @@ router.post("/book", async (req, res) => {
           calendarId: "primary",
           eventId: doctorResponse.data.id,
         });
-        console.log("Rolled back doctor calendar event");
+        console.log("Rolled back doctor calendar event due to booking failure");
       } catch (rollbackErr) {
         console.error("Failed to rollback doctor event:", rollbackErr);
       }
@@ -155,6 +154,7 @@ router.post("/book", async (req, res) => {
     res.status(500).json({ error: "Booking failed" });
   }
 });
+
 
 
 // ===============================
@@ -175,21 +175,24 @@ router.get("/my-appointments", async (req, res) => {
 
     // Fetch all appointments for this user
     const appointments = await Appointment.find({ user: user._id })
-      .populate("doctor", "name specialization")
+      .populate("doctor", "name specialization weeklySlots")
       .sort({ startDateTime: 1 });
 
-    // Setup patient’s calendar client
+    // Setup patient calendar
     const patientOAuth2Client = await ensureFreshAccessToken(user, 'user');
     const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
 
     for (const appt of appointments) {
-      // ✅ Check patient’s calendar
+      let doctor = appt.doctor;
+
+      // --- Check patient calendar ---
       if (appt.patientCalendarEventId) {
         try {
           const event = await patientCalendar.events.get({
             calendarId: "primary",
             eventId: appt.patientCalendarEventId,
           });
+
           if (event.data.status === "cancelled") {
             console.log("Patient event cancelled:", appt.patientCalendarEventId);
             appt.status = "cancelled by user";
@@ -206,25 +209,22 @@ router.get("/my-appointments", async (req, res) => {
         }
       }
 
-      // ✅ Optionally check doctor’s calendar too
-      if (appt.doctorCalendarEventId) {
+      // --- Check doctor calendar ---
+      if (appt.doctorCalendarEventId && doctor) {
         try {
-          const doctor = await Doctor.findById(appt.doctor);
-          if (doctor) {
-            const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
-            const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+          const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
+          const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
 
-            const event = await doctorCalendar.events.get({
-              calendarId: "primary",
-              eventId: appt.doctorCalendarEventId,
-            });
+          const event = await doctorCalendar.events.get({
+            calendarId: "primary",
+            eventId: appt.doctorCalendarEventId,
+          });
 
-            if (event.data.status === "cancelled") {
-              console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
-              appt.status = "cancelled by doctor";
-              appt.doctorCalendarEventId = null;
-              await appt.save();
-            }
+          if (event.data.status === "cancelled") {
+            console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
+            appt.status = "cancelled by doctor";
+            appt.doctorCalendarEventId = null;
+            await appt.save();
           }
         } catch (err) {
           if (err?.code === 404) {
@@ -236,19 +236,16 @@ router.get("/my-appointments", async (req, res) => {
         }
       }
 
-      // ✅ Free up doctor’s slot if cancelled
-      if (!appt.patientCalendarEventId && !appt.doctorCalendarEventId && appt.status.includes("cancelled")) {
-        const doctor = await Doctor.findById(appt.doctor);
-        if (doctor) {
-          const daySlot = doctor.weeklySlots.find(d => d.day === appt.slotDay);
-          if (daySlot) {
-            const timeSlot = daySlot.times.find(t => t.time === appt.slotTime);
-            if (timeSlot) {
-              timeSlot.status = "available";
-              timeSlot.appointmentId = null;
-            }
+      // --- Free doctor slot if cancelled ---
+      if (!appt.patientCalendarEventId && !appt.doctorCalendarEventId && appt.status.includes("cancelled") && doctor) {
+        const daySlot = doctor.weeklySlots.find(d => d.day === appt.slotDay);
+        if (daySlot) {
+          const timeSlot = daySlot.times.find(t => t.time === appt.slotTime);
+          if (timeSlot) {
+            timeSlot.status = "available";
+            timeSlot.appointmentId = null;
+            await doctor.save();
           }
-          await doctor.save();
         }
       }
     }
@@ -260,6 +257,7 @@ router.get("/my-appointments", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
 const ensureOAuthClient = async (entity) => {
   if (!entity?.googleAccessToken || !entity?.googleRefreshToken) return null;
 
@@ -296,9 +294,8 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
   try {
     // Verify user
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-     if (decoded.role !== "user") {
-      return res.status(403).json({ error: "Access denied. Not a user." });
-    }
+    if (decoded.role !== "user") return res.status(403).json({ error: "Access denied. Not a user." });
+
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
 
@@ -311,60 +308,45 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
 
     const doctor = await Doctor.findById(appointment.doctor._id);
 
-    // Calculate time since booking
+    // Time since booking
     const now = new Date();
     const diffMinutes = Math.floor((now - appointment.createdAt) / (1000 * 60));
 
-    let calendarDeletionErrors = [];
-    // Delete doctor calendar event
-    if (appointment.doctorCalendarEventId && doctor.googleAccessToken) {
+    // --- Delete doctor calendar event ---
+    if (appointment.doctorCalendarEventId && doctor) {
       try {
-        const oAuth2Client = new google.auth.OAuth2(
-          process.env.GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET
-        );
-        oAuth2Client.setCredentials({
-          access_token: doctor.googleAccessToken,
-          refresh_token: doctor.googleRefreshToken,
-        });
+        const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
+        const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
 
-        const doctorCalendar = google.calendar({ version: "v3", auth: oAuth2Client });
         await doctorCalendar.events.delete({
           calendarId: "primary",
           eventId: appointment.doctorCalendarEventId,
         });
         console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
       } catch (err) {
-        console.log("Could not cancel doctor's calendar event:", err.message);
+        console.warn("Could not cancel doctor's calendar event:", err.message);
         calendarDeletionErrors.push("doctor's calendar");
       }
     }
 
-    // Delete patient calendar event
-    if (appointment.patientCalendarEventId && appointment.user.googleAccessToken) {
+    // --- Delete patient calendar event ---
+    if (appointment.patientCalendarEventId && user) {
       try {
-        const oAuth2Client = new google.auth.OAuth2(
-          process.env.GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET
-        );
-        oAuth2Client.setCredentials({
-          access_token: appointment.user.googleAccessToken,
-          refresh_token: appointment.user.googleRefreshToken,
-        });
+        const patientOAuth2Client = await ensureFreshAccessToken(user, "user");
+        const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
 
-        const patientCalendar = google.calendar({ version: "v3", auth: oAuth2Client });
         await patientCalendar.events.delete({
           calendarId: "primary",
           eventId: appointment.patientCalendarEventId,
         });
         console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
       } catch (err) {
-        console.log("Could not cancel patient's calendar event:", err.message);
+        console.warn("Could not cancel patient's calendar event:", err.message);
         calendarDeletionErrors.push("patient's calendar");
       }
     }
 
-    // Reset doctor slot
+    // --- Free doctor slot ---
     if (doctor) {
       const daySlot = doctor.weeklySlots.find(d => d.day === appointment.slotDay);
       if (daySlot) {
@@ -377,7 +359,7 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
       await doctor.save();
     }
 
-    // Delete if booked <15 minutes, else mark cancelled
+    // --- Delete or mark cancelled ---
     if (diffMinutes <= 15) {
       await Appointment.findByIdAndDelete(appointment._id);
       return res.json({ success: true, message: "Appointment deleted (cancelled within 15 minutes)" });
@@ -441,72 +423,49 @@ async function ensureFreshAccessToken(entity, entityType) {
   return oAuth2Client;
 }
 
-// Doctor books appointment for patient
 router.post("/doctor-book", async (req, res) => {
   let user, doctor;
+  let patientResponse = null;
+  let doctorResponse = null;
+  let appointment = null;
+
   try {
     console.log("[API] POST /doctor-book called");
 
-    const { token, patientEmail, patientPhone, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { token, patientEmail, startDateTime, endDateTime, slotDay, slotTime } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor token
+    // Verify doctor
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(decoded);
-    if (decoded.role !== "doctor") {
-      return res.status(403).json({ error: "Access denied. Not a doctor." });
-    }
+    if (decoded.role !== "doctor") return res.status(403).json({ error: "Access denied. Not a doctor." });
 
-     user = await User.findOne({ email: patientEmail });
-if (!user) return res.status(404).json({ error: "User not found" });
-
-     doctor = await Doctor.findById(decoded.id);
+    doctor = await Doctor.findById(decoded.id);
     if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-    // Debugging: show doctor record
-    console.log("[Doctor Record]", {
-      id: doctor._id,
-      email: doctor.email,
-      hasAccessToken: !!doctor.googleAccessToken,
-      hasRefreshToken: !!doctor.googleRefreshToken,
-      accessToken: doctor.googleAccessToken,
-      refreshToken: doctor.googleRefreshToken
-    });
+    user = await User.findOne({ email: patientEmail });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Ensure doctor’s Google access token is fresh
+    // --- Create event in doctor's calendar ---
     const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
     const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
 
-    // Find or create patient
-    let patient = await User.findOne({ email: patientEmail });
-    
+    doctorResponse = await doctorCalendar.events.insert({
+      calendarId: "primary",
+      requestBody: {
+        summary: `Appointment with ${user.name || user.email}`,
+        description: `Patient: ${user.name || "Unknown"}\nEmail: ${user.email}\nPhone: ${user.phone || "Not provided"}`,
+        location: "Wellness Center, IIT Dharwad",
+        start: { dateTime: startDateTime },
+        end: { dateTime: endDateTime },
+      },
+    });
+    console.log("Doctor calendar event created:", doctorResponse.data.id);
 
-    // Create event in doctor's calendar
-    const doctorEvent = {
-      summary: `Appointment with ${patient.name || patient.email}`,
-      description: `Patient: ${patient.name || "Unknown"}\nEmail: ${patient.email}\nPhone: ${patient.phone || "Not provided"}`,
-      location: "Wellness Center, IIT Dharwad",
-      start: { dateTime: startDateTime },
-      end: { dateTime: endDateTime }
-    };
-
-    let doctorCalendarResponse;
-    try {
-      doctorCalendarResponse = await doctorCalendar.events.insert({
-        calendarId: "primary",
-        requestBody: doctorEvent
-      });
-      console.log("Created event in doctor's calendar:", doctorCalendarResponse.data.id);
-    } catch (err) {
-      console.error("Failed to create event in doctor's calendar:", err);
-      return res.status(500).json({ error: "Failed to create calendar event. Please check your Google Calendar connection." });
-    }
-
-    // Save appointment in DB with doctor event ID first
-    const appointment = new Appointment({
+    // --- Save appointment in DB ---
+    appointment = new Appointment({
       doctor: doctor._id,
-      user: patient._id,
-      doctorCalendarEventId: doctorCalendarResponse.data.id,
+      user: user._id,
+      doctorCalendarEventId: doctorResponse.data.id,
       startDateTime,
       endDateTime,
       slotDay,
@@ -515,48 +474,41 @@ if (!user) return res.status(404).json({ error: "User not found" });
       bookedBy: "doctor"
     });
     await appointment.save();
-    console.log("[Appointment Saved in DB]", appointment);
 
-    // Try to add to patient's calendar if they have an access token
+    // --- Create patient calendar event if possible ---
     let patientCalendarEventId = null;
-    if (patient.googleAccessToken) { // <- only check access token
+    if (user.googleAccessToken) {
       try {
-        const patientOAuth2Client = await ensureFreshAccessToken(patient, "user"); // uses refresh token if available
+        const patientOAuth2Client = await ensureFreshAccessToken(user, "user");
         const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
 
-        const patientEvent = {
-          summary: `Medical Appointment with Dr. ${doctor.name}`,
-          description: `Appointment booked by Dr. ${doctor.name}\nSpecialization: ${doctor.specialization || "General"}`,
-          location: "Wellness Center, IIT Dharwad",
-          start: { dateTime: startDateTime },
-          end: { dateTime: endDateTime }
-        };
-
-        const patientResponse = await patientCalendar.events.insert({
+        patientResponse = await patientCalendar.events.insert({
           calendarId: "primary",
-          requestBody: patientEvent
+          requestBody: {
+            summary: `Medical Appointment with Dr. ${doctor.name}`,
+            description: `Appointment booked by Dr. ${doctor.name}\nSpecialization: ${doctor.specialization || "General"}`,
+            location: "Wellness Center, IIT Dharwad",
+            start: { dateTime: startDateTime },
+            end: { dateTime: endDateTime },
+          },
         });
-
         patientCalendarEventId = patientResponse.data.id;
-        appointment.patientCalendarEventId = patientCalendarEventId; // update DB
+        appointment.patientCalendarEventId = patientCalendarEventId;
         await appointment.save();
 
-        console.log("Created event in patient's calendar:", patientCalendarEventId);
-      } catch (calendarErr) {
-        console.log("Could not add to patient calendar:", calendarErr.message);
+        console.log("Patient calendar event created:", patientCalendarEventId);
+      } catch (err) {
+        console.warn("Could not add to patient calendar:", err.message);
       }
     }
 
-    // Update doctor's slot
+    // --- Update doctor slot ---
     const daySlot = doctor.weeklySlots.find(d => d.day === slotDay);
     if (daySlot) {
       const timeSlot = daySlot.times.find(t => t.time === slotTime);
       if (timeSlot && timeSlot.status === "available") {
         timeSlot.status = "booked";
         timeSlot.appointmentId = appointment._id;
-        console.log("[Doctor Slot Updated]", slotDay, slotTime);
-      } else {
-        console.warn("Slot was already booked:", slotDay, slotTime);
       }
     }
     await doctor.save();
@@ -566,61 +518,69 @@ if (!user) return res.status(404).json({ error: "User not found" });
     res.json({
       success: true,
       appointment: populatedAppointment,
-      doctorCalendarEventId: doctorCalendarResponse.data.id,
-      patientCalendarEventId: patientResponse.data.id,
-      message: `Appointment booked successfully. Created in doctor's calendar${patientCalendarEventId ? " and patient's calendar" : " (patient calendar not available)"}.`
+      doctorCalendarEventId: doctorResponse.data.id,
+      patientCalendarEventId,
+      message: `Appointment booked successfully${patientCalendarEventId ? " in both calendars" : " (patient calendar not available)"}.`
     });
 
   } catch (err) {
     console.error("Doctor booking error:", err);
-    // Rollback patient event
-if (patientResponse && patientResponse.data && patientResponse.data.id && user) {
-  try {
-    const rollbackOAuth2Client = await ensureFreshAccessToken(user, "user");
-    const rollbackCalendar = google.calendar({ version: "v3", auth: rollbackOAuth2Client });
-    await rollbackCalendar.events.delete({
-      calendarId: "primary",
-      eventId: patientResponse.data.id,
-    });
-    console.log("Rolled back patient calendar event");
-  } catch (rollbackErr) {
-    console.error("Failed to rollback patient event:", rollbackErr);
-  }
-}
 
-// Rollback doctor event
-if (doctorResponse && doctorResponse.data && doctorResponse.data.id && doctor) {
-  try {
-    const rollbackDoctor = await ensureFreshAccessToken(doctor, "doctor");
-    const rollbackCalendar = google.calendar({ version: "v3", auth: rollbackDoctor });
-    await rollbackCalendar.events.delete({
-      calendarId: "primary",
-      eventId: doctorResponse.data.id,
-    });
-    console.log("Rolled back doctor calendar event");
-  } catch (rollbackErr) {
-    console.error("Failed to rollback doctor event:", rollbackErr);
-  }
-}
+    // --- Rollback patient calendar ---
+    if (patientResponse?.data?.id && user) {
+      try {
+        const rollbackPatient = await ensureFreshAccessToken(user, "user");
+        const patientCalendar = google.calendar({ version: "v3", auth: rollbackPatient });
+        await patientCalendar.events.delete({
+          calendarId: "primary",
+          eventId: patientResponse.data.id
+        });
+        console.log("Rolled back patient calendar event");
+      } catch (rollbackErr) {
+        console.error("Failed to rollback patient event:", rollbackErr);
+      }
+    }
 
-    res.status(500).json({ error: err.message });
+    // --- Rollback doctor calendar ---
+    if (doctorResponse?.data?.id && doctor) {
+      try {
+        const rollbackDoctor = await ensureFreshAccessToken(doctor, "doctor");
+        const doctorCalendar = google.calendar({ version: "v3", auth: rollbackDoctor });
+        await doctorCalendar.events.delete({
+          calendarId: "primary",
+          eventId: doctorResponse.data.id
+        });
+        console.log("Rolled back doctor calendar event");
+      } catch (rollbackErr) {
+        console.error("Failed to rollback doctor event:", rollbackErr);
+      }
+    }
+
+    // --- Delete DB appointment if created ---
+    if (appointment?._id) {
+      await Appointment.findByIdAndDelete(appointment._id);
+      console.log("Rolled back appointment in DB");
+    }
+
+    res.status(500).json({ error: "Booking failed. " + err.message });
   }
 });
 
+
+
 // Doctor cancels appointment
 router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
+  console.log("[API] DELETE /:appointmentId/doctor-cancel called");
+
+  const { token } = req.body;
+  const { appointmentId } = req.params;
+
+  if (!token) return res.status(400).json({ error: "Missing token" });
+
   try {
-    console.log("[API] DELETE /:appointmentId/doctor-cancel called");
-    const { token } = req.body;
-    const { appointmentId } = req.params;
-
-    if (!token) return res.status(400).json({ error: "Missing token" });
-
     // Verify doctor token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== "doctor") {
-      return res.status(403).json({ error: "Access denied. Not a doctor." });
-    }
+    if (decoded.role !== "doctor") return res.status(403).json({ error: "Access denied. Not a doctor." });
 
     const doctor = await Doctor.findById(decoded.id);
     if (!doctor) return res.status(404).json({ error: "Doctor not found" });
@@ -633,57 +593,41 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
       return res.status(403).json({ error: "This appointment does not belong to you" });
     }
 
-    let calendarDeletionErrors = [];
+    const calendarDeletionErrors = [];
 
-    // Delete doctor calendar event
+    // --- Delete doctor calendar event ---
     if (appointment.doctorCalendarEventId && doctor.googleAccessToken) {
       try {
-        const oAuth2Client = new google.auth.OAuth2(
-          process.env.GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET
-        );
-        oAuth2Client.setCredentials({
-          access_token: doctor.googleAccessToken,
-          refresh_token: doctor.googleRefreshToken,
-        });
-
-        const doctorCalendar = google.calendar({ version: "v3", auth: oAuth2Client });
+        const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
+        const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
         await doctorCalendar.events.delete({
           calendarId: "primary",
           eventId: appointment.doctorCalendarEventId,
         });
         console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
       } catch (err) {
-        console.log("Could not cancel doctor's calendar event:", err.message);
+        console.error("Could not cancel doctor's calendar event:", err.message);
         calendarDeletionErrors.push("doctor's calendar");
       }
     }
 
-    // Delete patient calendar event
+    // --- Delete patient calendar event ---
     if (appointment.patientCalendarEventId && appointment.user.googleAccessToken) {
       try {
-        const oAuth2Client = new google.auth.OAuth2(
-          process.env.GOOGLE_CLIENT_ID,
-          process.env.GOOGLE_CLIENT_SECRET
-        );
-        oAuth2Client.setCredentials({
-          access_token: appointment.user.googleAccessToken,
-          refresh_token: appointment.user.googleRefreshToken,
-        });
-
-        const patientCalendar = google.calendar({ version: "v3", auth: oAuth2Client });
+        const patientOAuth2Client = await ensureFreshAccessToken(appointment.user, "user");
+        const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
         await patientCalendar.events.delete({
           calendarId: "primary",
           eventId: appointment.patientCalendarEventId,
         });
         console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
       } catch (err) {
-        console.log("Could not cancel patient's calendar event:", err.message);
+        console.error("Could not cancel patient's calendar event:", err.message);
         calendarDeletionErrors.push("patient's calendar");
       }
     }
 
-    // Reset doctor slot
+    // --- Reset doctor slot ---
     const daySlot = doctor.weeklySlots.find(d => d.day === appointment.slotDay);
     if (daySlot) {
       const timeSlot = daySlot.times.find(t => t.time === appointment.slotTime);
@@ -694,7 +638,7 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
     }
     await doctor.save();
 
-    // Update appointment status
+    // --- Update appointment status ---
     appointment.status = "cancelled by doctor";
     appointment.doctorCalendarEventId = null;
     appointment.patientCalendarEventId = null;
@@ -706,11 +650,13 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
     }
 
     res.json({ success: true, message });
+
   } catch (err) {
     console.error("Doctor cancellation error:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // Update appointment status
 router.patch("/:appointmentId/status", async (req, res) => {

@@ -74,7 +74,7 @@ function LoginRedirect() {
         navigate("/docdashboard/initial-doctor-profile");
       } else {
         console.log("🙋 Redirecting patient to initial profile setup...");
-        navigate("/initial-profile");
+        navigate("/patdashboard/initial-profile");
       }
     } else {
       console.log("➡️ Not first login. Redirecting to dashboard...");
