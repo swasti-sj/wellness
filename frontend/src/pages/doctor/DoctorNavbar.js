@@ -1,16 +1,22 @@
-// DoctorNavbar.js
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { FaUserMd } from "react-icons/fa";
 import "../../styles/Navbar.css"; // reuse same styles as patient navbar
 
 export default function DoctorNavbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [active, setActive] = useState("Appointments");
   const navigate = useNavigate();
+  const location = useLocation(); // get current URL
 
-  const handleNavClick = (path, label) => {
-    setActive(label);
+  // Determine active tab from current pathname
+  const activeTab = (() => {
+    if (location.pathname === "/docdashboard") return "Dashboard";
+    if (location.pathname.startsWith("/docdashboard/doctor-appointment")) return "Appointments";
+    if (location.pathname.startsWith("/docdashboard/referral")) return "Refer";
+    return "";
+  })();
+
+  const handleNavClick = (path) => {
     navigate(path);
   };
 
@@ -28,13 +34,11 @@ export default function DoctorNavbar() {
   return (
     <nav className="navbar">
       <div className="navbar-content">
-        {/* Left: Logo + Title */}
         <div className="navbar-logo">
           <img src="/college-logo.png" alt="College Logo" className="login-logo" />
           <span className="navbar-title">IIT Dharwad (Doctor)</span>
         </div>
 
-        {/* Center Tabs */}
         <div className="navbar-links">
           {[
             { label: "Dashboard", path: "/docdashboard" },
@@ -43,15 +47,14 @@ export default function DoctorNavbar() {
           ].map((item) => (
             <button
               key={item.label}
-              className={`navbar-btn${active === item.label ? " active" : ""}`}
-              onClick={() => handleNavClick(item.path, item.label)}
+              className={`navbar-btn${activeTab === item.label ? " active" : ""}`}
+              onClick={() => handleNavClick(item.path)}
             >
               {item.label}
             </button>
           ))}
         </div>
 
-        {/* Right: Doctor Icon with Dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowProfileMenu((prev) => !prev)}
