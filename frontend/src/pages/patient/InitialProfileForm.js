@@ -21,7 +21,8 @@ function InitialProfileForm() {
         },
       });
       alert('Profile saved');
-      navigate('patdashboard');
+      navigate('/patdashboard', { replace: true });
+
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');

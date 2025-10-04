@@ -31,6 +31,21 @@ router.post("/book", async (req, res) => {
     doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
+    const overlappingAppointment = await Appointment.findOne({
+      doctor: doctor._id,
+      user: user._id,
+      status: "booked",
+      $or: [
+        { 
+          startDateTime: { $lt: new Date(endDateTime) }, 
+          endDateTime: { $gt: new Date(startDateTime) } 
+        }
+      ]
+    });
+
+    if (overlappingAppointment) {
+      return res.status(400).json({ error: "You already have an appointment overlapping this time." });
+    }
     // --- Ensure fresh OAuth clients ---
     patientOAuth2Client = await ensureFreshAccessToken(user, "user");
     doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
@@ -444,6 +459,22 @@ router.post("/doctor-book", async (req, res) => {
 
     user = await User.findOne({ email: patientEmail });
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    const overlappingAppointment = await Appointment.findOne({
+      doctor: doctor._id,
+      user: user._id,
+      status: "booked",
+      $or: [
+        { 
+          startDateTime: { $lt: new Date(endDateTime) }, 
+          endDateTime: { $gt: new Date(startDateTime) } 
+        }
+      ]
+    });
+
+    if (overlappingAppointment) {
+      return res.status(400).json({ error: "Patient already has an appointment overlapping this time." });
+    }
 
     // --- Create event in doctor's calendar ---
     const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");

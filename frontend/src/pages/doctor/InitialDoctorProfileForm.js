@@ -63,7 +63,7 @@ function InitialDoctorProfileForm({apiBaseUrl}) {
         },
       });
       alert('Profile saved');
-      navigate('/docdashboard');
+      navigate('/docdashboard', { replace: true });
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
