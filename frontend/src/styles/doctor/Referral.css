@@ -1,0 +1,104 @@
+/* Referral Modal */
+.referral-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  width: 500px;
+  max-width: 95%;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.referral-modal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #89288f;
+  font-size: 1.2rem;
+}
+
+.referral-modal select,
+.referral-modal textarea {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.referral-modal textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.referral-modal button {
+  margin-right: 10px;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  cursor: pointer;
+}
+
+.referral-modal button:first-child {
+  background-color: #89288f;
+}
+
+.referral-modal button:first-child:hover {
+  background-color: #89288f;
+}
+
+.referral-modal button:last-child {
+  background-color: #6c757d;
+}
+
+.referral-modal button:last-child:hover {
+  background-color: #565e64;
+}
+
+/* Overlay background */
+.referral-modal::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: -1;
+}
+
+/* Referred Notes */
+.referred-notes {
+  margin-top: 15px;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 12px;
+}
+
+.referred-notes h4 {
+  margin-bottom: 10px;
+  font-size: 1.05rem;
+  color: #333;
+}
+
+.referred-notes div {
+  background: #f8f9fa;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #ddd;
+}
+
+.referred-notes small {
+  display: block;
+  font-size: 0.8rem;
+  color: #777;
+  margin-top: 4px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translate(-50%, -45%); }
+  to { opacity: 1; transform: translate(-50%, -50%); }
+}

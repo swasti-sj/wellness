@@ -10,16 +10,28 @@ import InitialProfile from './pages/patient/InitialProfileForm';
 import ProfilePage from './pages/patient/ProfilePage';
 import InitialDoctorProfile from './pages/doctor/InitialDoctorProfileForm';
 import DoctorNote from './pages/doctor/DoctorNote';
+import DoctorReferral from './pages/doctor/DoctorReferral';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import DoctorAppointment from './pages/doctor/DoctorAppointment';
-
+import DoctorNavbar from "./pages/doctor/DoctorNavbar";
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
   console.log("🛠️ Rendering LayoutWithNavbar");
   return (
     <>
       <Navbar />
+      <div style={{ paddingTop: "60px" }}>
+        <Outlet />
+      </div>
+    </>
+  );
+}
+function LayoutWithDocNavbar() {
+  console.log("🛠️ Rendering LayoutWithDocNavbar");
+  return (
+    <>
+      <DoctorNavbar />
       <div style={{ paddingTop: "60px" }}>
         <Outlet />
       </div>
@@ -39,7 +51,7 @@ function PatientDashboardLayout() {
 function DoctorDashboardLayout() {
   return (
     <>
-      <Outlet /> {/* renders child doctor pages */}
+      <LayoutWithDocNavbar /> {/* renders child doctor pages */}
     </>
   );
 }
@@ -124,6 +136,8 @@ function App() {
         <Route path="/docdashboard" element={<DoctorDashboardLayout />}>
           <Route index element={<DoctorDashboard />} /> {/* default doctor dashboard */}
           <Route path="notes" element={<DoctorNote apiBaseUrl={apiBaseUrl} />} />
+          
+          <Route path="referral" element={<DoctorReferral apiBaseUrl={apiBaseUrl} />} />
           <Route path="doctor-appointment" element={<DoctorAppointment apiBaseUrl={apiBaseUrl} />} />
           <Route path="doctor-profile" element={<DoctorProfilePage apiBaseUrl={apiBaseUrl} />} />
         </Route>

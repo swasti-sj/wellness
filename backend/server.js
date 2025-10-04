@@ -17,6 +17,7 @@ const userRoutes = require('./routes/users');
 const trialreadRoutes=require('./routes/trialread'); 
 const noteRoutes = require('./routes/notes');
 const prescriptionRoutes = require('./routes/prescriptions');
+const referralRoutes = require('./routes/referrals');
 
 // Middleware
 console.log("⚙️ Setting up middleware...");
@@ -177,7 +178,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/trialread', trialreadRoutes);
 app.use('/api/notes', noteRoutes);
 app.use('/api/prescriptions', prescriptionRoutes);
-
+app.use('/api/referrals', referralRoutes);
 const PORT = process.env.PORT || 5000;
 app.get("/config", (req, res) => {
   res.json({

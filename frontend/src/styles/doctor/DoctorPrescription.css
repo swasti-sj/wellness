@@ -6,7 +6,7 @@
 
 .doctor-prescription h4 {
   margin-top: 0;
-  color: #0056b3;
+  color: #89288f;
 }
 
 .previous-prescriptions {
@@ -70,7 +70,7 @@
 }
 
 .save-btn {
-  background-color: #007bff;
+  background-color: #89288f;
   font-size: 1rem;
   padding: 10px 15px;
 }

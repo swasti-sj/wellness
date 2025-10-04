@@ -264,6 +264,8 @@ function DoctorAppointment({apiBaseUrl}) {
                     <button onClick={() => handleTogglePrescriptions(appt._id)} className="action-btn">
                       {selectedRxApptId === appt._id ? 'Hide Rx' : 'Prescription'}
                     </button>
+                    
+
                     {(appt.status === 'booked' || appt.status === 'in-progress') && (
                       <button 
                         onClick={() => handleCancelAppointment(appt._id, appt)} 

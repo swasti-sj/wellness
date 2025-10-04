@@ -1,0 +1,63 @@
+/* Notes Section */
+.doctor-notes {
+  border-top: 2px solid #e0e0e0;
+  margin-top: 15px;
+  padding: 15px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.doctor-notes h4 {
+  margin-bottom: 10px;
+  color: #651d69;
+  font-size: 1.1rem;
+}
+
+.note-item {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  transition: box-shadow 0.2s ease-in-out;
+}
+
+.note-item:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.note-item small {
+  display: block;
+  margin-top: 5px;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.add-note-form {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.add-note-form textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  min-height: 60px;
+  resize: vertical;
+}
+
+.add-note-form button {
+  background-color: #89288f;
+  border: none;
+  padding: 8px 14px;
+  color: #fff;
+  border-radius: 5px;
+  cursor: pointer;
+  align-self: flex-start;
+}
+
+.add-note-form button:hover {
+  background-color: #89288f;
+}

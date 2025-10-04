@@ -25,7 +25,7 @@
   background-color: #fff;
   padding: 15px;
   border-radius: 6px;
-  border-left: 5px solid #007bff; /* Default blue border */
+  border-left: 5px solid #89288f; /* Default blue border */
   margin-bottom: 15px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.07);
 }
@@ -51,10 +51,10 @@
 
 /* Status-specific styles */
 .appointment-item.status-booked {
-  border-left-color: #007bff; /* Blue */
+  border-left-color: #89288f; /* Blue */
 }
 .status-booked .appointment-status {
-  background-color: #007bff;
+  background-color: #89288f;
 }
 
 .appointment-item.status-attended {

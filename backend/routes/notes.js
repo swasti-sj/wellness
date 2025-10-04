@@ -66,4 +66,24 @@ router.get("/:appointmentId", async (req, res) => {
   }
 });
 
+// GET /api/notes/patient/:patientId
+router.get('/patient/:patientId', async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const token = req.query.token;
+    if (!token) return res.status(400).json({ error: 'Missing token' });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== 'doctor') return res.status(403).json({ error: 'Access denied' });
+
+    const notes = await Note.find({ appointment: { $in: await Appointment.find({ user: patientId }).select('_id') } })
+      .populate('appointment', 'startDateTime endDateTime');
+
+    res.json({ success: true, notes });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

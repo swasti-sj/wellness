@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import "../../styles/doctor/DoctorNote.css";
+
 
 function DoctorNote({ appointmentId }) {
   const [notes, setNotes] = useState([]);
@@ -66,37 +68,27 @@ function DoctorNote({ appointmentId }) {
   };
 
   return (
-    <div className="notes-container">
-      <h3>Clinical Notes</h3>
-      
-      <form onSubmit={handleAddNote} className="note-form">
-        <textarea
-          value={newNoteText}
-          onChange={(e) => setNewNoteText(e.target.value)}
-          placeholder="Add a new note for this appointment..."
-          rows="4"
-          required
-        />
-        <button type="submit" disabled={!newNoteText.trim()}>Add Note</button>
-      </form>
-      
-      {error && <p className="error-message">{error}</p>}
-      
-      <div className="notes-list">
-        {isLoading ? (
-          <p>Loading notes...</p>
-        ) : notes.length > 0 ? (
-          notes.map(note => (
-            <div key={note._id} className="note-item">
-              <p>{note.text}</p>
-              <small>Noted on: {new Date(note.createdAt).toLocaleString()}</small>
-            </div>
-          ))
-        ) : (
-          <p>No notes for this appointment yet.</p>
-        )}
+    <div className="doctor-notes">
+  <h3>Clinical Notes</h3>
+  <form onSubmit={handleAddNote} className="note-form">
+    <textarea
+      value={newNoteText}
+      onChange={(e) => setNewNoteText(e.target.value)}
+      placeholder="Write a note..."
+    />
+    <button type="submit">Add Note</button>
+  </form>
+
+  <div className="notes-list">
+    {notes.length > 0 ? notes.map(note => (
+      <div key={note._id} className="note-card">
+        <p>{note.text}</p>
+        <small>{new Date(note.createdAt).toLocaleString()}</small>
       </div>
-    </div>
+    )) : <p>No notes yet.</p>}
+  </div>
+</div>
+
   );
 }
 

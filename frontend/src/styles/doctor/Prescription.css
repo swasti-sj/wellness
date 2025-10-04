@@ -1,0 +1,79 @@
+/* Prescription Section */
+.doctor-prescription {
+  border-top: 2px solid #e0e0e0;
+  margin-top: 15px;
+  padding: 15px;
+  background: #fafafa;
+  border-radius: 6px;
+}
+
+.doctor-prescription h4 {
+  color: #89288f;
+  margin-bottom: 15px;
+}
+
+.previous-prescriptions {
+  background: #fff;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-bottom: 15px;
+}
+
+.previous-prescriptions h5 {
+  margin: 0 0 10px 0;
+  color: #333;
+}
+
+.prescription-item {
+  border-bottom: 1px solid #eee;
+  padding: 6px 0;
+  font-size: 0.95rem;
+}
+
+.prescription-item:last-child {
+  border-bottom: none;
+}
+
+.prescription-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prescription-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 8px;
+}
+
+.prescription-row input {
+  padding: 8px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.remove-btn {
+  background-color: #dc3545;
+}
+
+.remove-btn:hover {
+  background-color: #a71d2a;
+}
+
+.add-btn {
+  background-color: #28a745;
+}
+
+.add-btn:hover {
+  background-color: #1c7c31;
+}
+
+.save-btn {
+  background-color: #89288f;
+  align-self: flex-start;
+}
+
+.save-btn:hover {
+  background-color: #89288f;
+}
