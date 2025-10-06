@@ -58,31 +58,6 @@ router.post('/', verifyDoctor, async (req, res) => {
 });
 
 // ------------------------------
-// Get referrals for logged-in doctor (all patients)
-// ------------------------------
-router.get('/all', verifyDoctor, async (req, res) => {
-  try {
-    const referrals = await Referral.find({ toDoctor: req.doctorId })
-      .populate('patient', 'name email')
-      .populate('fromDoctor', 'name email')
-      .sort({ createdAt: -1 });
-
-    const notes = referrals.map(r => ({
-      _id: r._id,
-      patient: r.patient ? { name: r.patient.name, email: r.patient.email } : { name: "Unknown", email: "" },
-      text: r.reason || "No reason provided",
-      doctor: r.fromDoctor ? { name: r.fromDoctor.name, email: r.fromDoctor.email } : { name: "Unknown", email: "" },
-      createdAt: r.createdAt
-    }));
-
-    res.json({ success: true, notes });
-  } catch (err) {
-    console.error("Fetch all referral notes error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// ------------------------------
 // Get referrals for a single patient (optional)
 // ------------------------------
 router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
@@ -113,6 +88,31 @@ router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
 // ------------------------------
 // Get referrals made by this doctor (sent referrals)
 // ------------------------------
+// Get all incoming referrals (toDoctor)
+router.get('/all', verifyDoctor, async (req, res) => {
+  try {
+    const referrals = await Referral.find({ toDoctor: req.doctorId })
+      .populate('patient', 'name email')
+      .populate('fromDoctor', 'name email')
+      .sort({ createdAt: -1 });
+
+    const notes = referrals.map(r => ({
+      _id: r._id,
+      patient: r.patient ? { name: r.patient.name, email: r.patient.email } : { name: "Unknown", email: "" },
+      text: r.reason || "No reason provided",
+      doctor: r.fromDoctor ? { name: r.fromDoctor.name, email: r.fromDoctor.email } : { name: "Unknown", email: "" },
+      createdAt: r.createdAt,
+      read: r.read
+    }));
+
+    res.json({ success: true, notes });
+  } catch (err) {
+    console.error("Fetch incoming referral notes error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Get all referrals created by this doctor (sent)
 router.get('/mine', verifyDoctor, async (req, res) => {
   try {
     const referrals = await Referral.find({ fromDoctor: req.doctorId })
@@ -134,5 +134,29 @@ router.get('/mine', verifyDoctor, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
+// routes/referral.js
+router.patch('/:id/read', verifyDoctor, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const referral = await Referral.findById(id);
+
+    if (!referral) return res.status(404).json({ error: 'Referral not found' });
+    if (referral.toDoctor.toString() !== req.doctorId)
+      return res.status(403).json({ error: 'Access denied' });
+
+    referral.read = true;
+    referral.status = 'viewed';
+    referral.viewedAt = new Date();
+    await referral.save();
+
+    res.json({ success: true, message: 'Referral marked as read' });
+  } catch (err) {
+    console.error("Error marking referral as read:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 module.exports = router;
