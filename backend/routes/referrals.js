@@ -110,4 +110,29 @@ router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
   }
 });
 
+// ------------------------------
+// Get referrals made by this doctor (sent referrals)
+// ------------------------------
+router.get('/mine', verifyDoctor, async (req, res) => {
+  try {
+    const referrals = await Referral.find({ fromDoctor: req.doctorId })
+      .populate('patient', 'name email')
+      .populate('toDoctor', 'name email specialization')
+      .sort({ createdAt: -1 });
+
+    const notes = referrals.map(r => ({
+      _id: r._id,
+      patient: r.patient ? { name: r.patient.name, email: r.patient.email } : { name: "Unknown", email: "" },
+      referredTo: r.toDoctor ? { name: r.toDoctor.name, specialization: r.toDoctor.specialization } : { name: "Unknown", specialization: "" },
+      text: r.reason || "No reason provided",
+      createdAt: r.createdAt,
+    }));
+
+    res.json({ success: true, notes });
+  } catch (err) {
+    console.error("Fetch own referral notes error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;
