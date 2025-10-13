@@ -13,6 +13,8 @@ export default function DoctorNavbar() {
     if (location.pathname === "/docdashboard") return "Dashboard";
     if (location.pathname.startsWith("/docdashboard/doctor-appointment")) return "Appointments";
     if (location.pathname.startsWith("/docdashboard/referral")) return "Refer";
+    
+    if (location.pathname.startsWith("/docdashboard/history")) return "History";
     return "";
   })();
 
@@ -43,6 +45,7 @@ export default function DoctorNavbar() {
           {[
             { label: "Dashboard", path: "/docdashboard" },
             { label: "Appointments", path: "/docdashboard/doctor-appointment" },
+            { label: "History", path: "/docdashboard/history" },
             { label: "Refer", path: "/docdashboard/referral" },
           ].map((item) => (
             <button

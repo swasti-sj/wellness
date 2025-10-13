@@ -11,6 +11,7 @@ import ProfilePage from './pages/patient/ProfilePage';
 import InitialDoctorProfile from './pages/doctor/InitialDoctorProfileForm';
 import DoctorNote from './pages/doctor/DoctorNote';
 import DoctorReferral from './pages/doctor/DoctorReferral';
+import PatientHistory from './pages/doctor/PatientHistory';
 import DoctorDashboard from './pages/doctor/DoctorDashboard';
 import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import DoctorAppointment from './pages/doctor/DoctorAppointment';
@@ -138,6 +139,7 @@ function App() {
           <Route path="notes" element={<DoctorNote apiBaseUrl={apiBaseUrl} />} />
           
           <Route path="referral" element={<DoctorReferral apiBaseUrl={apiBaseUrl} />} />
+          <Route path="history" element={<PatientHistory apiBaseUrl={apiBaseUrl} />} />
           <Route path="doctor-appointment" element={<DoctorAppointment apiBaseUrl={apiBaseUrl} />} />
           <Route path="doctor-profile" element={<DoctorProfilePage apiBaseUrl={apiBaseUrl} />} />
         </Route>
