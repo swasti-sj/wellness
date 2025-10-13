@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Calendar, momentLocalizer } from "react-big-calendar";
+import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { format } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -130,6 +131,19 @@ export default function DoctorAppointment({ apiBaseUrl }) {
     }
   };
 
+  const navigate = useNavigate();
+
+  const handleViewHistory = (patient) => {
+    if (!patient?.roll && !patient?.email) {
+      alert("No roll number or email available for this patient");
+      return;
+    }
+
+    // Prefer roll number, fallback to email
+    const identifier = patient.roll || patient.email;
+    navigate("/docdashboard/history", { state: { query: identifier } });
+  };
+
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
       const res = await axios.patch(`${apiBaseUrl}/appointments/${appointmentId}/status`, {
@@ -233,6 +247,13 @@ export default function DoctorAppointment({ apiBaseUrl }) {
               <button onClick={handleCloseModal} className="close-btn">
                 Close
               </button>
+              <button
+                onClick={() => handleViewHistory(selectedEvent.patient)}
+                className="history-btn"
+              >
+                View History
+              </button>
+
             </div>
 
             <hr />

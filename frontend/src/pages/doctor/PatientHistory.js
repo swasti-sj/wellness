@@ -3,14 +3,22 @@ import axios from "axios";
 import DoctorNote from "./DoctorNote";
 import DoctorPrescription from "./DoctorPrescription";
 import "../../styles/doctor/PatientHistory.css";
+import { useLocation } from "react-router-dom";
 
 export default function PatientHistory({ apiBaseUrl }) {
-  const [query, setQuery] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
+  const location = useLocation();
+  
+  const [query, setQuery] = useState(location.state?.query || "");
+  useEffect(() => {
+    if (location.state?.query) {
+      searchPatient(); // automatically search on load
+    }
+  }, [location.state]);
 
   // patient info
   const [patientInfo, setPatientInfo] = useState(null);

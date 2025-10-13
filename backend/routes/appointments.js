@@ -833,29 +833,36 @@ router.get("/patient-history", async (req, res) => {
     const doctor = await verifyDoctorToken(token);
     if (!doctor) return res.status(401).json({ error: "Invalid or expired token" });
 
-    const regex = new RegExp(query, "i");
+    const regex = query ? new RegExp(query, "i") : /.*/; // match all if no query provided
 
     // Step 1: Find appointments for this doctor where user matches query
     const appointments = await Appointment.find({ doctor: doctor._id })
       .populate({
         path: "user",
-        match: { $or: [{ name: regex }, { roll: regex }] },
+        match: {
+          $or: [
+            { name: regex },
+            { roll: regex },
+            { email: regex } 
+          ],
+        },
       })
       .populate("doctor")
       .sort({ startDateTime: -1 });
 
+    // Filter out appointments where user didn’t match
     const filtered = appointments.filter(a => a.user);
 
     // Step 2: Attach notes and prescriptions
     const result = await Promise.all(
       filtered.map(async (a) => {
-        const notes = await Note.find({ appointment: a._id }); // all notes for this appointment
-        const prescriptions = await Prescription.find({ appointment: a._id }); // all prescriptions
+        const notes = await Note.find({ appointment: a._id });
+        const prescriptions = await Prescription.find({ appointment: a._id });
 
         return {
           ...a.toObject(),
-          notes: notes.map(n => n.text), // map to array of strings
-          prescriptions: prescriptions.map(p => p.prescriptions || ""), // adjust field
+          notes: notes.map(n => n.text),
+          prescriptions: prescriptions.map(p => p.prescriptions || ""),
         };
       })
     );
@@ -866,7 +873,5 @@ router.get("/patient-history", async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
-
-
 
 module.exports = router;
