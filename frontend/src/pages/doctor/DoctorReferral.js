@@ -108,7 +108,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
               🔔 {unreadCount} New Referral{unreadCount > 1 ? "s" : ""}
             </div>
           ) : (
-            <div className="no-new-referrals">No new referrals</div>
+            <div className="no-new-referrals">🔔 No new referrals</div>
           )}
         </div>
       </div>

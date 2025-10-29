@@ -1,44 +1,41 @@
+// models/Doctor.js
 const mongoose = require('mongoose');
 
-const DoctorSchema = new mongoose.Schema({
-  googleId: { type: String },
-  name: String,
-  email: String,
-  picture: String,
-  specialization: String,
-  weeklySlots: [
+const daySlotSchema = new mongoose.Schema({
+  day: String,
+  times: [
     {
-      day: {
+      time: String,
+      status: {
         type: String,
-        enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-        required: true
-      },
-      times: [
-        {
-          time: String, 
-          status: {
-            type: String,
-            enum: [
-              'available',
-              'booked',
-              'attended',
-              'no show',
-              'cancelled by user',
-              'cancelled by doctor',
-              'walk in'
-            ],
-            default: 'available'
-          },
-          appointmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment', default: null }
-        }
-      ]
+        enum: [
+          'available',
+          'booked',
+          'attended',
+          'no show',
+          'cancelled by user',
+          'cancelled by doctor',
+          'walk in'
+        ],
+        default: 'available'
+      }
     }
-  ],
+  ]
+});
 
-  googleAccessToken: String,
+const doctorSchema = new mongoose.Schema(
+  {
+    googleId: { type: String, unique: true },
+    name: { type: String, required: true },
+    email: { type: String, required: true },
+    picture: { type: String },
+    specialization: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    weeklySlots: [daySlotSchema],
+    googleAccessToken: { type: String },
+    googleRefreshToken: { type: String }
+  },
+  { timestamps: true }
+);
 
-  googleRefreshToken: String,
-
-}, { timestamps: true });
-
-module.exports = mongoose.model('Doctor', DoctorSchema);
+module.exports = mongoose.model('Doctor', doctorSchema);

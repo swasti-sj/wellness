@@ -1,234 +1,228 @@
 /* ===========================
-   Calendar Container & General
+   Doctor Appointment Page – Modern & Professional Theme
 =========================== */
-.calendar-title {
-  text-align: center;
-  color: #012970;
-  margin-bottom: 1.5rem;
-}
 
-.calendar-container {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  padding: 1rem;
-  position: relative; /* ensure toolbar/modal stacking */
-  z-index: 1;
-}
-
-.rbc-calendar {
-  font-family: "Roboto", sans-serif;
-}
-
-.rbc-month-view,
-.rbc-time-view {
-  border-radius: 12px;
-}
-
-/* ===========================
-   Default Toolbar
-=========================== */
-.rbc-toolbar {
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  padding: 0.5rem;
+/* --- General Page Layout --- */
+.appointments-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: auto;
+  font-family: 'Roboto', sans-serif;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 2;
-  position: relative;
+  flex-direction: column;
+  gap: 2rem;
+  background: linear-gradient(135deg, #faf7ff 0%, #f7f2fa 100%);
+  min-height: 100vh;
 }
 
-.rbc-toolbar button {
-  background: #012970;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  padding: 4px 10px;
-  margin: 0 2px;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.rbc-toolbar button.rbc-active {
-  background: #0288d1;
-}
-
-.rbc-btn-group button {
-  margin: 0 5px;
-  padding: 5px 10px;
-  background-color: #012970;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.rbc-btn-group button:hover {
-  background-color: #0052cc;
-}
-
-.rbc-toolbar-label {
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: #012970;
-}
-
-/* ===========================
-   Custom Toolbar
-=========================== */
-.custom-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  flex-wrap: wrap;
-  position: relative;  /* ensure clicks work */
-  z-index: 10;
-}
-
-.toolbar-left,
-.toolbar-right {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.toolbar-center {
-  font-weight: bold;
-  font-size: 1.2rem;
-  color: #012970;
-  margin: 5px 0;
-}
-
-.toolbar-btn {
-  background-color: #012970;
-  color: #fff;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: 0.2s;
-}
-
-.toolbar-btn:hover {
-  background-color: #0052cc;
-}
-
-.toolbar-btn.active-view {
-  background-color: #28a745; /* active view is green */
-}
-
-/* ===========================
-   Events
-=========================== */
-.rbc-event {
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  padding: 3px 6px;
-}
-
-.rbc-event-label {
-  display: none;
-}
-
-/* ===========================
-   Calendar Header
-=========================== */
+/* --- Calendar Header --- */
 .calendar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.calendar-header h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.8rem;
+  color: #6c1b85;
+  margin: 0;
 }
 
 .add-appointment-btn {
-  background: #012970;
+  background: linear-gradient(135deg, #c08b30 0%, #f0a607 100%);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 8px 14px;
+  border-radius: 12px;
+  padding: 0.6rem 1.2rem;
+  font-weight: 600;
   cursor: pointer;
-  font-weight: 500;
-  transition: 0.2s;
+  transition: all 0.3s ease;
 }
 
 .add-appointment-btn:hover {
-  background: #0288d1;
+  background: linear-gradient(135deg, #5b1572 0%, #912fa5 100%);
+  box-shadow: 0 4px 15px rgba(108, 27, 133, 0.4);
+  transform: translateY(-2px);
 }
 
-/* ===========================
-   Booking Form
-=========================== */
-.booking-form .form-group {
-  margin-bottom: 1rem;
+/* --- Calendar Container --- */
+.calendar-container {
+  background: #fff;
+  border-radius: 18px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(108, 27, 133, 0.15);
+  overflow: hidden;
 }
 
-.booking-form label {
-  display: block;
-  font-weight: 500;
+/* --- React Big Calendar Base --- */
+.rbc-calendar {
+  font-family: 'Roboto', sans-serif;
   color: #333;
-  margin-bottom: 4px;
 }
 
-.booking-form input,
-.booking-form select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
+/* --- Toolbar --- */
+.rbc-toolbar,
+.custom-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  background: #faf7ff;
+  padding: 0.5rem 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(108, 27, 133, 0.1);
 }
 
-.submit-btn {
-  background: #012970;
+.rbc-toolbar .rbc-btn-group button,
+.toolbar-btn {
+  background: linear-gradient(135deg, #6c1b85, #912fa5);
   color: #fff;
   border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  margin: 0 3px;
+  transition: all 0.3s ease;
+}
+
+.rbc-toolbar .rbc-btn-group button:hover,
+.toolbar-btn:hover {
+  background: linear-gradient(135deg, #912fa5, #c08b30);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(108, 27, 133, 0.3);
+}
+
+.rbc-toolbar .rbc-active,
+.toolbar-btn.active-view,
+.rbc-toolbar .rbc-btn-group button.rbc-active {
+  background: linear-gradient(135deg, #c08b30, #f0a607);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(108, 27, 133, 0.3);
+}
+
+/* --- Toolbar Label --- */
+.rbc-toolbar-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #6c1b85;
+}
+
+/* --- Calendar Headers & Rows --- */
+.rbc-header {
+  background: #faf7ff;
+  color: #5a1a8e;
+  font-weight: 600;
+  text-align: center;
+  padding: 10px 5px;
+  border-bottom: 1px solid #e2d9f3;
+}
+
+.rbc-header + .rbc-header {
+  border-left: 1px solid #e2d9f3;
+}
+
+.rbc-row-segment {
+  border-right: 1px solid #f0f0f5;
+}
+
+.rbc-row-bg {
+  background: #faf7ff;
+}
+
+.rbc-day-bg:hover {
+  background: #f0eaff;
   cursor: pointer;
 }
 
-.submit-btn:hover {
-  background: #0288d1;
+.rbc-time-content {
+  border-left: 1px solid #e2d9f3;
 }
 
-.cancel-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
+/* --- Events --- */
+.rbc-event {
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #fff;
   cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(108, 27, 133, 0.15);
 }
 
-.cancel-btn:hover {
-  background: #b02a37;
+.rbc-event:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(108, 27, 133, 0.25);
 }
 
-/* ===========================
-   Modals
-=========================== */
+/* --- Status Colors --- */
+.rbc-event[style*="attended"] {
+  background: linear-gradient(135deg, #28a745, #6dd47e);
+}
+
+.rbc-event[style*="cancelled"] {
+  background: linear-gradient(135deg, #dc3545, #ff7675);
+}
+
+.rbc-event[style*="no show"] {
+  background: linear-gradient(135deg, #6c757d, #adb5bd);
+}
+
+.rbc-event[style*="booked"] {
+  background: linear-gradient(135deg, #ffc107, #f0a607);
+}
+
+/* --- Agenda View --- */
+.rbc-agenda-table th,
+.rbc-agenda-table td {
+  border-bottom: 1px solid #e2d9f3;
+  padding: 0.5rem;
+}
+
+.rbc-agenda-table th {
+  background: #faf7ff;
+  color: #5a1a8e;
+  font-weight: 600;
+}
+
+/* --- Appointment Modal --- */
 .appointment-modal {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 999;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal-content {
-  background: white;
-  border-radius: 12px;
-  padding: 1.5rem;
+  background: #fff;
+  border-radius: 18px;
+  padding: 2rem;
   width: 420px;
   max-height: 85vh;
   overflow-y: auto;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 10px 30px rgba(108, 27, 133, 0.2);
+}
+
+.modal-content h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.5rem;
+  color: #6c1b85;
+  margin-bottom: 1rem;
+}
+
+.modal-content p {
+  font-size: 0.95rem;
+  margin: 0.25rem 0;
 }
 
 .modal-actions {
@@ -238,16 +232,109 @@
   margin-top: 1rem;
 }
 
+.submit-btn,
+.cancel-btn,
+.history-btn {
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #c08b30, #f0a607);
+  color: #fff;
+}
+
+.submit-btn:hover {
+  background: linear-gradient(135deg, #5b1572, #912fa5);
+  box-shadow: 0 4px 15px rgba(108, 27, 133, 0.3);
+}
+
+.cancel-btn {
+  background: linear-gradient(135deg, #dc3545, #ff7675);
+  color: #fff;
+}
+
+.cancel-btn:hover {
+  transform: translateY(-2px);
+}
 
 .history-btn {
-  background-color: #012970;
-  color: white;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  margin-right: 10px;
+  background: #6c1b85;
+  color: #fff;
 }
+
 .history-btn:hover {
-  background-color: #0140b0;
+  background: #912fa5;
+}
+
+/* --- Booking Form Inside Modal --- */
+.booking-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.booking-form label {
+  font-weight: 500;
+  color: #6c1b85;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.booking-form input,
+.booking-form select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid #e2d9f3;
+  font-size: 0.95rem;
+  transition: all 0.25s ease;
+}
+
+.booking-form input:focus,
+.booking-form select:focus {
+  outline: none;
+  border-color: #6c1b85;
+  box-shadow: 0 0 8px rgba(108, 27, 133, 0.2);
+  background-color: #fff;
+}
+
+/* --- Fade Animation --- */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* --- Responsive --- */
+@media (max-width: 992px) {
+  .appointments-container {
+    padding: 1.5rem;
+  }
+  .modal-content {
+    width: 95%;
+  }
+  .rbc-toolbar {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .calendar-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .rbc-time-view,
+  .rbc-month-view,
+  .rbc-agenda-view {
+    font-size: 0.85rem;
+  }
+
+  .rbc-event {
+    font-size: 0.85rem;
+    padding: 4px 6px;
+  }
 }

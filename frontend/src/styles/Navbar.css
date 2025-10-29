@@ -1,86 +1,332 @@
-/* Navbar.css */
-.navbar {
-  background: linear-gradient(to right, #6a1b6f, #89288f);
-  color: white;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+/* ============================================
+   NAVBAR - IIT DHARWAD DOCTOR MODULE (POLISHED)
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 78px;
+  /* background: linear-gradient(to bottom, #6a1b6f 0%, #83298c 95%); */
+  background: purple;
+  border-bottom: 3px solid #ffad4a;
+  box-shadow: 0 3px 20px rgba(106, 27, 111, 0.25);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* ============================================
+   NAVBAR CONTENT
+   ============================================ */
 .navbar-content {
-  max-width: 1120px;
+  max-width: 1400px;
+  width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 4rem;
+  align-self:center;
+  height: 100%;
 }
+
+/* ============================================
+   LOGO + TITLE
+   ============================================ */
 .navbar-logo {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
+  /* background-color: white; */
+  height: 100%;
+  width: auto;
 }
-.navbar-logo-img {
-  height: 2.5rem;
-  width: 2.5rem;
+
+.login-logo {
+  height: 90%;
+  width: auto;
   object-fit: contain;
+  display: flex;
+  /* background-color: rgba(255, 255, 255, 0.6); */
+  /* border-radius: 1rem; */
+  align-items: center;
+  justify-content: center;
+  /* color: #fff; */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+
+.login-logo:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 173, 74, 0.4);
+}
+
 .navbar-title {
-  font-weight: 600;
-  font-size: 1.25rem;
-  user-select: none;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.8px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
 }
+
+/* ============================================
+   NAVIGATION BUTTONS
+   ============================================ */
 .navbar-links {
   display: flex;
-  gap: 1.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  flex: 1;
 }
+
 .navbar-btn {
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  transition: background 0.2s, color 0.2s;
   background: transparent;
-  color: white;
-  border: none;
+  border: 2px solid transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 0.6rem 1.4rem;
+  border-radius: 8px;
   cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
 }
-.navbar-btn.active {
-  background: #fff;
-  color: #000;
-}
+
 .navbar-btn:hover {
-  background: #6a1b6f;
+  color: #ffad4a;
+  border-color: #ffad4a;
+  transform: translateY(-2px);
 }
+
+.navbar-btn.active {
+  border-color: #ffad4a;
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.3);
+}
+
+/* ============================================
+   PROFILE BUTTON
+   ============================================ */
+.relative {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .profile-btn {
-  background: transparent;
-  border: none;
-  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  transition: all 0.3s ease;
 }
-.profile-icon {
-  font-size: 1.875rem;
-  cursor: pointer;
+
+.profile-btn:hover {
+  border-color: #ffad4a;
+  box-shadow: 0 0 18px rgba(255, 173, 74, 0.4);
+  transform: scale(1.08);
 }
+
+.profile-btn:active {
+  transform: scale(0.96);
+}
+
+/* ============================================
+   PROFILE DROPDOWN
+   ============================================ */
 .profile-menu {
   position: absolute;
+  top: 70px;
   right: 0;
-  margin-top: 0.5rem;
-  width: 10rem;
-  background: #f2f2f2;
-  color: #89288f;
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 0.5rem 0;
-  z-index: 20;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  min-width: 180px;
+  border: 2px solid #ffad4a;
+  animation: slideDown 0.25s ease-out;
+  overflow: hidden;
+  z-index: 1001;
 }
+
 .profile-menu-btn {
   width: 100%;
-  text-align: left;
-  padding: 0.5rem 1rem;
+  padding: 0.9rem 1.3rem;
   background: transparent;
   border: none;
-  transition: background 0.2s, color 0.2s;
+  text-align: left;
   cursor: pointer;
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 600;
+  border-bottom: 1px solid #eee;
+  transition: all 0.2s ease;
 }
+
 .profile-menu-btn:hover {
-  background: #89288f;
-  color: #fff;
+  background: rgba(255, 173, 74, 0.1);
+  color: #6a1b6f;
+  padding-left: 1.6rem;
+}
+
+
+/* ============================================
+   RESPONSIVENESS
+   ============================================ */
+@media (max-width: 992px) {
+  .navbar-title {
+    font-size: 1.3rem;
+  }
+
+  .login-logo {
+    height: 58px;
+  }
+
+  .profile-btn {
+    width: 50px;
+    height: 50px;
+    font-size: 1.4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-content {
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .navbar-links {
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  .login-logo {
+    height: 55px;
+  }
+
+  .profile-btn {
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+  }
+
+  .navbar-btn {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-title {
+    font-size: 1.1rem;
+  }
+
+  .login-logo {
+    height: 50px;
+  }
+
+  .profile-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .navbar-btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* ====== Hamburger Toggle (Responsive Addition) ====== */
+.hamburger-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.8rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.hamburger-btn:hover {
+  color: #ffad4a;
+}
+
+/* Show hamburger and hide links on small screens */
+@media (max-width: 768px) {
+  .hamburger-btn {
+    display: block;
+  }
+
+  .navbar-links {
+    display: none;
+    flex-direction: column;
+    background: purple;
+    width: 100%;
+    position: absolute;
+    top: 78px;
+    left: 0;
+    padding: 1rem 0;
+    border-bottom: 3px solid #ffad4a;
+  }
+
+  .navbar-links.show {
+    display: flex;
+  }
+}
+/* === Responsive fix: Profile inside hamburger === */
+@media (max-width: 768px) {
+  .navbar-links button .fa-user-md {
+    margin-right: 6px;
+  }
+
+  .navbar-links .navbar-btn {
+    width: 100%;
+    justify-content: flex-start;
+    padding-left: 2rem;
+  }
+
+  .navbar-links.show .navbar-btn {
+    border: none;
+    color: white;
+    background: transparent;
+  }
+
+  .navbar-links.show .navbar-btn:hover {
+    color: #ffad4a;
+    transform: translateX(5px);
+  }
 }
