@@ -858,7 +858,8 @@ router.get("/history", async (req, res) => {
   } catch (err) {
     console.error("Error fetching visit history:", err);
     res.status(500).json({ error: "Server error: " + err.message });
-
+  }
+},
 // GET /api/appointments/patient-history?query=neha
 async function verifyDoctorToken(token) {
   try {
@@ -869,7 +870,7 @@ async function verifyDoctorToken(token) {
     console.error("Token verification failed:", err.message);
     return null;
   }
-}
+},
 router.get("/patient-history", async (req, res) => {
   try {
     const { token, query } = req.query;
@@ -917,8 +918,6 @@ router.get("/patient-history", async (req, res) => {
     console.error("Error fetching patient history:", err);
     res.status(500).json({ error: "Server error" });
   }
-});
+}));
 
 module.exports = router;
-
-
