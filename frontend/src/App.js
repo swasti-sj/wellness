@@ -16,13 +16,14 @@ import AppointmentBooking from "./pages/patient/AppointmentBooking";
 import InitialProfile from "./pages/patient/InitialProfileForm";
 import ProfilePage from "./pages/patient/ProfilePage";
 import InitialDoctorProfile from "./pages/doctor/InitialDoctorProfileForm";
-import VisitHistory from "./pages/patient/VisitHistory";
 import DoctorNote from "./pages/doctor/DoctorNote";
 import DoctorReferral from "./pages/doctor/DoctorReferral";
+import PatientHistory from "./pages/doctor/PatientHistory";
 import DoctorDashboard from "./pages/doctor/DoctorDashboard";
 import DoctorProfilePage from "./pages/doctor/DoctorProfilePage";
 import DoctorAppointment from "./pages/doctor/DoctorAppointment";
 import DoctorNavbar from "./pages/doctor/DoctorNavbar";
+import VisitHistory from "./pages/patient/VisitHistory";
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
   console.log("🛠️ Rendering LayoutWithNavbar");
@@ -180,6 +181,10 @@ function App() {
           <Route
             path="doctor-profile"
             element={<DoctorProfilePage apiBaseUrl={apiBaseUrl} />}
+          />
+          <Route
+            path="history"
+            element={<PatientHistory apiBaseUrl={apiBaseUrl} />}
           />
         </Route>
         {/* Doctor onboarding without navbar */}

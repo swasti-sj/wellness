@@ -1,4 +1,8 @@
-v/* --- Global Reset & Base --- */
+/* ============================================
+   IIT DHARWAD MEDICAL PORTAL
+   DOCTOR PROFILE PAGE - POLISHED DESIGN
+   ============================================ */
+
 * {
   margin: 0;
   padding: 0;
@@ -7,50 +11,51 @@ v/* --- Global Reset & Base --- */
 
 body {
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #faf6ff, #fff8f3);
+  background-color: #f5f7fb;
   color: #333;
   line-height: 1.6;
 }
 
-.container {
+/* ============================================
+   MAIN WRAPPER
+   ============================================ */
+
+.profile-wrapper {
+  min-height: calc(100vh - 80px);
+  background: linear-gradient(135deg, #f6f9fc 0%, #ececf9 100%);
+  padding: 3rem 1rem;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
 }
 
-/* --- Profile Container --- */
+/* ============================================
+   PROFILE CARD (SPLIT BOX)
+   ============================================ */
+
 .profile-container {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  max-width: 950px;
   width: 100%;
-  max-width: 420px;
-  background: linear-gradient(135deg, #6a1b6f 0%, #89288f 100%);
-  color: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(106, 27, 111, 0.25);
-  padding: 2.5rem 2rem;
-  text-align: center;
-  animation: fadeIn 0.5s ease-in-out;
-  position: relative;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(58, 42, 120, 0.1);
+  border: 1px solid #e4e4ef;
   overflow: hidden;
+  animation: fadeIn 0.5s ease-in-out;
+  transition: all 0.3s ease;
 }
 
-/* --- Soft Glow Overlay --- */
-.profile-container::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 173, 74, 0.2),
-    transparent 60%
-  );
-  pointer-events: none;
+.profile-container:hover {
+  box-shadow: 0 10px 32px rgba(106, 27, 111, 0.15);
 }
 
-/* --- Fade Animation --- */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(15px);
   }
   to {
     opacity: 1;
@@ -58,102 +63,463 @@ body {
   }
 }
 
-/* --- Header --- */
-.profile-container h2 {
-  font-size: 1.8rem;
-  font-weight: 700;
-  margin-bottom: 1.8rem;
-  letter-spacing: 0.5px;
+/* ============================================
+   LEFT PANEL (DOCTOR INFO)
+   ============================================ */
+
+.profile-left {
+  flex: 1;
+  min-width: 320px;
+  background: linear-gradient(160deg, #6a1b9a 0%, #8a2be2 70%, #9c27b0 100%);
   color: #fff;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   position: relative;
 }
 
-.profile-container h2::after {
+.profile-left::after {
   content: "";
-  display: block;
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #ffad4a, #fff);
-  margin: 0.6rem auto 0;
-  border-radius: 2px;
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  pointer-events: none;
 }
 
-/* --- Profile Picture --- */
+.profile-left h2 {
+  font-size: 1.9rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  letter-spacing: 0.6px;
+  color: #fff;
+}
+
 .profile-picture {
   width: 130px;
   height: 130px;
   border-radius: 50%;
   object-fit: cover;
+  margin: 0 auto 1.5rem;
   border: 4px solid #fff;
-  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
-  margin-bottom: 1.5rem;
-  transition: transform 0.3s ease;
+  box-shadow: 0 6px 14px rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .profile-picture:hover {
-  transform: scale(1.06);
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(255, 255, 255, 0.3);
 }
 
-/* --- Profile Details --- */
-.profile-container p {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 0.9rem 1rem;
+.profile-left p {
+  font-size: 0.95rem;
   margin: 0.6rem 0;
   text-align: left;
-  font-size: 0.95rem;
-  color: #f3e9f3;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #fefefe;
+  backdrop-filter: blur(4px);
+  transition: background 0.3s ease;
 }
 
-.profile-container p:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-2px);
+.profile-left p:hover {
+  background: rgba(255, 255, 255, 0.25);
 }
 
-.profile-container strong {
-  display: inline-block;
-  min-width: 110px;
-  color: #ffad4a;
+.profile-left p strong {
+  color: #ffdf8e;
   font-weight: 600;
+  display: inline-block;
+  min-width: 120px;
 }
 
-/* --- Sign Out Button --- */
+/* ============================================
+   RIGHT PANEL (AVAILABILITY)
+   ============================================ */
+
+.profile-right {
+  flex: 1.5;
+  min-width: 350px;
+  padding: 2.5rem;
+  background: linear-gradient(180deg, #ffffff 0%, #f9f9ff 100%);
+}
+
+.profile-right h4 {
+  color: #5e207b;
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  border-bottom: 3px solid #ffb84a;
+  display: inline-block;
+  padding-bottom: 0.4rem;
+  letter-spacing: 0.4px;
+}
+
+.slot-day {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  background: #fdfdfd;
+  border-left: 5px solid #8a2be2;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 3px 10px rgba(138, 43, 226, 0.06);
+  transition: all 0.3s ease;
+}
+
+.slot-day:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(138, 43, 226, 0.1);
+}
+
+.slot-day strong {
+  color: #6a1b9a;
+  font-weight: 600;
+  min-width: 100px;
+}
+
+.slot-day span {
+  flex: 1;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+.weekly-slots > p {
+  color: #777;
+  font-style: italic;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+/* ============================================
+   SIGN OUT BUTTON (ENHANCED)
+   ============================================ */
+
 .signout-btn {
   width: 100%;
   margin-top: 2rem;
   padding: 0.9rem;
+  background: linear-gradient(135deg, #ffb84a 0%, #ff9800 100%);
+  color: #fff;
   border: none;
   border-radius: 10px;
   font-size: 1rem;
   font-weight: 600;
-  letter-spacing: 0.4px;
   cursor: pointer;
-  background: linear-gradient(135deg, #ffad4a 0%, #89288f 100%);
-  color: #fff;
-  box-shadow: 0 4px 15px rgba(255, 173, 74, 0.25);
+  letter-spacing: 0.5px;
+  box-shadow: 0 5px 14px rgba(255, 152, 0, 0.3);
   transition: all 0.3s ease;
 }
 
 .signout-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
-  background: linear-gradient(135deg, #89288f 0%, #ffad4a 100%);
+  box-shadow: 0 7px 18px rgba(255, 152, 0, 0.4);
+  background: linear-gradient(135deg, #ffc670 0%, #ff9800 100%);
 }
 
-/* --- Responsive --- */
-@media (max-width: 480px) {
+.signout-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 900px) {
   .profile-container {
+    flex-direction: column;
+  }
+
+  .profile-left,
+  .profile-right {
+    width: 100%;
     padding: 2rem 1.5rem;
   }
 
-  .profile-container h2 {
+  .profile-left {
+    border-radius: 16px 16px 0 0;
+  }
+
+  .profile-right {
+    border-radius: 0 0 16px 16px;
+  }
+
+  .profile-left p {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-left h2 {
     font-size: 1.5rem;
   }
 
-  .profile-container p {
+  .profile-right h4 {
+    font-size: 1.1rem;
+  }
+
+  .slot-day {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .slot-day strong {
     font-size: 0.9rem;
   }
+
+  .slot-day span {
+    font-size: 0.85rem;
+    /* ============================================
+   ENHANCED FORM + BUTTON STYLES
+   ============================================ */
+
+    .profile-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .profile-field {
+      display: flex;
+      flex-direction: column;
+      text-align: left;
+    }
+
+    .profile-field label {
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      color: #ffdf8e;
+    }
+
+    .profile-field input {
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 0.8rem;
+      font-size: 0.95rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      outline: none;
+      color: #333;
+    }
+
+    .profile-field input:focus {
+      border: 2px solid #ffb84a;
+      background: #fff;
+    }
+
+    /* Buttons */
+    .profile-buttons {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .edit-btn,
+    .save-btn {
+      width: 100%;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      color: #fff;
+    }
+
+    .edit-btn {
+      background: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
+      box-shadow: 0 5px 14px rgba(106, 27, 154, 0.3);
+    }
+
+    .edit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 18px rgba(106, 27, 154, 0.4);
+    }
+
+    .save-btn {
+      background: linear-gradient(135deg, #4caf50 0%, #388e3c 100%);
+      box-shadow: 0 5px 14px rgba(56, 142, 60, 0.3);
+    }
+
+    .save-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 7px 18px rgba(56, 142, 60, 0.4);
+    }
+
+    /* Time + Select styling in right panel */
+    .time-input,
+    .status-select {
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      padding: 0.3rem 0.5rem;
+      font-size: 0.9rem;
+      margin-right: 5px;
+    }
+
+    .add-slot-btn {
+      background: linear-gradient(135deg, #8a2be2 0%, #9c27b0 100%);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .add-slot-btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #9c27b0 0%, #8a2be2 100%);
+    }
+  }
+}
+/* ============================================
+   EDIT MODE (Input & Select Styling)
+   ============================================ */
+
+.profile-field input,
+.profile-field select,
+.time-input,
+.status-select {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.95rem;
+  border: 1.5px solid #d3b7ff;
+  border-radius: 8px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #4a006d;
+  transition: all 0.3s ease;
+  box-shadow: inset 0 1px 3px rgba(138, 43, 226, 0.08);
+}
+
+.profile-field input:focus,
+.profile-field select:focus,
+.time-input:focus,
+.status-select:focus {
+  border-color: #8a2be2;
+  box-shadow: 0 0 6px rgba(138, 43, 226, 0.2);
+  background: #fff;
+}
+
+/* Keep spacing consistent */
+.profile-field {
+  margin-bottom: 1rem;
+}
+
+.profile-field label {
+  display: block;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 0.4rem;
+}
+
+/* ============================================
+   TIME INPUTS & SLOT SELECTS IN RIGHT PANEL
+   ============================================ */
+
+.time-input,
+.status-select {
+  margin-right: 0.6rem;
+  min-width: 120px;
+}
+
+.add-slot-btn {
+  background: linear-gradient(135deg, #8a2be2 0%, #6a1b9a 100%);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(138, 43, 226, 0.2);
+  transition: all 0.3s ease;
+}
+
+.add-slot-btn:hover {
+  background: linear-gradient(135deg, #9b45e8 0%, #7a1dc1 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(138, 43, 226, 0.25);
+}
+
+/* ============================================
+   EDIT / SAVE BUTTON CONSISTENCY
+   ============================================ */
+
+.edit-btn,
+.save-btn {
+  width: 100%;
+  margin-top: 1.2rem;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.3s ease;
+}
+
+.edit-btn {
+  background: linear-gradient(135deg, #8a2be2 0%, #6a1b9a 100%);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(138, 43, 226, 0.3);
+}
+
+.edit-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #9c3bee 0%, #7a1dc1 100%);
+  box-shadow: 0 7px 18px rgba(138, 43, 226, 0.4);
+}
+
+.save-btn {
+  background: linear-gradient(135deg, #43c38f 0%, #2ea86a 100%);
+  color: #fff;
+  box-shadow: 0 5px 14px rgba(46, 168, 106, 0.3);
+}
+
+.save-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #51d69b 0%, #26a165 100%);
+  box-shadow: 0 7px 18px rgba(46, 168, 106, 0.4);
+}
+
+/* ============================================
+   DISABLED STATE FOR SAVE
+   ============================================ */
+
+.save-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   POLISH INPUTS INSIDE PURPLE LEFT PANEL
+   ============================================ */
+
+.profile-left input {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  box-shadow: none;
+}
+
+.profile-left input:focus {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: #ffdf8e;
+  color: #fff;
+  box-shadow: 0 0 6px rgba(255, 223, 142, 0.4);
 }

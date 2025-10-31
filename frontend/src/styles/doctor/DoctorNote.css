@@ -1,63 +1,453 @@
-/* Notes Section */
+/* ============================================
+   DOCTOR_NOTE.CSS - IIT DHARWAD MEDICAL PORTAL
+   Clinical Notes Section Styling
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #ede9f6 100%);
+  color: #333;
+}
+
+/* ============================================
+   DOCTOR NOTES CONTAINER
+   ============================================ */
+
 .doctor-notes {
-  border-top: 2px solid #e0e0e0;
-  margin-top: 15px;
-  padding: 15px;
-  background: #fafafa;
-  border-radius: 6px;
-}
-
-.doctor-notes h4 {
-  margin-bottom: 10px;
-  color: #651d69;
-  font-size: 1.1rem;
-}
-
-.note-item {
+  max-width: 900px;
+  margin: 2rem auto;
   background: #fff;
-  border: 1px solid #ddd;
-  padding: 12px;
-  border-radius: 6px;
-  margin-bottom: 10px;
-  transition: box-shadow 0.2s ease-in-out;
+  border-radius: 14px;
+  padding: 2.5rem;
+  box-shadow: 0 6px 24px rgba(106, 27, 111, 0.12);
+  border-left: 5px solid #6a1b6f;
+  animation: slideUp 0.5s ease-out;
 }
 
-.note-item:hover {
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.note-item small {
-  display: block;
-  margin-top: 5px;
-  font-size: 0.8rem;
-  color: #888;
+/* ============================================
+   SECTION HEADING
+   ============================================ */
+
+.doctor-notes h3 {
+  color: #6a1b6f;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  letter-spacing: 0.6px;
+  font-weight: 700;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #ffad4a;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.add-note-form {
-  margin-top: 12px;
+.doctor-notes h3::before {
+  content: '📋';
+  font-size: 1.6rem;
+}
+
+/* ============================================
+   NOTE FORM
+   ============================================ */
+
+.note-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+/* 
+.note-form:hover {
+  border-color: #ffad4a;
+  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.1);
+} */
+
+.note-form:focus-within {
+  border-color: #6a1b6f;
+  box-shadow: 0 4px 16px rgba(106, 27, 111, 0.15);
 }
 
-.add-note-form textarea {
-  padding: 10px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-  min-height: 60px;
+/* ============================================
+   TEXTAREA STYLING
+   ============================================ */
+
+.note-form textarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 1.2rem;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 0.95rem;
   resize: vertical;
+  transition: all 0.3s ease;
+  color: #333;
+  background: #fff;
+  line-height: 1.6;
 }
 
-.add-note-form button {
-  background-color: #89288f;
-  border: none;
-  padding: 8px 14px;
-  color: #fff;
-  border-radius: 5px;
-  cursor: pointer;
+.note-form textarea:focus {
+  outline: none;
+  border-color: #6a1b6f;
+  box-shadow: 0 0 0 3px rgba(106, 27, 111, 0.1);
+  background: #fff;
+}
+
+.note-form textarea:hover {
+  border-color: #89288f;
+}
+
+.note-form textarea::placeholder {
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.note-form button[type="submit"] {
   align-self: flex-start;
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #ffad4a 0%, #ff9800 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.25);
+  text-transform: uppercase;
 }
 
-.add-note-form button:hover {
-  background-color: #89288f;
+.note-form button[type="submit"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
+}
+
+.note-form button[type="submit"]:active {
+  transform: translateY(0);
+}
+
+.note-form button[type="submit"]:focus-visible {
+  outline: 2px solid #6a1b6f;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   NOTES LIST CONTAINER
+   ============================================ */
+
+.notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  animation: fadeIn 0.4s ease-out 0.2s backwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.notes-list > p {
+  color: #999;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  font-style: italic;
+  font-size: 1rem;
+  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+  border-radius: 12px;
+  border: 2px dashed #ddd;
+}
+
+/* ============================================
+   INDIVIDUAL NOTE CARD
+   ============================================ */
+
+.note-card {
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #89288f;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  animation: noteSlideIn 0.4s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+@keyframes noteSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.note-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(135deg, #6a1b6f 0%, #ffad4a 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.note-card:hover {
+  box-shadow: 0 6px 20px rgba(106, 27, 111, 0.15);
+  transform: translateX(4px);
+  background: linear-gradient(135deg, #fff 0%, #fafafa 100%);
+}
+
+.note-card:hover::before {
+  opacity: 1;
+}
+
+/* ============================================
+   NOTE TEXT & TIMESTAMP
+   ============================================ */
+
+.note-card p {
+  color: #333;
+  font-size: 0.95rem;
+  margin-bottom: 1rem;
+  line-height: 1.7;
+  word-wrap: break-word;
+  font-weight: 500;
+}
+
+.note-card small {
+  color: #999;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.note-card small::before {
+  content: '⏰';
+  font-size: 0.85rem;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TABLET
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .doctor-notes {
+    margin: 1.5rem;
+    padding: 2rem;
+  }
+
+  .doctor-notes h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .note-form {
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .note-form textarea {
+    min-height: 120px;
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+
+  .note-form button[type="submit"] {
+    padding: 0.75rem 1.75rem;
+    font-size: 0.9rem;
+  }
+
+  .note-card {
+    padding: 1.25rem;
+  }
+
+  .note-card p {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .note-card small {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-notes {
+    max-width: 100%;
+    margin: 1.25rem 0.75rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .doctor-notes h3 {
+    font-size: 1.3rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .note-form {
+    padding: 1.25rem;
+    gap: 0.9rem;
+  }
+
+  .note-form textarea {
+    min-height: 110px;
+    padding: 0.9rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+
+  .note-form button[type="submit"] {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.85rem;
+    align-self: center;
+    width: 100%;
+  }
+
+  .note-card {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .note-card p {
+    font-size: 0.85rem;
+    margin-bottom: 0.6rem;
+    line-height: 1.6;
+  }
+
+  .note-card small {
+    font-size: 0.75rem;
+  }
+
+  .notes-list > p {
+    padding: 2rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-notes {
+    margin: 1rem 0;
+    padding: 1.25rem;
+    border-radius: 10px;
+  }
+
+  .doctor-notes h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .doctor-notes h3::before {
+    font-size: 1.2rem;
+  }
+
+  .note-form {
+    padding: 1rem;
+    gap: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .note-form textarea {
+    min-height: 100px;
+    padding: 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 8px;
+  }
+
+  .note-form textarea::placeholder {
+    font-size: 0.8rem;
+  }
+
+  .note-form button[type="submit"] {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.8rem;
+    width: 100%;
+    border-radius: 8px;
+  }
+
+  .note-card {
+    padding: 0.9rem;
+    border-radius: 8px;
+    border-left-width: 3px;
+  }
+
+  .note-card p {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .note-card small {
+    font-size: 0.7rem;
+    gap: 0.3rem;
+  }
+
+  .notes-list > p {
+    padding: 1.5rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================ */
+
+.note-form textarea:focus-visible,
+.note-form button:focus-visible {
+  outline: 2px solid #ffad4a;
+  outline-offset: 2px;
+}
+
+.note-card:focus-visible {
+  outline: 2px solid #6a1b6f;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doctor-notes,
+  .note-form,
+  .note-card,
+  .notes-list {
+    animation: none;
+    transition: none;
+  }
 }

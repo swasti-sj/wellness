@@ -1,50 +1,527 @@
-/* InitialProfileForm.css */
-form {
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 1.5rem;
-  background: #f9f9f9;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-  font-family: Arial, sans-serif;
+/* ============================================
+   PROFILE_FORM.CSS - IIT DHARWAD MEDICAL PORTAL
+   Initial Doctor Profile Form Styling
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-label {
-  display: block;
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #ede9f6 100%);
+  color: #333;
+  line-height: 1.6;
+}
+
+/* ============================================
+   FORM WRAPPER
+   ============================================ */
+
+.profile-form {
+  max-width: 800px;
+  margin: 2.5rem auto;
+  background: #fff;
+  padding: 3rem;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(106, 27, 111, 0.15);
+  border-left: 6px solid #6a1b6f;
+  border-top: 3px solid #ffad4a;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   SECTION HEADINGS
+   ============================================ */
+
+.profile-form h3 {
+  color: #6a1b6f;
+  font-size: 1.4rem;
+  margin: 2.5rem 0 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #ffad4a;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-form h3:first-of-type {
+  margin-top: 0;
+}
+
+.profile-form h3::before {
+  content: '⏰';
+  font-size: 1.3rem;
+}
+
+.profile-form > div > strong {
+  color: #6a1b6f;
   margin-bottom: 1rem;
-  color: #012970; /* your preferred blue */
-  font-weight: 600;
-}
-
-input, select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  margin-top: 0.25rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
+  display: block;
   font-size: 1rem;
-  transition: border-color 0.2s ease;
+  letter-spacing: 0.3px;
+  font-weight: 700;
 }
 
-input:focus, select:focus {
+/* ============================================
+   FORM LABELS & INPUTS
+   ============================================ */
+
+.profile-form label {
+  display: block;
+  margin-bottom: 1.75rem;
+  font-weight: 600;
+  color: #333;
+  font-size: 0.95rem;
+  letter-spacing: 0.3px;
+}
+
+.profile-form label input {
+  display: block;
+  width: 100%;
+  padding: 0.9rem 1.1rem;
+  margin-top: 0.6rem;
+  border: 2px solid #ddd;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  color: #333;
+}
+
+.profile-form label input:hover {
+  border-color: #89288f;
+  background: #fff;
+}
+
+.profile-form label input:focus {
   outline: none;
-  border-color: #28a745; /* green highlight */
-  box-shadow: 0 0 5px rgba(40,167,69,0.3);
+  border-color: #6a1b6f;
+  box-shadow: 0 0 0 4px rgba(106, 27, 111, 0.1);
+  background: #fff;
 }
 
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: #012970; /* your blue */
-  color: white;
+.profile-form label input::placeholder {
+  color: #bbb;
+  font-weight: 500;
+}
+
+/* ============================================
+   WEEKLY SLOTS SECTION
+   ============================================ */
+
+.profile-form > div {
+  margin: 2rem 0;
+}
+
+.profile-form div > div {
+  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #ffad4a;
+  border-top: 2px solid #89288f;
+  transition: all 0.3s ease;
+  animation: slideIn 0.4s ease-out backwards;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.profile-form div > div:nth-child(2) { animation-delay: 0.1s; }
+.profile-form div > div:nth-child(3) { animation-delay: 0.2s; }
+.profile-form div > div:nth-child(4) { animation-delay: 0.3s; }
+.profile-form div > div:nth-child(5) { animation-delay: 0.4s; }
+.profile-form div > div:nth-child(6) { animation-delay: 0.5s; }
+.profile-form div > div:nth-child(7) { animation-delay: 0.6s; }
+.profile-form div > div:nth-child(8) { animation-delay: 0.7s; }
+
+.profile-form div > div:hover {
+  box-shadow: 0 4px 12px rgba(106, 27, 111, 0.1);
+  transform: translateX(2px);
+}
+
+.profile-form div > div strong {
+  color: #6a1b6f;
+  display: block;
+  margin-bottom: 0.9rem;
   font-size: 1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background 0.2s ease;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
-button:hover {
-  background: #0141a3;
+.profile-form div span {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 0.9rem;
+}
+
+/* ============================================
+   TIME INPUT STYLING
+   ============================================ */
+
+.profile-form input[type="time"] {
+  padding: 0.6rem 0.85rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+  cursor: pointer;
+  color: #333;
+  font-weight: 500;
+}
+
+.profile-form input[type="time"]:hover {
+  border-color: #89288f;
+  box-shadow: 0 2px 6px rgba(137, 40, 143, 0.1);
+}
+
+.profile-form input[type="time"]:focus {
+  outline: none;
+  border-color: #6a1b6f;
+  box-shadow: 0 0 0 3px rgba(106, 27, 111, 0.1);
+}
+
+/* ============================================
+   SELECT DROPDOWN STYLING
+   ============================================ */
+
+.profile-form select {
+  padding: 0.6rem 0.85rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: #fff;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 500;
+}
+
+.profile-form select:hover {
+  border-color: #89288f;
+  box-shadow: 0 2px 6px rgba(137, 40, 143, 0.1);
+}
+
+.profile-form select:focus {
+  outline: none;
+  border-color: #6a1b6f;
+  box-shadow: 0 0 0 3px rgba(106, 27, 111, 0.1);
+}
+
+.profile-form select option {
+  padding: 0.5rem;
+  color: #333;
+  background: #fff;
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+
+.profile-form button[type="button"] {
+  background: linear-gradient(135deg, #89288f 0%, #6a1b6f 100%);
+  color: #fff;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  margin-left: 0.75rem;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 3px 10px rgba(106, 27, 111, 0.15);
+}
+
+.profile-form button[type="button"]:hover {
+  background: linear-gradient(135deg, #6a1b6f 0%, #4a0f50 100%);
+  box-shadow: 0 5px 14px rgba(106, 27, 111, 0.25);
+  transform: translateY(-2px);
+}
+
+.profile-form button[type="button"]:active {
+  transform: translateY(0);
+}
+
+.profile-form button[type="button"]:focus-visible {
+  outline: 2px solid #ffad4a;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.profile-form button[type="submit"] {
+  width: 100%;
+  padding: 1rem;
+  margin-top: 2.5rem;
+  background: linear-gradient(135deg, #6a1b6f 0%, #89288f 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.6px;
+  box-shadow: 0 6px 20px rgba(106, 27, 111, 0.2);
+  text-transform: uppercase;
+}
+
+.profile-form button[type="submit"]:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(106, 27, 111, 0.3);
+}
+
+.profile-form button[type="submit"]:active {
+  transform: translateY(-1px);
+}
+
+.profile-form button[type="submit"]:focus-visible {
+  outline: 2px solid #ffad4a;
+  outline-offset: 3px;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN - TABLET
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .profile-form {
+    max-width: 100%;
+    margin: 2rem 1.5rem;
+    padding: 2.5rem;
+  }
+
+  .profile-form h3 {
+    font-size: 1.2rem;
+    margin: 2rem 0 1.2rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .profile-form label {
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-form label input {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-form div > div {
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .profile-form input[type="time"],
+  .profile-form select {
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+  }
+
+  .profile-form button[type="button"] {
+    padding: 0.55rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .profile-form button[type="submit"] {
+    padding: 0.9rem;
+    font-size: 1rem;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-form {
+    margin: 1.5rem 0.75rem;
+    padding: 1.75rem;
+    border-radius: 12px;
+  }
+
+  .profile-form h3 {
+    font-size: 1.1rem;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.6rem;
+  }
+
+  .profile-form h3::before {
+    font-size: 1.1rem;
+  }
+
+  .profile-form label {
+    margin-bottom: 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-form label input {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.9rem;
+    border-radius: 8px;
+  }
+
+  .profile-form div > div {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 10px;
+  }
+
+  .profile-form div > div strong {
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .profile-form div span {
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .profile-form input[type="time"],
+  .profile-form select {
+    width: 100%;
+    padding: 0.65rem;
+    font-size: 0.9rem;
+  }
+
+  .profile-form button[type="button"] {
+    width: 100%;
+    padding: 0.65rem;
+    margin-left: 0;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+  }
+
+  .profile-form button[type="submit"] {
+    padding: 0.85rem;
+    font-size: 0.95rem;
+    margin-top: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-form {
+    margin: 1rem 0;
+    padding: 1.25rem;
+    border-radius: 10px;
+    border-left-width: 4px;
+  }
+
+  .profile-form h3 {
+    font-size: 1rem;
+    margin: 1.25rem 0 0.85rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .profile-form h3::before {
+    font-size: 1rem;
+  }
+
+  .profile-form label {
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+  }
+
+  .profile-form label input {
+    padding: 0.7rem 0.8rem;
+    font-size: 0.85rem;
+    border-radius: 6px;
+  }
+
+  .profile-form > div > strong {
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .profile-form div > div {
+    padding: 0.85rem;
+    margin-bottom: 0.85rem;
+    border-radius: 8px;
+    border-left-width: 3px;
+  }
+
+  .profile-form div > div strong {
+    font-size: 0.85rem;
+    margin-bottom: 0.65rem;
+  }
+
+  .profile-form div span {
+    gap: 0.5rem;
+  }
+
+  .profile-form input[type="time"],
+  .profile-form select {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+
+  .profile-form button[type="button"] {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.75rem;
+  }
+
+  .profile-form button[type="submit"] {
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    margin-top: 1.25rem;
+    border-radius: 10px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY & FOCUS STATES
+   ============================================ */
+
+.profile-form label input:focus-visible,
+.profile-form input[type="time"]:focus-visible,
+.profile-form select:focus-visible {
+  outline: 2px solid #ffad4a;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .profile-form,
+  .profile-form div > div,
+  .profile-form button {
+    animation: none;
+    transition: none;
+  }
 }

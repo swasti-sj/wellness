@@ -1,0 +1,260 @@
+/* ===============================
+   Patient History Page (Clean & Gold-Purple Theme)
+   No Blue — Just Purple, Gold & Neutral Shades
+================================= */
+:root {
+  --primary: #5b2e91;   /* Deep royal purple */
+  --accent: #d4af37;    /* Ari Gold */
+  --bg-light: #f9f7fb;  /* Subtle lavender-white background */
+  --card-bg: #ffffff;
+  --text: #2d2d2d;
+  --text-light: #676767;
+  --border: #e6e0ee;
+}
+
+/* --- Page Container --- */
+.appointment-container {
+  max-width: 1100px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: var(--bg-light);
+  border-radius: 16px;
+  font-family: "Inter", "Roboto", sans-serif;
+}
+
+/* --- Page Title --- */
+.appointment-title {
+  text-align: center;
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.9rem;
+  margin-bottom: 1.8rem;
+  letter-spacing: 0.5px;
+}
+
+/* --- Search Section --- */
+.appointment-form {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.appointment-select {
+  flex: 1;
+  min-width: 260px;
+  padding: 0.75rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 1rem;
+  color: var(--text);
+  transition: all 0.3s ease;
+}
+
+.appointment-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 5px rgba(212, 175, 55, 0.3);
+  outline: none;
+}
+
+.appointment-btn {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.appointment-btn:hover {
+  background: #6d40a4;
+}
+
+/* --- Error Text --- */
+.error-text {
+  color: #b53333;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* --- Patient Info Card --- */
+.patient-summary {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 2px 8px rgba(91, 46, 145, 0.05);
+}
+
+.patient-summary h3 {
+  color: var(--primary);
+  font-size: 1.3rem;
+  margin-bottom: 0.5rem;
+}
+
+.patient-summary p {
+  color: var(--text-light);
+  margin: 0.3rem 0;
+}
+
+/* --- Referral Section --- */
+.referral-section {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(91, 46, 145, 0.05);
+  margin-bottom: 2rem;
+}
+
+.referral-section h4 {
+  color: var(--primary);
+  font-size: 1.1rem;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+}
+
+.referral-section select,
+.referral-section textarea {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+  transition: 0.2s ease;
+  background: #fff;
+  color: var(--text);
+}
+
+.referral-section select:focus,
+.referral-section textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.primary-btn:hover {
+  background: #c09e32;
+}
+
+/* --- Appointment Cards --- */
+.appointment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.appointment-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(91, 46, 145, 0.05);
+  transition: 0.3s;
+}
+
+.appointment-card:hover {
+  box-shadow: 0 4px 12px rgba(91, 46, 145, 0.08);
+}
+
+.appointment-summary {
+  cursor: pointer;
+}
+
+.appointment-summary h4 {
+  color: var(--primary);
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.appointment-summary p {
+  color: var(--text-light);
+  font-size: 0.95rem;
+}
+
+.expand-hint {
+  text-align: right;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* --- Expanded Details --- */
+.expanded-details {
+  border-top: 1px solid var(--border);
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.medications-section h5 {
+  color: var(--primary);
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.medication-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.medication-item label {
+  color: var(--text);
+}
+
+.no-data {
+  color: var(--text-light);
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+.expand-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.expand-columns > * {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* --- Responsiveness --- */
+@media (max-width: 768px) {
+  .appointment-container {
+    padding: 1.5rem;
+  }
+
+  .appointment-form {
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+
+  .appointment-btn {
+    width: 100%;
+  }
+
+  .patient-summary,
+  .referral-section {
+    padding: 1rem;
+  }
+}

@@ -11,11 +11,11 @@ const daysOfWeek = [
 function emptyWeeklySlots() {
   return daysOfWeek.map(day => ({
     day,
-    times: [{ time: '', status: 'available' }]
+    times: [{ time: '', status: 'available' }] // Default status is 'available'
   }));
 }
 
-function InitialDoctorProfileForm({apiBaseUrl}) {
+function InitialDoctorProfileForm({ apiBaseUrl }) {
   const [form, setForm] = useState({
     name: '',
     specialization: '',
@@ -48,7 +48,7 @@ function InitialDoctorProfileForm({apiBaseUrl}) {
       if (idx !== dayIndex) return slot;
       return {
         ...slot,
-        times: [...slot.times, { time: '', status: 'available' }],
+        times: [...slot.times, { time: '', status: 'available' }], // New slots are also 'available'
       };
     });
     setForm({ ...form, weeklySlots: updatedSlots });
@@ -56,14 +56,24 @@ function InitialDoctorProfileForm({apiBaseUrl}) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Create a deep copy of the form data to process before submitting
+    const processedForm = JSON.parse(JSON.stringify(form));
+
+    // Filter out any time slots that are empty
+    processedForm.weeklySlots = processedForm.weeklySlots.map(daySlot => ({
+      ...daySlot,
+      times: daySlot.times.filter(timeSlot => timeSlot.time.trim() !== '')
+    }));
+
     try {
-      await axios.post(`${apiBaseUrl}/doctors/profile`, form, {
+      await axios.post(`${apiBaseUrl}/doctors/profile`, processedForm, { // Send the processed form
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
       alert('Profile saved');
-      navigate('/docdashboard', { replace: true });
+      navigate('/docdashboard');
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
@@ -96,21 +106,9 @@ function InitialDoctorProfileForm({apiBaseUrl}) {
                   value={t.time}
                   onChange={e => handleSlotChange(dayIdx, timeIdx, 'time', e.target.value)}
                   style={{ marginRight: 5 }}
-                  required
+                  // The 'required' attribute has been removed
                 />
-                <select
-                  value={t.status}
-                  onChange={e => handleSlotChange(dayIdx, timeIdx, 'status', e.target.value)}
-                  style={{ marginRight: 5 }}
-                >
-                  <option value="available">Available</option>
-                  <option value="booked">Booked</option>
-                  <option value="attended">Attended</option>
-                  <option value="no show">No Show</option>
-                  <option value="cancelled by user">Cancelled by User</option>
-                  <option value="cancelled by doctor">Cancelled by Doctor</option>
-                  <option value="walk in">Walk In</option>
-                </select>
+                {/* The status select dropdown has been removed */}
               </span>
             ))}
             <button type="button" onClick={() => addTimeSlot(dayIdx)}>+ Add Time</button>

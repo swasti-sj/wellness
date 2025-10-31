@@ -5,6 +5,8 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const Doctor = require("../models/Doctor");
 const Appointment = require('../models/Appointment');
+const Note = require("../models/Note");
+const Prescription = require("../models/Prescription");
 const mongoose = require("mongoose");
 
 // ===============================
@@ -856,6 +858,64 @@ router.get("/history", async (req, res) => {
   } catch (err) {
     console.error("Error fetching visit history:", err);
     res.status(500).json({ error: "Server error: " + err.message });
+
+// GET /api/appointments/patient-history?query=neha
+async function verifyDoctorToken(token) {
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const doctor = await Doctor.findById(decoded.id);
+    return doctor;
+  } catch (err) {
+    console.error("Token verification failed:", err.message);
+    return null;
+  }
+}
+router.get("/patient-history", async (req, res) => {
+  try {
+    const { token, query } = req.query;
+    if (!token) return res.status(400).json({ error: "Token missing" });
+
+    const doctor = await verifyDoctorToken(token);
+    if (!doctor) return res.status(401).json({ error: "Invalid or expired token" });
+
+    const regex = query ? new RegExp(query, "i") : /.*/; // match all if no query provided
+
+    // Step 1: Find appointments for this doctor where user matches query
+    const appointments = await Appointment.find({ doctor: doctor._id })
+      .populate({
+        path: "user",
+        match: {
+          $or: [
+            { name: regex },
+            { roll: regex },
+            { email: regex } 
+          ],
+        },
+      })
+      .populate("doctor")
+      .sort({ startDateTime: -1 });
+
+    // Filter out appointments where user didn’t match
+    const filtered = appointments.filter(a => a.user);
+
+    // Step 2: Attach notes and prescriptions
+    const result = await Promise.all(
+      filtered.map(async (a) => {
+        const notes = await Note.find({ appointment: a._id });
+        const prescriptions = await Prescription.find({ appointment: a._id });
+
+        return {
+          ...a.toObject(),
+          notes: notes.map(n => n.text),
+          prescriptions: prescriptions.map(p => p.prescriptions || ""),
+        };
+      })
+    );
+
+    res.json({ appointments: result });
+  } catch (err) {
+    console.error("Error fetching patient history:", err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 

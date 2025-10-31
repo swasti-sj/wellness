@@ -1,46 +1,32 @@
-.doctor-dashboard {
-  display: flex;
+/* ---------- DOCTOR DASHBOARD ---------- */
+.page-wrapper {
+  background: linear-gradient(180deg, #fffef7, #fffaf0);
   min-height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
+  padding-top: 5rem;
 }
 
-.sidebar {
-  width: 220px;
-  background: #012970;
-  color: #fff;
-  padding: 20px;
+.doctor-dashboard-content {
+  max-width: 900px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: var(--soft-shadow);
+  text-align: center;
+  animation: fadeIn 0.6s ease;
 }
 
-.sidebar-title {
-  font-size: 1.2rem;
-  margin-bottom: 20px;
-  font-weight: bold;
+.doctor-dashboard-content h2 {
+  color: var(--purple);
+  margin-bottom: 1rem;
 }
 
-.sidebar-menu {
-  list-style: none;
-  padding: 0;
+.doctor-dashboard-content p {
+  color: #555;
+  font-size: 1.1rem;
 }
 
-.sidebar-menu li {
-  margin-bottom: 12px;
-}
-
-.sidebar-menu a {
-  text-decoration: none;
-  color: #d1d1d1;
-  transition: 0.2s;
-}
-
-.sidebar-menu a:hover,
-.sidebar-menu a.active {
-  color: #fff;
-  font-weight: bold;
-}
-
-.dashboard-content {
-  flex: 1;
-  padding: 25px;
-  background: #f9f9f9;
-  overflow-y: auto;
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

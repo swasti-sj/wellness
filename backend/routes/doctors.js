@@ -4,12 +4,13 @@ const Doctor = require('../models/Doctor');
 const moment = require('moment');
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
+
+// 🔹 List all doctors (basic info)
 router.get('/list', async (req, res) => {
   console.log("Fetching doctors...");
   try {
     const doctors = await Doctor.find().select("name specialization email picture").lean();
-    console.log(doctors);  // ✅ log the actual data
-    res.set('Cache-Control', 'no-store'); // prevent 304 caching
+    res.set('Cache-Control', 'no-store'); // prevent caching
     res.json(doctors.map(d => ({ ...d, _id: d._id.toString() })));
   } catch (err) {
     console.error("Error fetching doctors:", err);
@@ -17,7 +18,7 @@ router.get('/list', async (req, res) => {
   }
 });
 
-// Get doctors with available weekly slots for the next 7 days
+// 🔹 Get doctors with available weekly slots for next 7 days
 router.get('/available', async (req, res) => {
   try {
     const doctors = await Doctor.find();
@@ -45,7 +46,7 @@ router.get('/available', async (req, res) => {
           day: d.day,
           times
         };
-      }).filter(s => s !== null);
+      }).filter(Boolean);
 
       return {
         _id: doc._id,
@@ -62,32 +63,56 @@ router.get('/available', async (req, res) => {
   }
 });
 
-// Update doctor profile
-router.post('/profile', authMiddleware, async (req, res) => {
-  try {
-    const { name, specialization, phone, weeklySlots } = req.body;
-    // You may want to validate weeklySlots structure here if allowing updates
 
-    const doctor = await Doctor.findByIdAndUpdate(
-      req.user.id,
-      { name, specialization, phone, weeklySlots },
-      { new: true }
-    );
+// ==============================
+// 🧠 Doctor Profile Endpoints
+// ==============================
+
+// 🔹 Get logged-in doctor profile
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const doctor = await Doctor.findById(req.user.id)
+      .select('-googleAccessToken -googleRefreshToken'); // hide sensitive data
+
+    if (!doctor) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
     res.json(doctor);
   } catch (err) {
+    console.error('Error fetching doctor profile:', err);
+    res.status(500).json({ error: 'Error fetching doctor profile' });
+  }
+});
+
+// 🔹 Update doctor profile (editable fields)
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, email, phone, specialization, weeklySlots } = req.body;
+
+    // Allow partial updates — only update provided fields
+    const updates = {};
+    if (name !== undefined) updates.name = name;
+    if (email !== undefined) updates.email = email;
+    if (phone !== undefined) updates.phone = phone;
+    if (specialization !== undefined) updates.specialization = specialization;
+    if (weeklySlots !== undefined) updates.weeklySlots = weeklySlots;
+
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      req.user.id,
+      { $set: updates },
+      { new: true, runValidators: true }
+    ).select('-googleAccessToken -googleRefreshToken');
+
+    if (!updatedDoctor) {
+      return res.status(404).json({ error: 'Doctor not found' });
+    }
+
+    res.json(updatedDoctor);
+  } catch (err) {
+    console.error('Error updating doctor profile:', err);
     res.status(500).json({ error: 'Failed to update doctor profile' });
   }
 });
-
-// Get doctor profile
-router.get('/profile', authMiddleware, async (req, res) => {
-  try {
-    const doctor = await Doctor.findById(req.user.id).select("-password");
-    res.json(doctor);
-  } catch {
-    res.status(500).send('Error fetching doctor profile');
-  }
-});
-
 
 module.exports = router;

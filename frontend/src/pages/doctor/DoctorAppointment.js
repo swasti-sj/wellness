@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { Calendar, momentLocalizer } from "react-big-calendar";
+import { useNavigate } from "react-router-dom";
 import moment from "moment";
 import { format } from "date-fns";
 import "react-big-calendar/lib/css/react-big-calendar.css";
@@ -31,6 +32,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
   });
 
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!apiBaseUrl || !token) return;
@@ -130,6 +132,16 @@ export default function DoctorAppointment({ apiBaseUrl }) {
     }
   };
 
+  const handleViewHistory = (patient) => {
+    if (!patient?.roll && !patient?.email) {
+      alert("No roll number or email available for this patient");
+      return;
+    }
+
+    const identifier = patient.roll || patient.email;
+    navigate("/docdashboard/history", { state: { query: identifier } });
+  };
+
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
       const res = await axios.patch(`${apiBaseUrl}/appointments/${appointmentId}/status`, {
@@ -148,171 +160,174 @@ export default function DoctorAppointment({ apiBaseUrl }) {
   };
 
   return (
-    <div className="appointments-container">
-      <div className="calendar-header">
-        <h2>My Appointments</h2>
-        <button
-          onClick={() => setShowBookingForm(true)}
-          className="add-appointment-btn"
-        >
-          + New Appointment
-        </button>
-      </div>
-
-      {isLoading && <p>Loading appointments...</p>}
-      {error && <p className="error-message">{error}</p>}
-
-      {!isLoading && !error && (
-        <div className="calendar-container">
-          <Calendar
-            localizer={localizer}
-            events={appointments}
-            startAccessor="start"
-            endAccessor="end"
-            style={{ height: "80vh" }}
-            views={["month", "week", "day", "agenda"]}
-            view={view}                          
-            onView={(newView) => setView(newView)}  
-            date={date}                          
-            onNavigate={(newDate) => setDate(newDate)}            
-            popup
-            onSelectEvent={handleSelectEvent}
-            components={{ toolbar: CustomToolbar }}
-            eventPropGetter={(event) => {
-              let backgroundColor = "#012970";
-              if (event.status === "attended") backgroundColor = "#28a745";
-              else if (event.status === "cancelled") backgroundColor = "#dc3545";
-              else if (event.status === "no show") backgroundColor = "#6c757d";
-              return { style: { backgroundColor, borderRadius: "8px", color: "#fff" } };
-            }}
-          />
+    <div className="doctor-appointments-page">
+      <div className="appointments-container">
+        <div className="calendar-header">
+          <h2>My Appointments</h2>
+          <button onClick={() => setShowBookingForm(true)} className="add-appointment-btn">
+            + New Appointment
+          </button>
         </div>
-      )}
 
-      {selectedEvent && (
-        <div className="appointment-modal">
-          <div className="modal-content">
-            <h3>{selectedEvent.patient?.name || "Unknown Patient"}</h3>
-            <p><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</p>
-            <p><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</p>
-            <p>
-              <strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}
-            </p>
-            <p><strong>Status:</strong> {selectedEvent.status}</p>
+        {isLoading && <p>Loading appointments...</p>}
+        {error && <p className="error-message">{error}</p>}
 
-            {selectedEvent.status === "booked" && (
-              <div className="status-update">
-                <select
-                  onChange={(e) => handleStatusUpdate(selectedEvent.id, e.target.value)}
-                  defaultValue=""
-                >
-                  <option value="" disabled>Update Status</option>
-                  <option value="attended">Mark Completed</option>
-                  <option value="no show">Mark No-Show</option>
-                  <option value="walk in">Mark Walk In</option>
-                </select>
-              </div>
-            )}
-
-            <div className="modal-actions">
-              {(selectedEvent.status === "booked" ||
-                selectedEvent.status === "in-progress") && (
-                <button
-                  onClick={() =>
-                    handleCancelAppointment(
-                      selectedEvent.id,
-                      selectedEvent.slotDay,
-                      selectedEvent.slotTime
-                    )
-                  }
-                  className="cancel-btn"
-                >
-                  Cancel Appointment
-                </button>
-              )}
-              <button onClick={handleCloseModal} className="close-btn">
-                Close
-              </button>
-            </div>
-
-            <hr />
-            <DoctorNote appointmentId={selectedEvent.id} />
-            <DoctorPrescription
-              appointmentId={selectedEvent.id}
-              patientId={selectedEvent.patient?._id}
+        {!isLoading && !error && (
+          <div className="calendar-container">
+            <Calendar
+              localizer={localizer}
+              events={appointments}
+              startAccessor="start"
+              endAccessor="end"
+              style={{ height: "80vh" }}
+              views={["month", "week", "day", "agenda"]}
+              view={view}
+              onView={(newView) => setView(newView)}
+              date={date}
+              onNavigate={(newDate) => setDate(newDate)}
+              popup
+              onSelectEvent={handleSelectEvent}
+              components={{ toolbar: CustomToolbar }}
+              eventPropGetter={(event) => {
+                let backgroundColor = "#012970";
+                if (event.status === "attended") backgroundColor = "#28a745";
+                else if (event.status === "cancelled") backgroundColor = "#dc3545";
+                else if (event.status === "no show") backgroundColor = "#6c757d";
+                else if (event.status === "booked") backgroundColor = "#ffc107";
+                return { style: { backgroundColor, borderRadius: "12px", color: "#fff" } };
+              }}
             />
           </div>
-        </div>
-      )}
+        )}
 
-      {showBookingForm && (
-        <div className="appointment-modal">
-          <div className="modal-content">
-            <h3>Book New Appointment</h3>
-            <form onSubmit={handleBookAppointment} className="booking-form">
-              <div className="form-group">
-                <label>Patient Email:</label>
-                <input
-                  type="email"
-                  value={bookingData.patientEmail}
-                  onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Patient Phone (optional):</label>
-                <input
-                  type="tel"
-                  value={bookingData.patientPhone}
-                  onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })}
-                />
-              </div>
-              <div className="form-group">
-                <label>Date:</label>
-                <input
-                  type="date"
-                  value={bookingData.date}
-                  onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                  min={new Date().toISOString().split("T")[0]}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Time:</label>
-                <input
-                  type="time"
-                  value={bookingData.time}
-                  onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="form-group">
-                <label>Duration (minutes):</label>
-                <select
-                  value={bookingData.duration}
-                  onChange={(e) => setBookingData({ ...bookingData, duration: parseInt(e.target.value) })}
-                >
-                  <option value={15}>15</option>
-                  <option value={30}>30</option>
-                  <option value={45}>45</option>
-                  <option value={60}>60</option>
-                </select>
-              </div>
+        {/* Appointment Details Modal */}
+        {selectedEvent && (
+          <div className="appointment-modal">
+            <div className="modal-content">
+              <h3>{selectedEvent.patient?.name || "Unknown Patient"}</h3>
+              <p><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</p>
+              <p><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</p>
+              <p>
+                <strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}
+              </p>
+              <p><strong>Status:</strong> {selectedEvent.status}</p>
+
+              {selectedEvent.status === "booked" && (
+                <div className="status-update">
+                  <select
+                    onChange={(e) => handleStatusUpdate(selectedEvent.id, e.target.value)}
+                    defaultValue=""
+                  >
+                    <option value="" disabled>Update Status</option>
+                    <option value="attended">Mark Completed</option>
+                    <option value="no show">Mark No-Show</option>
+                    <option value="walk in">Mark Walk In</option>
+                  </select>
+                </div>
+              )}
 
               <div className="modal-actions">
-                <button type="submit" className="submit-btn">Book</button>
+                {(selectedEvent.status === "booked" || selectedEvent.status === "in-progress") && (
+                  <button
+                    onClick={() =>
+                      handleCancelAppointment(
+                        selectedEvent.id,
+                        selectedEvent.slotDay,
+                        selectedEvent.slotTime
+                      )
+                    }
+                    className="cancel-btn"
+                  >
+                    Cancel Appointment
+                  </button>
+                )}
+                <button onClick={handleCloseModal} className="close-btn">
+                  Close
+                </button>
                 <button
-                  type="button"
-                  onClick={() => setShowBookingForm(false)}
-                  className="cancel-btn"
+                  onClick={() => handleViewHistory(selectedEvent.patient)}
+                  className="history-btn"
                 >
-                  Cancel
+                  View History
                 </button>
               </div>
-            </form>
+
+              <hr />
+              <DoctorNote appointmentId={selectedEvent.id} />
+              <DoctorPrescription
+                appointmentId={selectedEvent.id}
+                patientId={selectedEvent.patient?._id}
+              />
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* New Booking Modal */}
+        {showBookingForm && (
+          <div className="appointment-modal">
+            <div className="modal-content">
+              <h3>Book New Appointment</h3>
+              <form onSubmit={handleBookAppointment} className="booking-form">
+                <div className="form-group">
+                  <label>Patient Email:</label>
+                  <input
+                    type="email"
+                    value={bookingData.patientEmail}
+                    onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Patient Phone (optional):</label>
+                  <input
+                    type="tel"
+                    value={bookingData.patientPhone}
+                    onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Date:</label>
+                  <input
+                    type="date"
+                    value={bookingData.date}
+                    onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Time:</label>
+                  <input
+                    type="time"
+                    value={bookingData.time}
+                    onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Duration (minutes):</label>
+                  <select
+                    value={bookingData.duration}
+                    onChange={(e) => setBookingData({ ...bookingData, duration: parseInt(e.target.value) })}
+                  >
+                    <option value={15}>15</option>
+                    <option value={30}>30</option>
+                    <option value={45}>45</option>
+                    <option value={60}>60</option>
+                  </select>
+                </div>
+
+                <div className="modal-actions">
+                  <button type="submit" className="submit-btn">Book</button>
+                  <button type="button" onClick={() => setShowBookingForm(false)} className="cancel-btn">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

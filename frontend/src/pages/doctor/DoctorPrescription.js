@@ -93,36 +93,45 @@ function DoctorPrescription({ appointmentId, patientId }) {
 
   return (
     <div className="doctor-prescription">
-  <h3>Manage Prescription</h3>
+      <h4>Manage Prescription</h4>
+      {error && <p className="error-message">{error}</p>}
 
-  {previousPrescriptions.length > 0 && (
-    <div className="previous-prescriptions">
-      <h4>Continue Previous Medications?</h4>
-      {previousPrescriptions.map((rx, idx) => (
-        <label key={idx} className="checkbox-item">
-          <input type="checkbox" onChange={(e)=>handleContinuePrevious(rx, e.target.checked)} />
-          {rx.medication} ({rx.dosage}, {rx.frequency})
-        </label>
-      ))}
-    </div>
-  )}
+      {/* Section to continue previous medications */}
+      {previousPrescriptions.length > 0 && (
+        <div className="previous-prescriptions">
+          <h5>Continue Previous Medications?</h5>
+          {previousPrescriptions.map((prevRx, index) => (
+            <div key={index} className="checkbox-item">
+              <input
+                type="checkbox"
+                id={`prevRx-${index}`}
+                checked={currentPrescriptions.some(p => p.medication === prevRx.medication)}
+                onChange={(e) => handleContinuePrevious(prevRx, e.target.checked)}
+              />
+              <label htmlFor={`prevRx-${index}`}>
+                {prevRx.medication} ({prevRx.dosage}, {prevRx.frequency})
+              </label>
+            </div>
+          ))}
+        </div>
+      )}
 
-  <div className="prescription-form">
-    {currentPrescriptions.map((rx, idx) => (
-      <div key={idx} className="prescription-row">
-        <input name="medication" placeholder="Medication" value={rx.medication} />
-        <input name="dosage" placeholder="Dosage" value={rx.dosage} />
-        <input name="frequency" placeholder="Frequency" value={rx.frequency} />
-        <input name="notes" placeholder="Notes" value={rx.notes} />
-        <button className="remove-btn" onClick={() => handleRemoveRow(idx)}>✖</button>
+      {/* Form for current prescriptions */}
+      <div className="prescription-form">
+        {currentPrescriptions.map((rx, index) => (
+          <div key={index} className="prescription-row">
+            <input name="medication" placeholder="Medication" value={rx.medication} onChange={e => handleInputChange(index, e)} />
+            <input name="dosage" placeholder="Dosage (e.g., 500mg)" value={rx.dosage} onChange={e => handleInputChange(index, e)} />
+            <input name="frequency" placeholder="Frequency (e.g., Twice a day)" value={rx.frequency} onChange={e => handleInputChange(index, e)} />
+            <input name="notes" placeholder="Notes (e.g., After food)" value={rx.notes} onChange={e => handleInputChange(index, e)} />
+            <button className="remove-btn" onClick={() => handleRemoveRow(index)}>X</button>
+          </div>
+        ))}
+        <button className="add-btn" onClick={handleAddRow}>+ Add Medication</button>
       </div>
-    ))}
-    <button className="add-btn" onClick={handleAddRow}>+ Add</button>
-  </div>
 
-  <button className="save-btn" onClick={handleSavePrescription}>Save Prescription</button>
-</div>
-
+      <button className="save-btn" onClick={handleSavePrescription}>Save Prescription</button>
+    </div>
   );
 }
 
