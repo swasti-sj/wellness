@@ -811,4 +811,54 @@ router.get("/my-slots", async (req, res) => {
   }
 });
 
+router.get("/history", async (req, res) => {
+  try {
+    console.log("[API] GET /appointments/history called");
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader)
+      return res.status(401).json({ error: "Authorization header missing" });
+
+    const token = authHeader.split(" ")[1];
+    if (!token) return res.status(400).json({ error: "Missing token" });
+
+    // Decode and verify JWT
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    // Find only appointments with "attended" or "completed" status
+    const history = await Appointment.find({
+      user: user._id,
+      status: {
+        $in: [
+          "attended",
+          "no show",
+          "cancelled by user",
+          "cancelled by doctor",
+          "walk in"
+        ]
+      }
+    })
+      .populate("doctor", "name specialization")
+      .sort({ date: -1 }); // latest first
+
+    const formattedHistory = history.map((appt) => ({
+      _id: appt._id,
+      doctor: appt.doctor,
+      specialization: appt.doctor?.specialization || "-",
+      date: appt.startDateTime || appt.date || null,
+      time: appt.slotTime || "-",
+      status: appt.status,
+    }));
+    
+    res.json(formattedHistory);
+  } catch (err) {
+    console.error("Error fetching visit history:", err);
+    res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
 module.exports = router;
+
+

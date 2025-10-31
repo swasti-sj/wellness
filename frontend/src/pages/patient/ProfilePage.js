@@ -24,7 +24,8 @@ function ProfilePage() {
   if (!profile) return <div>Loading profile...</div>;
 
   return (
-    <div className="profile-container">
+    <div className='container'>
+      <div className="profile-container">
       <h2>My Profile</h2>
       <img
         src={profile.picture}
@@ -41,6 +42,7 @@ function ProfilePage() {
       <button className="signout-btn" onClick={handleSignOut}>
         Sign Out
       </button>
+      </div>
     </div>
   );
 }
