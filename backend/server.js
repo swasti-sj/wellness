@@ -1,44 +1,74 @@
 // Entry point for Express backend
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const GoogleStrategy = require('passport-google-oauth20').Strategy;
-require('dotenv').config();
-const jwt = require('jsonwebtoken');
-const session = require('express-session'); 
-const passport = require('passport');
-const User = require('./models/User');
-const Doctor = require('./models/Doctor');
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+require("dotenv").config();
+const jwt = require("jsonwebtoken");
+const session = require("express-session");
+const passport = require("passport");
+const User = require("./models/User");
+const Doctor = require("./models/Doctor");
 const app = express();
 
-const appointmentRoutes = require('./routes/appointments');
-const doctorRoutes = require('./routes/doctors');
-const userRoutes = require('./routes/users');
-const trialreadRoutes=require('./routes/trialread'); 
-const noteRoutes = require('./routes/notes');
-const prescriptionRoutes = require('./routes/prescriptions');
-const referralRoutes = require('./routes/referrals');
+const appointmentRoutes = require("./routes/appointments");
+const doctorRoutes = require("./routes/doctors");
+const userRoutes = require("./routes/users");
+const trialreadRoutes = require("./routes/trialread");
+const noteRoutes = require("./routes/notes");
+const prescriptionRoutes = require("./routes/prescriptions");
+const referralRoutes = require("./routes/referrals");
+const dashboardRoutes = require('./routes/dashboardRoutes');
+
 
 // Middleware
 console.log("⚙️ Setting up middleware...");
 app.use(cors());
+app.use('/api', dashboardRoutes);
 app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'my_secret_key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "my_secret_key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false },
+  })
+);
 
-// Connect to MongoDB 
+// Connect to MongoDB
 console.log("🔗 Connecting to MongoDB...");
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/medapp', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-}).then(() => {
-  console.log("✅ Connected to MongoDB");
-}).catch(err => {
-  console.error("❌ MongoDB connection error:", err);
+// Enable helpful mongoose debugging in development
+mongoose.set("strictQuery", false);
+if (process.env.NODE_ENV !== "production") {
+  mongoose.set("debug", true);
+}
+
+const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/medapp";
+mongoose
+  .connect(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    serverSelectionTimeoutMS: 5000, // fail fast if cannot connect
+    socketTimeoutMS: 45000,
+    // family: 4, // uncomment to force IPv4 if your environment needs it
+  })
+  .then(() => {
+    console.log("✅ Connected to MongoDB at", mongoUri);
+  })
+  .catch((err) => {
+    console.error(
+      "❌ MongoDB connection error (initial):",
+      err && err.message ? err.message : err
+    );
+    // Fail fast during development so the issue is visible immediately
+    if (process.env.NODE_ENV !== "production") {
+      console.error("Exiting process due to MongoDB connection failure.");
+      process.exit(1);
+    }
+  });
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ Mongoose connection error event:", err);
 });
 
 app.use(passport.initialize());
@@ -46,24 +76,29 @@ app.use(passport.session());
 
 // Passport Google OAuth
 console.log("🔑 Configuring Google OAuth Strategy...");
-passport.use(new GoogleStrategy({
-  clientID: process.env.GOOGLE_CLIENT_ID,
-  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-  callbackURL: "http://localhost:5000/auth/google/callback",
-  scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"]
-}, (accessToken, refreshToken, profile, done) => {
-  console.log("📡 Google OAuth callback triggered");
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "http://localhost:5000/auth/google/callback",
+      scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
+    },
+    (accessToken, refreshToken, profile, done) => {
+      console.log("📡 Google OAuth callback triggered");
 
-  const userData = {
-    googleId: profile.id,
-    email: profile.emails?.[0]?.value,    
-    name: profile.displayName,
-    picture: profile.photos?.[0]?.value,
-    accessToken,
-    refreshToken,
-  };
-  return done(null, userData);
-}));
+      const userData = {
+        googleId: profile.id,
+        email: profile.emails?.[0]?.value,
+        name: profile.displayName,
+        picture: profile.photos?.[0]?.value,
+        accessToken,
+        refreshToken,
+      };
+      return done(null, userData);
+    }
+  )
+);
 
 passport.serializeUser((user, done) => {
   console.log("💾 Serializing user into session:", user.email || user.googleId);
@@ -71,27 +106,32 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((user, done) => {
-  console.log("📦 Deserializing user from session:", user.email || user.googleId);
+  console.log(
+    "📦 Deserializing user from session:",
+    user.email || user.googleId
+  );
   done(null, user);
 });
 
 // Google OAuth login entry
-app.get('/auth/google', (req, res, next) => {
+app.get("/auth/google", (req, res, next) => {
   const role = req.query.role || "patient";
   console.log(`🌐 /auth/google hit. Role requested: ${role}`);
-  passport.authenticate('google', {
+  passport.authenticate("google", {
     state: role,
-    accessType: 'offline', 
-    prompt: 'consent'       
+    accessType: "offline",
+    prompt: "consent",
   })(req, res, next);
 });
 
 // Google OAuth callback
-app.get("/auth/google/callback",
+app.get(
+  "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   async (req, res) => {
     console.log("✅ Successful Google login callback");
-    const { email, name, googleId, picture, accessToken, refreshToken } = req.user;
+    const { email, name, googleId, picture, accessToken, refreshToken } =
+      req.user;
     console.log("🔓 User details:", { email, name, googleId });
     const role = req.query.state || "patient"; // <-- FIXED: get role from OAuth state param
     console.log("👥 Role from state param:", role);
@@ -126,7 +166,9 @@ app.get("/auth/google/callback",
         { expiresIn: "1d" }
       );
       console.log("📤 Redirecting doctor to frontend with token...");
-      res.redirect(`http://localhost:3000/login?token=${token}&role=doctor&firstLogin=${firstLogin}`);
+      res.redirect(
+        `http://localhost:3000/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
+      );
     } else {
       console.log("🙋 Handling patient login/signup...");
       let user = await User.findOne({ email });
@@ -140,7 +182,7 @@ app.get("/auth/google/callback",
           picture,
           role: "patient",
           googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken
+          googleRefreshToken: refreshToken,
         });
         await user.save();
         firstLogin = true;
@@ -153,7 +195,9 @@ app.get("/auth/google/callback",
         await user.save();
 
         if (!user.age || !user.phone || !user.sex) {
-          console.log("📋 Patient profile incomplete. Marking as firstLogin...");
+          console.log(
+            "📋 Patient profile incomplete. Marking as firstLogin..."
+          );
           firstLogin = true;
         }
       }
@@ -165,24 +209,30 @@ app.get("/auth/google/callback",
         { expiresIn: "1d" }
       );
       console.log("📤 Redirecting patient to frontend with token...");
-      res.redirect(`http://localhost:3000/login?token=${token}&role=patient&firstLogin=${firstLogin}`);
+      res.redirect(
+        `http://localhost:3000/login?token=${token}&role=patient&firstLogin=${firstLogin}`
+      );
     }
   }
 );
 
 // Routes
 console.log("🛣️ Mounting API routes...");
-app.use('/api/appointments', appointmentRoutes);
-app.use('/api/doctors', doctorRoutes);
-app.use('/api/users', userRoutes);      
-app.use('/api/trialread', trialreadRoutes);
-app.use('/api/notes', noteRoutes);
-app.use('/api/prescriptions', prescriptionRoutes);
-app.use('/api/referrals', referralRoutes);
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/doctors", doctorRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/trialread", trialreadRoutes);
+app.use("/api/notes", noteRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/referrals", referralRoutes);
 const PORT = process.env.PORT || 5000;
 app.get("/config", (req, res) => {
+  // Return a sensible default when LOCALHOST_URL isn't set so frontend
+  // doesn't hang waiting for configuration.
+  const defaultApiBase =
+    process.env.LOCALHOST_URL || `http://localhost:${PORT}`;
   res.json({
-    apiBaseUrl: process.env.LOCALHOST_URL
+    apiBaseUrl: defaultApiBase,
   });
 });
 

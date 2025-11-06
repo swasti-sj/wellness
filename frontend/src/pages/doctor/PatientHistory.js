@@ -4,30 +4,30 @@ import DoctorNote from "./DoctorNote";
 import DoctorPrescription from "./DoctorPrescription";
 import "../../styles/doctor/PatientHistory.css";
 import { useLocation } from "react-router-dom";
+import Fuse from "fuse.js"; // 🔹 added for fuzzy search
 
 export default function PatientHistory({ apiBaseUrl }) {
   const [appointments, setAppointments] = useState([]);
-  const [expanded, setExpanded] = useState(null);
+  const [filteredPatients, setFilteredPatients] = useState([]); // 🔹 list of unique patients
+  const [expandedPatient, setExpandedPatient] = useState(null); // which patient is opened
+  const [expandedAppt, setExpandedAppt] = useState(null); // which appointment is expanded
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
   const location = useLocation();
-  
+
   const [query, setQuery] = useState(location.state?.query || "");
+  const [doctors, setDoctors] = useState([]);
+  const [doctorId, setDoctorId] = useState("");
+  const [reason, setReason] = useState("");
+
   useEffect(() => {
     if (location.state?.query) {
-      searchPatient(); // automatically search on load
+      searchPatient(); // auto search if navigated with a query
     }
   }, [location.state]);
 
-  // patient info
-  const [patientInfo, setPatientInfo] = useState(null);
-
-  // referral
-  const [doctorId, setDoctorId] = useState("");
-  const [reason, setReason] = useState("");
-  const [doctors, setDoctors] = useState([]);
-
+  // 🔹 Fetch doctors list
   useEffect(() => {
     if (!apiBaseUrl) return;
     const fetchDoctors = async () => {
@@ -41,10 +41,12 @@ export default function PatientHistory({ apiBaseUrl }) {
     fetchDoctors();
   }, [apiBaseUrl]);
 
+  // 🔹 Main search logic with fuzzy matching
   const searchPatient = async () => {
     if (!query.trim()) return alert("Enter patient name, roll number or email");
     setIsLoading(true);
     setError("");
+
     try {
       const res = await axios.get(`${apiBaseUrl}/appointments/patient-history`, {
         params: { token, query },
@@ -52,22 +54,49 @@ export default function PatientHistory({ apiBaseUrl }) {
 
       const appts = res.data?.appointments || [];
       setAppointments(appts);
-      setPatientInfo(appts[0]?.user || null);
 
-      if (appts.length === 0) setError("No records found for this patient.");
+      // ✅ Extract unique patients
+      const seen = new Set();
+      const uniquePatients = [];
+      appts.forEach((a) => {
+        const u = a.user;
+        if (u && !seen.has(u._id)) {
+          seen.add(u._id);
+          uniquePatients.push(u);
+        }
+      });
+
+      // ✅ Apply fuzzy search
+      const fuse = new Fuse(uniquePatients, {
+        keys: ["name", "email", "roll"],
+        threshold: 0.3, // more tolerance = fuzzier search
+      });
+
+      const result =
+        query.trim().length > 0 ? fuse.search(query).map((r) => r.item) : uniquePatients;
+
+      setFilteredPatients(result);
+
+      if (result.length === 0) setError("No records found for this patient.");
     } catch (err) {
       console.error("Failed to fetch patient history:", err);
-      setError("Failed to fetch patient history.");
+      setError("Failed to load patient list.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleExpand = (id) => {
-    setExpanded(expanded === id ? null : id);
+  // 🔹 Expand/collapse patient details
+  const togglePatientExpand = (id) => {
+    setExpandedPatient(expandedPatient === id ? null : id);
+    setExpandedAppt(null);
   };
 
-  const handleSubmitReferral = async (e) => {
+  const toggleApptExpand = (id) => {
+    setExpandedAppt(expandedAppt === id ? null : id);
+  };
+
+  const handleSubmitReferral = async (e, patientInfo) => {
     e.preventDefault();
     if (!patientInfo?.email || !doctorId)
       return alert("Please ensure patient email and a doctor are selected.");
@@ -94,103 +123,144 @@ export default function PatientHistory({ apiBaseUrl }) {
   };
 
   return (
-    <div className="appointment-container">
+    <div className="patient-history-container">
+
       <h2 className="appointment-title">Patient History</h2>
 
       {/* --- Patient Search --- */}
-      <div className="appointment-form" style={{ marginBottom: "1.5rem" }}>
-        <input
-          type="text"
-          className="appointment-select"
-          placeholder="Enter patient name, roll number or email"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-        <button className="appointment-btn" onClick={searchPatient} disabled={isLoading}>
-          {isLoading ? "Searching..." : "Search"}
-        </button>
-      </div>
+      <form
+  className="appointment-form"
+  style={{ marginBottom: "1.5rem" }}
+  onSubmit={(e) => {
+    e.preventDefault(); // prevent page reload
+    searchPatient();
+  }}
+>
+  <input
+    type="text"
+    className="appointment-select"
+    placeholder="Enter patient name, roll number or email"
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
+  />
+  <button
+    type="submit"
+    className="appointment-btn"
+    disabled={isLoading}
+  >
+    {isLoading ? "Searching..." : "Search"}
+  </button>
+</form>
+
 
       {error && <p className="error-text">{error}</p>}
 
-      {/* --- Patient Info --- */}
-      {patientInfo && (
-        <>
-            <div className="patient-summary">
-            <h3>{patientInfo.name}</h3>
-            <p><b>Email:</b> {patientInfo.email}</p>
-            <p><b>Phone:</b> {patientInfo.phone || "N/A"}</p>
-            <p><b>Age:</b> {patientInfo.age || "N/A"}</p>
-            <p><b>Roll Number:</b> {patientInfo.roll || "N/A"}</p>
-            <p><b>Sex:</b> {patientInfo.sex || "N/A"}</p>
-            </div>
-
-            {/* Referral Form */}
-            <form className="referral-section" onSubmit={handleSubmitReferral}>
-            <h4>Refer Patient</h4>
-            <select
-                value={doctorId}
-                onChange={(e) => setDoctorId(e.target.value)}
-                required
-            >
-                <option value="">Select Doctor</option>
-                {doctors.map((doc) => (
-                <option key={doc._id} value={doc._id}>
-                    {doc.name} ({doc.specialization})
-                </option>
-                ))}
-            </select>
-
-            <textarea
-                value={reason}
-                onChange={(e) => setReason(e.target.value)}
-                placeholder="Reason for referral (optional)"
-            />
-
-            <button type="submit" className="primary-btn">
-                Refer
-            </button>
-            </form>
-        </>
-        )}
-
-      {/* --- Appointments --- */}
+      {/* --- Fuzzy Matched Patient Cards --- */}
       <div className="appointment-list">
-        {appointments.map((a) => (
-          <div key={a._id} className="appointment-card">
-            <div className="appointment-summary" onClick={() => toggleExpand(a._id)}>
-              <h4>
-                {new Date(a.startDateTime).toLocaleDateString()} |{" "}
-                {new Date(a.startDateTime).toLocaleTimeString()}
-              </h4>
+        {filteredPatients.map((p) => (
+          <div key={p._id} className="appointment-card">
+            <div
+              className="appointment-summary"
+              onClick={() => togglePatientExpand(p._id)}
+            >
+              <h3>{p.name}</h3>
               <p>
-                <b>Mode:</b> {a.mode || "Walk-in"} |{" "}
-                <b>Last Medication:</b> {a.lastMedication || "Not recorded"}
+                <b>Email:</b> {p.email} | <b>Roll:</b> {p.roll || "N/A"} |{" "}
+                <b>Sex:</b> {p.sex || "N/A"}
               </p>
-              
-              <p className="expand-hint">{expanded === a._id ? "▲ Collapse" : "▼ Expand"}</p>
+              <p className="expand-hint">
+                {expandedPatient === p._id ? "▲ Hide Details" : "▼ More Details"}
+              </p>
             </div>
 
-            {expanded === a._id && (
+            {/* --- Expand patient details + appointments --- */}
+            {expandedPatient === p._id && (
               <div className="expanded-details">
-                <div className="medications-section">
-                  <h5>Previous Medications</h5>
-                  {a.medications?.length ? (
-                    a.medications.map((m, i) => (
-                      <div key={i} className="medication-item">
-                        <input type="checkbox" id={`${a._id}-med-${i}`} />
-                        <label htmlFor={`${a._id}-med-${i}`}>{m}</label>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="no-data">No previous medications</p>
-                  )}
+                <div className="patient-summary">
+                  <p><b>Phone:</b> {p.phone || "N/A"}</p>
+                  <p><b>Age:</b> {p.age || "N/A"}</p>
                 </div>
 
-                <div className="expand-columns">
-                  <DoctorNote appointmentId={a._id} />
-                  <DoctorPrescription appointmentId={a._id} patientId={a.user?._id} />
-                </div>
+                {/* Referral form */}
+                <form
+                  className="referral-section"
+                  onSubmit={(e) => handleSubmitReferral(e, p)}
+                >
+                  <h4>Refer Patient</h4>
+                  <select
+                    value={doctorId}
+                    onChange={(e) => setDoctorId(e.target.value)}
+                    required
+                  >
+                    <option value="">Select Doctor</option>
+                    {doctors.map((doc) => (
+                      <option key={doc._id} value={doc._id}>
+                        {doc.name} ({doc.specialization})
+                      </option>
+                    ))}
+                  </select>
+
+                  <textarea
+                    value={reason}
+                    onChange={(e) => setReason(e.target.value)}
+                    placeholder="Reason for referral (optional)"
+                  />
+
+                  <button type="submit" className="primary-btn">
+                    Refer
+                  </button>
+                </form>
+
+                {/* Appointment history for that patient */}
+                <h4 className="section-title">Appointments</h4>
+                {appointments
+                  .filter((a) => a.user?._id === p._id)
+                  .map((a) => (
+                    <div key={a._id} className="appointment-card inner-card">
+                      <div
+                        className="appointment-summary"
+                        onClick={() => toggleApptExpand(a._id)}
+                      >
+                        <h5>
+                          {new Date(a.startDateTime).toLocaleDateString()} |{" "}
+                          {new Date(a.startDateTime).toLocaleTimeString()}
+                        </h5>
+                        <p>
+                          <b>Mode:</b> {a.mode || "Walk-in"} |{" "}
+                          <b>Last Medication:</b> {a.lastMedication || "Not recorded"}
+                        </p>
+                        <p className="expand-hint">
+                          {expandedAppt === a._id ? "▲ Collapse" : "▼ Expand"}
+                        </p>
+                      </div>
+
+                      {expandedAppt === a._id && (
+                        <div className="expanded-details">
+                          <div className="medications-section">
+                            <h5>Previous Medications</h5>
+                            {a.medications?.length ? (
+                              a.medications.map((m, i) => (
+                                <div key={i} className="medication-item">
+                                  <input type="checkbox" id={`${a._id}-med-${i}`} />
+                                  <label htmlFor={`${a._id}-med-${i}`}>{m}</label>
+                                </div>
+                              ))
+                            ) : (
+                              <p className="no-data">No previous medications</p>
+                            )}
+                          </div>
+
+                          <div className="expand-columns">
+                            <DoctorNote appointmentId={a._id} />
+                            <DoctorPrescription
+                              appointmentId={a._id}
+                              patientId={a.user?._id}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
               </div>
             )}
           </div>

@@ -204,7 +204,11 @@ export default function DoctorAppointment({ apiBaseUrl }) {
         {selectedEvent && (
           <div className="appointment-modal">
             <div className="modal-content">
+              
               <h3>{selectedEvent.patient?.name || "Unknown Patient"}</h3>
+              <button onClick={handleCloseModal} className="close-btn">
+                X
+                </button>
               <p><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</p>
               <p><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</p>
               <p>
@@ -241,9 +245,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                     Cancel Appointment
                   </button>
                 )}
-                <button onClick={handleCloseModal} className="close-btn">
-                  Close
-                </button>
+                
                 <button
                   onClick={() => handleViewHistory(selectedEvent.patient)}
                   className="history-btn"

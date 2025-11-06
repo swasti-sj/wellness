@@ -1,15 +1,29 @@
 /* ---------- DOCTOR DASHBOARD ---------- */
-.page-wrapper {
-  background: linear-gradient(180deg, #fffef7, #fffaf0);
-  min-height: 100vh;
-  padding-top: 5rem;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap');
+
+:root {
+  --purple: #6c1b85;
+  --orange: #e49c43;
+  --soft-bg: linear-gradient(180deg, #fffef7, #fffaf0);
+  --soft-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+  --text-dark: #2f0b5e;
+  --text-gray: #555;
 }
 
+/* Background for the whole page */
+.page-wrapper {
+  background: var(--soft-bg);
+  min-height: 100vh;
+  padding: 4rem 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+/* Main dashboard container */
 .doctor-dashboard-content {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 2rem auto;
   background: #fff;
-  padding: 2rem;
+  padding: 2rem 3rem;
   border-radius: 1rem;
   box-shadow: var(--soft-shadow);
   text-align: center;
@@ -17,16 +31,131 @@
 }
 
 .doctor-dashboard-content h2 {
+  font-family: 'Playfair Display', serif;
   color: var(--purple);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
 }
 
 .doctor-dashboard-content p {
-  color: #555;
+  color: var(--text-gray);
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+}
+
+/* Chart Section Styling */
+.chart-section {
+  background: #fff;
+  margin: 2.5rem auto;
+  padding: 2rem;
+  border-radius: 1rem;
+  max-width: 950px;
+  box-shadow: var(--soft-shadow);
+  animation: fadeInUp 0.8s ease;
+}
+
+.chart-title {
+  text-align: center;
+  font-family: 'Playfair Display', serif;
+  color: var(--text-dark);
+  margin-bottom: 1.2rem;
+  font-size: 1.5rem;
+  letter-spacing: 0.3px;
+}
+
+/* Tooltip Customization */
+.recharts-tooltip-wrapper {
+  font-family: 'Roboto', sans-serif;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+}
+
+/* Legend styling */
+.recharts-legend-item text {
+  fill: var(--text-dark);
+  font-weight: 500;
+}
+
+/* Pie chart colors */
+.recharts-pie-sector {
+  transition: transform 0.2s ease;
+}
+
+.recharts-pie-sector:hover {
+  transform: scale(1.05);
+}
+
+/* Stats Section */
+.stats-section {
+  margin: 3rem auto;
+  padding: 2rem;
+  max-width: 1000px;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: var(--soft-shadow);
+  text-align: center;
+  animation: fadeInUp 1s ease;
+}
+
+.stats-cards {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+  gap: 1.2rem;
+}
+
+.stats-card {
+  background: var(--orange);
+  color: #fff;
+  border-radius: 1rem;
+  padding: 1.5rem 2rem;
+  flex: 1;
+  min-width: 180px;
+  max-width: 280px;
+  box-shadow: 0 4px 20px rgba(108, 27, 133, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 25px rgba(108, 27, 133, 0.35);
+}
+
+.stats-card h3 {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+  font-family: 'Roboto', sans-serif;
   font-size: 1.1rem;
 }
 
+/* Animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .doctor-dashboard-content {
+    padding: 1.5rem;
+  }
+  .chart-section, .stats-section {
+    padding: 1.5rem;
+  }
+  .stats-cards {
+    flex-direction: column;
+    align-items: center;
+  }
 }
