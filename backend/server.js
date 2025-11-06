@@ -18,8 +18,11 @@ const trialreadRoutes = require("./routes/trialread");
 const noteRoutes = require("./routes/notes");
 const prescriptionRoutes = require("./routes/prescriptions");
 const referralRoutes = require("./routes/referrals");
+<<<<<<< HEAD
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
+=======
+>>>>>>> e4cbaf6703c7e313bc6af61fe765d348f5c72e3d
 
 // Middleware
 console.log("⚙️ Setting up middleware...");

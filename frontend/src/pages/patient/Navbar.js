@@ -26,14 +26,16 @@ export default function Navbar({ onNavSelect }) {
     navigate("/"); // redirect to login
   };
 
-
   return (
     <nav className="navbar">
       <div className="navbar-content">
         {/* Left: Logo and Name */}
         <div className="navbar-logo">
-          
-          <img src="/college-logo.png" alt="College Logo" className="login-logo" />
+          <img
+            src="/college-logo.png"
+            alt="College Logo"
+            className="login-logo"
+          />
           <span className="navbar-title">IIT Dharwad</span>
         </div>
 
@@ -54,7 +56,6 @@ export default function Navbar({ onNavSelect }) {
             </button>
           ))}
         </div>
-
 
         {/* Right: Student icon with dropdown */}
         <div className="relative">

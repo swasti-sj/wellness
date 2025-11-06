@@ -13,7 +13,11 @@
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.11.0",
     "date-fns": "^4.1.0",
+<<<<<<< HEAD
     "fuse.js": "^7.1.0",
+=======
+    "lucide-react": "^0.545.0",
+>>>>>>> e4cbaf6703c7e313bc6af61fe765d348f5c72e3d
     "react": "^19.1.0",
     "react-big-calendar": "^1.19.4",
     "react-dom": "^19.1.0",
