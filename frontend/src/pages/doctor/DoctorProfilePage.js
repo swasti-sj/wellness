@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import '../../styles/doctor/ProfilePage.css';
+import '../../styles/ProfilePage.css';
 
 function DoctorProfilePage({ apiBaseUrl }) {
   const [profile, setProfile] = useState(null);

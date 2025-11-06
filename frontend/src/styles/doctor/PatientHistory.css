@@ -9,7 +9,7 @@
 
 /* --- Search Input --- */
 .search-input {
-  width: 50%;
+  width: 100%;
   max-width: 400px;
   padding: 0.6rem 0.8rem;
   border: 1px solid #ccc;

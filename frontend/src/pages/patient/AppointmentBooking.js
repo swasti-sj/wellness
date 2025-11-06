@@ -9,21 +9,13 @@ import CustomToolbar from "../doctor/CustomToolbar";
 const localizer = momentLocalizer(moment);
 
 const getNextDateForDay = (dayName) => {
-  const days = [
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-  ];
+  const days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   const today = new Date();
   const dayIndex = days.indexOf(dayName);
   const diff = (dayIndex + 7 - today.getDay()) % 7 || 7;
   const nextDate = new Date();
   nextDate.setDate(today.getDate() + diff);
-  return nextDate.toLocaleDateString("en-CA");
+  return nextDate.toLocaleDateString('en-CA');
 };
 
 export default function AppointmentBooking() {
@@ -36,7 +28,7 @@ export default function AppointmentBooking() {
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [isBooking, setIsBooking] = useState(false);
   const [view, setView] = useState("month");
-  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null); // event for modal
 
   const token = localStorage.getItem("token");
 
@@ -51,9 +43,7 @@ export default function AppointmentBooking() {
 
   const fetchAvailableSlots = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/doctors/available"
-      );
+      const res = await axios.get("http://localhost:5000/api/doctors/available");
       setDoctors(res.data || []);
     } catch (err) {
       console.error(err);
@@ -62,15 +52,12 @@ export default function AppointmentBooking() {
 
   const fetchEvents = async () => {
     try {
-      const res = await axios.get(
-        "http://localhost:5000/api/appointments/my-appointments",
-        {
-          params: { token },
-        }
-      );
+      const res = await axios.get("http://localhost:5000/api/appointments/my-appointments", {
+        params: { token },
+      });
       setEvents(res.data.appointments || []);
 
-      const calEvents = (res.data.appointments || []).map((ev) => ({
+      const calEvents = (res.data.appointments || []).map(ev => ({
         id: ev._id,
         title: `${ev.doctor?.name || "Doctor"} (${ev.status})`,
         start: new Date(ev.startDateTime),
@@ -83,15 +70,14 @@ export default function AppointmentBooking() {
     }
   };
 
+  // Update available times when doctor or date changes
   useEffect(() => {
     if (selectedDoctorId && selectedDate) {
       const doc = doctors.find((d) => d._id === selectedDoctorId);
       if (doc) {
-        const weekday = new Date(selectedDate).toLocaleDateString("en-US", {
-          weekday: "long",
-        });
+        const weekday = new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" });
         const slot = doc.availableSlots?.find((s) => s.day === weekday);
-        setAvailableTimes(slot ? slot.times.map((t) => t.time) : []);
+        setAvailableTimes(slot ? slot.times.map(t => t.time) : []);
       } else setAvailableTimes([]);
       setSelectedTime("");
     } else setAvailableTimes([]);
@@ -108,19 +94,14 @@ export default function AppointmentBooking() {
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
 
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/appointments/book",
-        {
-          token,
-          doctorId: selectedDoctorId,
-          slotDay: new Date(selectedDate).toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
-          slotTime: selectedTime,
-          startDateTime: startDateTime.toISOString(),
-          endDateTime: endDateTime.toISOString(),
-        }
-      );
+      const res = await axios.post("http://localhost:5000/api/appointments/book", {
+        token,
+        doctorId: selectedDoctorId,
+        slotDay: new Date(selectedDate).toLocaleDateString("en-US", { weekday: "long" }),
+        slotTime: selectedTime,
+        startDateTime: startDateTime.toISOString(),
+        endDateTime: endDateTime.toISOString(),
+      });
 
       if (res.data?.success) {
         alert("Booked! Appointment saved successfully.");
@@ -133,10 +114,7 @@ export default function AppointmentBooking() {
         alert(res.data?.error || "Booking failed.");
       }
     } catch (err) {
-      console.error(
-        "Booking failed:",
-        err.response?.data?.error || err.message
-      );
+      console.error("Booking failed:", err.response?.data?.error || err.message);
       alert(err.response?.data?.error || "Booking failed. Please try again.");
     } finally {
       setIsBooking(false);
@@ -145,13 +123,12 @@ export default function AppointmentBooking() {
 
   const cancelEvent = async (ev) => {
     if (!window.confirm("Are you sure you want to cancel?")) return;
+
     try {
-      await axios.delete(
-        `http://localhost:5000/api/appointments/${ev.id}/cancel`,
-        {
-          data: { token },
-        }
-      );
+      await axios.delete(`http://localhost:5000/api/appointments/${ev.id}/cancel`, {
+        data: { token },
+      });
+
       alert("Cancellation request processed!");
       fetchEvents();
       fetchAvailableSlots();
@@ -163,10 +140,11 @@ export default function AppointmentBooking() {
   };
 
   return (
-    <div className="appointment-page">
-      {/* LEFT: FORM */}
+    <>
       <div className="appointment-container">
         <h2 className="appointment-title">Book an Appointment</h2>
+
+        {/* ------------------- FORM (UNCHANGED) ------------------- */}
         <div className="appointment-form">
           <div>
             <label className="appointment-label">Select Doctor</label>
@@ -232,10 +210,11 @@ export default function AppointmentBooking() {
           </button>
         </div>
       </div>
+      {/* ------------------- END FORM ------------------- */}
 
-      {/* RIGHT: CALENDAR */}
-      <div className="calendar-section">
-        <h3 className="calendar-title">Appointment Calendar</h3>
+      {/* ------------------- CALENDAR ------------------- */}
+      <div>
+        <h3>Appointment Calendar</h3>
         <div className="calendar-container">
           <Calendar
             localizer={localizer}
@@ -247,39 +226,25 @@ export default function AppointmentBooking() {
             onView={(v) => setView(v)}
             components={{ toolbar: CustomToolbar }}
             eventPropGetter={(event) => {
-              let background = "linear-gradient(45deg, #89288f, #ff7b00)";
-              if (event.status === "booked")
-                background = "linear-gradient(45deg, #ffb300, #ff7b00)";
-              if (event.status === "attended")
-                background = "linear-gradient(45deg, #28a745, #6dd47e)";
-              if (event.status === "cancelled")
-                background = "linear-gradient(45deg, #d9534f, #ff7675)";
-              return {
-                style: {
-                  background,
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: "8px",
-                  padding: "2px 6px",
-                  cursor: "pointer",
-                },
-              };
+              let bg = "#012970";
+              if (event.status === "booked") bg = "#ffc107";
+              if (event.status === "attended") bg = "#28a745";
+              if (event.status === "cancelled") bg = "#dc3545";
+              return { style: { backgroundColor: bg, color: "#fff", borderRadius: "5px", cursor: "pointer" } };
             }}
             onSelectEvent={(event) => setSelectedEvent(event)}
           />
         </div>
       </div>
 
-      {/* CANCEL POPUP */}
+      {/* ------------------- CANCEL POPUP ------------------- */}
       {selectedEvent && selectedEvent.status === "booked" && (
         <div className="modal-overlay">
           <div className="modal-popup">
-            <h4 className="modal-title">Cancel Appointment</h4>
+            <h4>Cancel Appointment</h4>
             <p>
-              {selectedEvent.title}
-              <br />
-              {moment(selectedEvent.start).format("LLLL")} -{" "}
-              {moment(selectedEvent.end).format("LLLL")}
+              {selectedEvent.title} <br />
+              {moment(selectedEvent.start).format("LLLL")} - {moment(selectedEvent.end).format("LLLL")}
             </p>
             <div className="modal-buttons">
               <button
@@ -298,6 +263,7 @@ export default function AppointmentBooking() {
           </div>
         </div>
       )}
-    </div>
+
+    </>
   );
 }

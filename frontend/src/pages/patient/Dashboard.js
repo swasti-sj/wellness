@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link, Outlet } from 'react-router-dom';
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import axios from "axios";
@@ -31,7 +31,7 @@ export default function Dashboard({
   const toggleExpand = (id) => {
     setExpandedDoctorId((prev) => (prev === id ? null : id));
   };
-  console.log(doctors);
+console.log(doctors);
   return (
     <div className="dashboard-container">
       <section>
@@ -53,20 +53,21 @@ export default function Dashboard({
                 <h3 className="doctor-card-title">{d.name}</h3>
                 <p>{d.specialization}</p>
                 {expanded && (
-                  <div className="doctorHover">
+                  <div className="mt-4">
                     <p>
                       <strong>Experience:</strong> {d.experience || "N/A"} years
                     </p>
                     <p>
                       <strong>Contact:</strong> {d.contact || "N/A"}
                     </p>
-                    <Link
+                   <Link
                       to="/patdashboard/book"
                       className="doctor-card-btn"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Book Now
                     </Link>
+
                   </div>
                 )}
               </div>
