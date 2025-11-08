@@ -1,76 +1,358 @@
-.doctor-prescription {
-  border-top: 2px solid #e0e0e0;
-  margin-top: 15px;
-  padding-top: 15px;
+/* ============================================
+   DOCTOR_PRESCRIPTION.CSS - IIT DHARWAD MEDICAL PORTAL
+   Prescription Management Styling
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
+
+.doctor-prescription {
+  max-width: 950px;
+  margin: 2rem auto;
+  background: #fff;
+  border-radius: 14px;
+  padding: 2.5rem;
+  box-shadow: 0 6px 24px rgba(106, 27, 111, 0.12);
+  border-left: 5px solid #6a1b6f;
+  animation: fadeSlideUp 0.5s ease-out;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   HEADINGS
+   ============================================ */
 
 .doctor-prescription h4 {
-  margin-top: 0;
-  color: #89288f;
+  color: #6a1b6f;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
+  font-weight: 700;
+  padding-bottom: 1rem;
+  border-bottom: 3px solid #ffad4a;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
 }
 
-.previous-prescriptions {
-  margin-bottom: 20px;
-  background-color: #f8f9fa;
-  padding: 15px;
-  border-radius: 5px;
+.doctor-prescription h4::before {
+  content: "💊";
+  font-size: 1.5rem;
 }
 
 .previous-prescriptions h5 {
-  margin-top: 0;
-  margin-bottom: 10px;
+  color: #6a1b6f;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* ============================================
+   ERROR MESSAGE
+   ============================================ */
+
+.error-message {
+  color: #d32f2f;
+  background: #fdecea;
+  padding: 0.8rem 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #d32f2f;
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* ============================================
+   PREVIOUS PRESCRIPTIONS SECTION
+   ============================================ */
+
+.previous-prescriptions {
+  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px solid #f0f0f0;
+  margin-bottom: 2rem;
+  transition: all 0.3s ease;
 }
 
 .checkbox-item {
   display: flex;
   align-items: center;
-  margin-bottom: 5px;
+  gap: 0.75rem;
+  margin-bottom: 0.8rem;
 }
 
 .checkbox-item input[type="checkbox"] {
-  margin-right: 10px;
+  accent-color: #6a1b6f;
+  width: 18px;
+  height: 18px;
 }
+
+.checkbox-item label {
+  font-size: 0.95rem;
+  color: #333;
+}
+
+/* ============================================
+   PRESCRIPTION FORM
+   ============================================ */
 
 .prescription-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 15px;
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
 }
 
 .prescription-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr auto;
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr) 40px;
+  gap: 1rem;
   align-items: center;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+  padding: 1rem;
+  border-radius: 10px;
+  border-left: 4px solid #89288f;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  animation: noteSlideIn 0.4s ease-out;
 }
+
+@keyframes noteSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.prescription-row:hover {
+  transform: translateX(4px);
+  box-shadow: 0 6px 16px rgba(106, 27, 111, 0.15);
+  background: linear-gradient(135deg, #fff 0%, #fafafa 100%);
+}
+
+/* ============================================
+   INPUT FIELDS
+   ============================================ */
 
 .prescription-row input {
-  width: 100%;
-  padding: 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  color: #333;
+  background: #fff;
 }
 
-.remove-btn, .add-btn, .save-btn {
-  padding: 8px 12px;
+.prescription-row input:focus {
+  outline: none;
+  border-color: #6a1b6f;
+  box-shadow: 0 0 0 3px rgba(106, 27, 111, 0.1);
+}
+
+.prescription-row input::placeholder {
+  color: #aaa;
+  font-weight: 500;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.add-btn,
+.save-btn {
+  align-self: flex-start;
+  padding: 0.85rem 2rem;
+  background: linear-gradient(135deg, #ffad4a 0%, #ff9800 100%);
+  color: #fff;
   border: none;
-  border-radius: 4px;
-  color: white;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
   cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.4px;
+  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.25);
+  text-transform: uppercase;
+}
+
+.add-btn:hover,
+.save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
+}
+
+.add-btn:active,
+.save-btn:active {
+  transform: translateY(0);
+}
+
+.add-btn:focus-visible,
+.save-btn:focus-visible {
+  outline: 2px solid #6a1b6f;
+  outline-offset: 2px;
+}
+
+/* Remove button inside each row */
+.remove-btn {
+  background: #ff5252;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  height: 38px;
+  width: 38px;
+  transition: all 0.3s ease;
+}
+
+.remove-btn:hover {
+  background: #d32f2f;
+  transform: scale(1.05);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .prescription-row {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+
+  .remove-btn {
+    width: 100%;
+  }
+
+  .add-btn,
+  .save-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .doctor-prescription {
+    padding: 1.75rem;
+    margin: 1.25rem;
+  }
+
+  .doctor-prescription h4 {
+    font-size: 1.4rem;
+  }
+
+  .prescription-row input {
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-prescription {
+    padding: 1.25rem;
+  }
+
+  .doctor-prescription h4 {
+    font-size: 1.2rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .prescription-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .add-btn,
+  .save-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+  }
+}
+
+/* ============================================
+   ANIMATIONS AND ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .doctor-prescription,
+  .prescription-row {
+    animation: none;
+    transition: none;
+  }
+}
+/* Harmonize with Appointment Page Theme */
+.doctor-prescription {
+  font-family: 'Roboto', sans-serif;
+  margin-top: 1.5rem;
+}
+
+.doctor-prescription input {
+  border-radius: 10px;
+  border: 1px solid #e2d9f3;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  width: 100%;
+  transition: 0.25s ease;
+}
+
+.doctor-prescription input:focus {
+  border-color: #6c1b85;
+  box-shadow: 0 0 8px rgba(108, 27, 133, 0.2);
+}
+
+.prescription-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)) auto;
+  gap: 0.6rem;
+  margin-bottom: 0.8rem;
+}
+
+.add-btn,
+.save-btn {
+  background: linear-gradient(135deg, #c08b30, #f0a607);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.add-btn:hover,
+.save-btn:hover {
+  background: linear-gradient(135deg, #5b1572, #912fa5);
+  box-shadow: 0 4px 15px rgba(108, 27, 133, 0.3);
 }
 
 .remove-btn {
-  background-color: #dc3545;
+  background: linear-gradient(135deg, #dc3545, #ff7675);
+  border: none;
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+  cursor: pointer;
 }
 
-.add-btn {
-  background-color: #28a745;
-  align-self: flex-start;
-}
-
-.save-btn {
-  background-color: #89288f;
-  font-size: 1rem;
-  padding: 10px 15px;
+.remove-btn:hover {
+  transform: scale(1.05);
 }

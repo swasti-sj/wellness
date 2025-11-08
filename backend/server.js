@@ -18,10 +18,13 @@ const trialreadRoutes = require("./routes/trialread");
 const noteRoutes = require("./routes/notes");
 const prescriptionRoutes = require("./routes/prescriptions");
 const referralRoutes = require("./routes/referrals");
+const dashboardRoutes = require('./routes/dashboardRoutes');
+
 
 // Middleware
 console.log("⚙️ Setting up middleware...");
 app.use(cors());
+app.use('/api', dashboardRoutes);
 app.use(express.json());
 app.use(
   session({
