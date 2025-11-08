@@ -187,12 +187,92 @@
   box-shadow: 0 3px 12px rgba(124, 50, 162, 0.15);
 }
 
-/* Timestamp */
-.timestamp {
-  font-size: 0.85rem;
-  color: #777;
+/* -------------------
+   Unread Highlight
+-------------------- */
+.referral-card-item {
+  background: #f9fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.8rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
+.referral-card-item:hover {
+  background: #f1f5fb;
+  transform: translateY(-2px);
+}
+
+.referral-card-item.unread {
+  background: #e8f0ff;
+  border-color: #012970;
+  box-shadow: 0 0 8px rgba(1, 41, 112, 0.2);
+}
+
+.referral-card-item.unread p:first-child::before {
+  content: "🆕 ";
+}
+
+.timestamp {
+  display: block;
+  text-align: right;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.referral-card {
+  padding: 1rem 1.2rem;
+  border-radius: 15px;
+  border: 1px solid #e4e6ef;
+  background: #fafbff;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.referral-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(1, 41, 112, 0.15);
+}
+
+.referral-card.unread {
+  border-left: 6px solid #28a745;
+  background: #e8f9f0;
+}
+
+.referral-card h4 {
+  color: #012970;
+  margin-bottom: 0.3rem;
+}
+
+.referral-card p {
+  margin: 0.2rem 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.referral-date {
+  display: block;
+  font-size: 0.85rem;
+  color: #555;
+  margin-top: 0.5rem;
+  text-align: right;
+}
+
+.no-referrals {
+  text-align: center;
+  color: #555;
+  font-style: italic;
+  margin-top: 1rem;
+}
+
+.loading {
+  text-align: center;
+  font-weight: 500;
+  color: #012970;
+  margin-top: 2rem;
+}
 /* Responsive Breakpoints */
 @media (max-width: 992px) {
   .referral-container {
