@@ -115,4 +115,20 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Update doctor profile
+router.post('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { name, specialization, phone, weeklySlots } = req.body;
+    // You may want to validate weeklySlots structure here if allowing updates
+
+    const doctor = await Doctor.findByIdAndUpdate(
+      req.user.id,
+      { name, specialization, phone, weeklySlots },
+      { new: true }
+    );
+    res.json(doctor);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update doctor profile' });
+  }
+});
 module.exports = router;
