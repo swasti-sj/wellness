@@ -18,6 +18,8 @@ const trialreadRoutes = require("./routes/trialread");
 const noteRoutes = require("./routes/notes");
 const prescriptionRoutes = require("./routes/prescriptions");
 const referralRoutes = require("./routes/referrals");
+const vitalsRoutes = require("./routes/vitals");
+const testRoutes = require("./routes/tests");
 const dashboardRoutes = require('./routes/dashboardRoutes');
 
 
@@ -26,6 +28,13 @@ console.log("⚙️ Setting up middleware...");
 app.use(cors());
 app.use('/api', dashboardRoutes);
 app.use(express.json());
+
+// Serve uploaded files statically
+app.use('/uploads', express.static('backend/uploads'));
+
+// Enable JSON parsing for form data
+app.use(express.urlencoded({ extended: true }));
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "my_secret_key",
@@ -225,6 +234,8 @@ app.use("/api/trialread", trialreadRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/referrals", referralRoutes);
+app.use("/api/vitals", vitalsRoutes);
+app.use("/api/tests", testRoutes);
 const PORT = process.env.PORT || 5000;
 app.get("/config", (req, res) => {
   // Return a sensible default when LOCALHOST_URL isn't set so frontend

@@ -1,0 +1,121 @@
+.hospital-referral {
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-top: 15px;
+}
+
+.hospital-referral h4 {
+  margin-bottom: 15px;
+  color: #012970;
+}
+
+.refer-option {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: white;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.refer-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin: 0;
+}
+
+.refer-label input[type="checkbox"] {
+  margin-right: 10px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.refer-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+}
+
+.referral-fields {
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input[type="text"],
+.form-group textarea {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-group input[type="text"]:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #012970;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  margin-right: 8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+.save-referral-btn {
+  margin-top: 15px;
+  padding: 10px 20px;
+  background: #012970;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.2s;
+}
+
+.save-referral-btn:hover {
+  background: #011954;
+}
+
+.save-confirmation {
+  margin-left: 10px;
+  color: #28a745;
+  font-weight: 600;
+}
+
+.error-message {
+  color: #dc3545;
+  padding: 8px;
+  background: #f8d7da;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}

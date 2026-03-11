@@ -1,0 +1,63 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
+function CertificateSummary({ appointmentId }) {
+  const [certificate, setCertificate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      if (!appointmentId) return;
+      
+      try {
+        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+          params: { token }
+        });
+        
+        if (res.data.certificate) {
+          setCertificate(res.data.certificate);
+        }
+      } catch (err) {
+        console.error('Error fetching certificate:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCertificate();
+  }, [appointmentId, token]);
+
+  if (isLoading) return null;
+  
+  if (!certificate || !certificate.issued) {
+    return (
+      <div className="certificate-summary">
+        <div className="summary-header">
+          <h4>Medical Certificate</h4>
+        </div>
+        <p className="no-data">No certificate issued</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="certificate-summary">
+      <div className="summary-header">
+        <h4>Medical Certificate</h4>
+      </div>
+      
+      <div className="certificate-details">
+        <p><strong>Clinical Details:</strong> {certificate.clinicalDetails || 'N/A'}</p>
+        {certificate.imageUrl && (
+          <div className="certificate-image">
+            <img src={certificate.imageUrl} alt="Medical Certificate" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default CertificateSummary;

@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate, useLocation } from "react-router-dom";
 import DoctorNote from "./DoctorNote";
 import DoctorPrescription from "./DoctorPrescription";
+import DoctorVitals from "./DoctorVitals";
+import DoctorHospitalReferral from "./DoctorHospitalReferral";
+import DoctorCertificate from "./DoctorCertificate";
+import SelectedTestsSummary from "./SelectedTestsSummary";
+import HospitalReferralSummary from "./HospitalReferralSummary";
+import CertificateSummary from "./CertificateSummary";
 import "../../styles/doctor/PatientHistory.css";
-import { useLocation } from "react-router-dom";
 import Fuse from "fuse.js"; // 🔹 added for fuzzy search
 
 export default function PatientHistory({ apiBaseUrl }) {
@@ -15,6 +21,7 @@ export default function PatientHistory({ apiBaseUrl }) {
   const [error, setError] = useState("");
   const token = localStorage.getItem("token");
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [query, setQuery] = useState(location.state?.query || "");
   const [doctors, setDoctors] = useState([]);
@@ -255,6 +262,24 @@ export default function PatientHistory({ apiBaseUrl }) {
                             <DoctorPrescription
                               appointmentId={a._id}
                               patientId={a.user?._id}
+                            />
+                            <DoctorVitals
+                              appointmentId={a._id}
+                              patientId={a.user?._id}
+                              apiBaseUrl={apiBaseUrl}
+                            />
+                            {/* Test Summary Section - displays tests like in appointment */}
+                            <SelectedTestsSummary 
+                              appointmentId={a._id}
+                              onEditClick={() => navigate(`/docdashboard/test-page?appointmentId=${a._id}&patientId=${a.user?._id}&returnUrl=/docdashboard/history`)}
+                            />
+                            {/* Hospital Referral Summary Section - displays referral data */}
+                            <HospitalReferralSummary 
+                              appointmentId={a._id}
+                            />
+                            {/* Certificate Summary Section - displays certificate data */}
+                            <CertificateSummary 
+                              appointmentId={a._id}
                             />
                           </div>
                         </div>

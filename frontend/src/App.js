@@ -24,6 +24,7 @@ import DoctorProfilePage from "./pages/doctor/DoctorProfilePage";
 import DoctorAppointment from "./pages/doctor/DoctorAppointment";
 import DoctorNavbar from "./pages/doctor/DoctorNavbar";
 import VisitHistory from "./pages/patient/VisitHistory";
+import TestPage from "./pages/doctor/TestPage";
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
   console.log("🛠️ Rendering LayoutWithNavbar");
@@ -182,9 +183,13 @@ function App() {
             path="doctor-profile"
             element={<DoctorProfilePage apiBaseUrl={apiBaseUrl} />}
           />
-          <Route
+<Route
             path="history"
             element={<PatientHistory apiBaseUrl={apiBaseUrl} />}
+          />
+          <Route
+            path="test-page"
+            element={<TestPage apiBaseUrl={apiBaseUrl} />}
           />
         </Route>
         {/* Doctor onboarding without navbar */}

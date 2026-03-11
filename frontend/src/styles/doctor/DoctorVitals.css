@@ -1,0 +1,190 @@
+/* Main Container */
+.doctor-vitals {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  margin: 15px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e0e0e0;
+}
+
+/* Header */
+.case-header {
+  text-align: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #012970;
+}
+
+.case-header h2 {
+  color: #012970;
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 1px;
+}
+
+.badge {
+  display: inline-block;
+  background: #28a745;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+/* Section Headers */
+.section {
+  margin-top: 25px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.section h4 {
+  color: #012970;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0 0 15px 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* Form Grid */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+/* Form Groups */
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 13px;
+  color: #495057;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fff;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #012970;
+  box-shadow: 0 0 0 3px rgba(1, 41, 112, 0.1);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+  color: #adb5bd;
+}
+
+/* Vitals Input Grid */
+.vitals-input-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+/* Textarea */
+textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+/* Save Button */
+.save-btn {
+  background: #012970;
+  color: #fff;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.save-btn:hover {
+  background: #011b55;
+  transform: translateY(-1px);
+}
+
+.save-btn:active {
+  transform: translateY(0);
+}
+
+.save-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Messages */
+.success-message {
+  color: #28a745;
+  background: #d4edda;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+.error-message {
+  color: #dc3545;
+  background: #f8d7da;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 15px;
+  font-size: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-group[style*="grid-column"] {
+    grid-column: span 1 !important;
+  }
+  
+  .vitals-input-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .doctor-vitals {
+    padding: 15px;
+  }
+  
+  .vitals-input-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .section {
+    padding: 10px;
+  }
+  
+  .save-btn {
+    width: 100%;
+  }
+}

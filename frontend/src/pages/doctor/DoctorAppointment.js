@@ -8,6 +8,13 @@ import "react-big-calendar/lib/css/react-big-calendar.css";
 import "../../styles/doctor/DoctorAppointment.css";
 import DoctorNote from "./DoctorNote";
 import DoctorPrescription from "./DoctorPrescription";
+import DoctorVitals from "./DoctorVitals";
+import DoctorTests from "./DoctorTests";
+import DoctorHospitalReferral from "./DoctorHospitalReferral";
+import DoctorCertificate from "./DoctorCertificate";
+import SelectedTestsSummary from "./SelectedTestsSummary";
+import HospitalReferralSummary from "./HospitalReferralSummary";
+import CertificateSummary from "./CertificateSummary";
 import CustomToolbar from "./CustomToolbar";
 
 const localizer = momentLocalizer(moment);
@@ -255,10 +262,25 @@ export default function DoctorAppointment({ apiBaseUrl }) {
               </div>
 
               <hr />
+              <DoctorVitals 
+                appointmentId={selectedEvent.id} 
+                patientId={selectedEvent.patient?._id}
+                apiBaseUrl={apiBaseUrl}
+              />
               <DoctorNote appointmentId={selectedEvent.id} />
               <DoctorPrescription
                 appointmentId={selectedEvent.id}
                 patientId={selectedEvent.patient?._id}
+              />
+              <SelectedTestsSummary 
+                appointmentId={selectedEvent.id}
+                onEditClick={() => navigate(`/docdashboard/test-page?appointmentId=${selectedEvent.id}&patientId=${selectedEvent.patient?._id}&returnUrl=/docdashboard/doctor-appointment`)}
+              />
+              <DoctorHospitalReferral 
+                appointmentId={selectedEvent.id}
+              />
+              <DoctorCertificate 
+                appointmentId={selectedEvent.id}
               />
             </div>
           </div>
