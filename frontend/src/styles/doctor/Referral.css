@@ -9,7 +9,7 @@
   max-width: 95%;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
   z-index: 1000;
   animation: fadeIn 0.3s ease-in-out;
 }
@@ -65,7 +65,7 @@
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: -1;
 }
 
@@ -99,6 +99,33 @@
 
 /* Animation */
 @keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -45%); }
-  to { opacity: 1; transform: translate(-50%, -50%); }
+  from {
+    opacity: 0;
+    transform: translate(-50%, -45%);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@media (max-width: 540px) {
+  .referral-modal {
+    width: 95%;
+    padding: 16px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  .referral-modal button {
+    display: block;
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 8px;
+  }
+
+  .referral-modal button:last-child {
+    margin-bottom: 0;
+  }
 }

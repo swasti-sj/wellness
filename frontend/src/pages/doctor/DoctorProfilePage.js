@@ -26,7 +26,7 @@ function DoctorProfilePage({ apiBaseUrl }) {
         console.error('Error fetching doctor profile:', err);
         setError(
           'Failed to load profile. ' +
-            (err.response?.data?.error || 'Please try again later.')
+          (err.response?.data?.error || 'Please try again later.')
         );
         setProfile(null);
       }

@@ -8,7 +8,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [existingVitalId, setExistingVitalId] = useState(null);
-  const [isViewMode, setIsViewMode] = useState(false);
+  const [openSection, setOpenSection] = useState(null);
 
   const [formData, setFormData] = useState({
     department: "",
@@ -24,7 +24,6 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
     investigations: "",
     treatmentAdvice: "",
     followUpDate: "",
-
     bloodPressureSystolic: "",
     bloodPressureDiastolic: "",
     weight: "",
@@ -36,423 +35,252 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
     notes: "",
   });
 
-  // ----------------------------
-  // HANDLE INPUT CHANGE
-  // ----------------------------
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // ----------------------------
-  // FETCH EXISTING VITALS
-  // ----------------------------
+  const toggleSection = (key) =>
+    setOpenSection((prev) => (prev === key ? null : key));
+
   useEffect(() => {
     const fetchVitals = async () => {
       if (!apiBaseUrl || !appointmentId) return;
-      
       try {
-        const res = await axios.get(
-          `${apiBaseUrl}/vitals/${appointmentId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
+        const res = await axios.get(`${apiBaseUrl}/vitals/${appointmentId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         if (res.data.vital) {
-          const vital = res.data.vital;
-          setExistingVitalId(vital._id);
-
+          const v = res.data.vital;
+          setExistingVitalId(v._id);
           setFormData({
-            department: vital.department || "",
-            uhid: vital.uhid || "",
-            tokenNumber: vital.tokenNumber || "",
-            bloodGroup: vital.bloodGroup || "",
-            time: vital.time || "",
-            pastMedicalHistory: vital.pastMedicalHistory || "",
-            medicalAllergy: vital.medicalAllergy || "",
-            chiefComplaints: vital.chiefComplaints || "",
-            systemicExamination: vital.systemicExamination || "",
-            generalPhysicalExamination: vital.generalPhysicalExamination || "",
-            investigations: vital.investigations || "",
-            treatmentAdvice: vital.treatmentAdvice || "",
-            followUpDate: vital.followUpDate
-              ? vital.followUpDate.split("T")[0]
-              : "",
-
-            bloodPressureSystolic: vital.bloodPressureSystolic || "",
-            bloodPressureDiastolic: vital.bloodPressureDiastolic || "",
-            weight: vital.weight || "",
-            height: vital.height || "",
-            temperature: vital.temperature || "",
-            pulse: vital.pulse || "",
-            respiratoryRate: vital.respiratoryRate || "",
-            spO2: vital.spO2 || "",
-            notes: vital.notes || "",
+            department: v.department || "",
+            uhid: v.uhid || "",
+            tokenNumber: v.tokenNumber || "",
+            bloodGroup: v.bloodGroup || "",
+            time: v.time || "",
+            pastMedicalHistory: v.pastMedicalHistory || "",
+            medicalAllergy: v.medicalAllergy || "",
+            chiefComplaints: v.chiefComplaints || "",
+            systemicExamination: v.systemicExamination || "",
+            generalPhysicalExamination: v.generalPhysicalExamination || "",
+            investigations: v.investigations || "",
+            treatmentAdvice: v.treatmentAdvice || "",
+            followUpDate: v.followUpDate ? v.followUpDate.split("T")[0] : "",
+            bloodPressureSystolic: v.bloodPressureSystolic || "",
+            bloodPressureDiastolic: v.bloodPressureDiastolic || "",
+            weight: v.weight || "",
+            height: v.height || "",
+            temperature: v.temperature || "",
+            pulse: v.pulse || "",
+            respiratoryRate: v.respiratoryRate || "",
+            spO2: v.spO2 || "",
+            notes: v.notes || "",
           });
-          
-          // If there's existing data, show view mode
-          setIsViewMode(true);
         }
       } catch (err) {
         console.log("No previous vitals found.");
-        setIsViewMode(false);
       }
     };
-
-    if (appointmentId) {
-      fetchVitals();
-    }
+    if (appointmentId) fetchVitals();
   }, [appointmentId, token, apiBaseUrl]);
 
-  // ----------------------------
-  // SAVE VITALS
-  // ----------------------------
   const handleSaveVitals = async () => {
     try {
       setLoading(true);
       setMessage("");
-
-      const payload = {
-        appointmentId,
-        patientId,
-        ...formData,
-      };
-
       const res = await axios.post(
         `${apiBaseUrl}/vitals/save`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { appointmentId, patientId, ...formData },
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (res.data.success) {
         setMessage("✅ Case sheet saved successfully!");
-        setIsViewMode(true);
+        setExistingVitalId(res.data.vital?._id || existingVitalId);
       }
-
       setLoading(false);
     } catch (err) {
-      console.error(err.response?.data || err.message);
-      setMessage(
-        err.response?.data?.error || "❌ Failed to save case sheet."
-      );
+      setMessage(err.response?.data?.error || "❌ Failed to save case sheet.");
       setLoading(false);
     }
   };
 
-  // ----------------------------
-  // CALCULATE BMI
-  // ----------------------------
   const calculateBMI = () => {
     const weight = parseFloat(formData.weight);
     const height = parseFloat(formData.height);
     if (weight && height) {
-      const heightInMeters = height / 100;
-      const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(2);
-      return bmi;
+      const h = height / 100;
+      return (weight / (h * h)).toFixed(1);
     }
-    return "--";
+    return "—";
+  };
+
+  // Reusable accordion section wrapper
+  const AccSection = ({ id, icon, title, subtitle, children }) => {
+    const isOpen = openSection === id;
+    return (
+      <div className="acc-section">
+        <button
+          type="button"
+          className={`acc-toggle${isOpen ? " open" : ""}`}
+          onClick={() => toggleSection(id)}
+        >
+          <div className="acc-toggle-left">
+            <span className="acc-icon">{icon}</span>
+            <div>
+              <div className="acc-title">{title}</div>
+              {subtitle && <div className="acc-subtitle">{subtitle}</div>}
+            </div>
+          </div>
+          <span className="acc-chevron">▼</span>
+        </button>
+        <div className={`acc-body${isOpen ? " open" : ""}`}>
+          {children}
+        </div>
+      </div>
+    );
   };
 
   return (
     <div className="doctor-vitals">
-      {/* Header */}
-      <div className="case-header">
-        <h2>CASE SHEET</h2>
-        {existingVitalId && <span className="badge">Saved</span>}
+      {/* ── Case Sheet Title ── */}
+      <div className="case-sheet-title">
+        CASE SHEET
+        {existingVitalId && <span className="saved-badge">✓ Saved</span>}
       </div>
 
-      {/* BASIC DETAILS SECTION */}
-      <div className="section">
-        <h4>📋 Basic Details</h4>
-        <div className="form-grid">
-          <div className="form-group">
-            <label>Department *</label>
-            <input
-              type="text"
-              name="department"
-              value={formData.department}
-              onChange={handleInputChange}
-              placeholder="Enter department"
-            />
+      {/* ── 1. Basic Details ── */}
+      <AccSection id="basic" icon="📋" title="Basic Details" subtitle="Department, UHID, blood group, time">
+        <div className="fg2">
+          <div className="ff">
+            <label>Department <span className="req">*</span></label>
+            <input type="text" name="department" value={formData.department} onChange={handleInputChange} placeholder="Enter department" />
           </div>
-          <div className="form-group">
+          <div className="ff">
             <label>UHID</label>
-            <input
-              type="text"
-              name="uhid"
-              value={formData.uhid}
-              onChange={handleInputChange}
-              placeholder="Unique Hospital ID"
-            />
+            <input type="text" name="uhid" value={formData.uhid} onChange={handleInputChange} placeholder="Unique Hospital ID" />
           </div>
-          <div className="form-group">
+          <div className="ff">
             <label>Token Number</label>
-            <input
-              type="text"
-              name="tokenNumber"
-              value={formData.tokenNumber}
-              onChange={handleInputChange}
-              placeholder="Token No"
-            />
+            <input type="text" name="tokenNumber" value={formData.tokenNumber} onChange={handleInputChange} placeholder="Token No" />
           </div>
-          <div className="form-group">
+          <div className="ff">
             <label>Blood Group</label>
-            <select
-              name="bloodGroup"
-              value={formData.bloodGroup}
-              onChange={handleInputChange}
-            >
+            <select name="bloodGroup" value={formData.bloodGroup} onChange={handleInputChange}>
               <option value="">Select Blood Group</option>
-              <option value="A+">A+</option>
-              <option value="A-">A-</option>
-              <option value="B+">B+</option>
-              <option value="B-">B-</option>
-              <option value="AB+">AB+</option>
-              <option value="AB-">AB-</option>
-              <option value="O+">O+</option>
-              <option value="O-">O-</option>
+              <option>A+</option><option>A-</option>
+              <option>B+</option><option>B-</option>
+              <option>AB+</option><option>AB-</option>
+              <option>O+</option><option>O-</option>
             </select>
           </div>
-          <div className="form-group">
+          <div className="ff">
             <label>Time</label>
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleInputChange}
-            />
+            <input type="time" name="time" value={formData.time} onChange={handleInputChange} />
           </div>
         </div>
-      </div>
+      </AccSection>
 
-      {/* MEDICAL HISTORY SECTION */}
-      <div className="section">
-        <h4>🏥 Medical History</h4>
-        <div className="form-grid">
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+      {/* ── 2. Medical History ── */}
+      <AccSection id="history" icon="🏥" title="Medical History" subtitle="Past illnesses, allergies, chief complaints">
+        <div className="fg1">
+          <div className="ff">
             <label>Past Medical History</label>
-            <textarea
-              name="pastMedicalHistory"
-              value={formData.pastMedicalHistory}
-              onChange={handleInputChange}
-              placeholder="Any chronic illnesses, surgeries, etc."
-              rows="2"
-            />
+            <textarea name="pastMedicalHistory" value={formData.pastMedicalHistory} onChange={handleInputChange} placeholder="Any chronic illnesses, surgeries, etc." rows={2} />
           </div>
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+          <div className="ff">
             <label>Medical Allergy</label>
-            <textarea
-              name="medicalAllergy"
-              value={formData.medicalAllergy}
-              onChange={handleInputChange}
-              placeholder="Drug allergies (Yes/No, If Yes specify)"
-              rows="2"
-            />
+            <textarea name="medicalAllergy" value={formData.medicalAllergy} onChange={handleInputChange} placeholder="Drug allergies (Yes/No, If Yes specify)" rows={2} />
           </div>
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
-            <label>Chief Complaints with Duration *</label>
-            <textarea
-              name="chiefComplaints"
-              value={formData.chiefComplaints}
-              onChange={handleInputChange}
-              placeholder="Main symptoms and how long"
-              rows="2"
-            />
+          <div className="ff">
+            <label>Chief Complaints with Duration <span className="req">*</span></label>
+            <textarea name="chiefComplaints" value={formData.chiefComplaints} onChange={handleInputChange} placeholder="Main symptoms and how long" rows={2} />
           </div>
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+          <div className="ff">
             <label>Systemic Examination</label>
-            <textarea
-              name="systemicExamination"
-              value={formData.systemicExamination}
-              onChange={handleInputChange}
-              placeholder="Cardiovascular, Respiratory, Abdomen, etc."
-              rows="2"
-            />
+            <textarea name="systemicExamination" value={formData.systemicExamination} onChange={handleInputChange} placeholder="Cardiovascular, Respiratory, Abdomen, etc." rows={2} />
           </div>
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+          <div className="ff">
             <label>General Physical Examination</label>
-            <textarea
-              name="generalPhysicalExamination"
-              value={formData.generalPhysicalExamination}
-              onChange={handleInputChange}
-              placeholder="General appearance, pallor, jaundice, lymph nodes, etc."
-              rows="2"
-            />
+            <textarea name="generalPhysicalExamination" value={formData.generalPhysicalExamination} onChange={handleInputChange} placeholder="General appearance, pallor, jaundice, lymph nodes, etc." rows={2} />
           </div>
         </div>
-      </div>
+      </AccSection>
 
-      {/* VITALS SECTION */}
-      <div className="section">
-        <h4>💓 Vital Signs</h4>
-        <div className="vitals-input-grid">
-          <div className="form-group">
-            <label>BP Systolic (mmHg)</label>
-            <input
-              type="number"
-              name="bloodPressureSystolic"
-              value={formData.bloodPressureSystolic}
-              onChange={handleInputChange}
-              placeholder="120"
-            />
+      {/* ── 3. Vital Signs ── */}
+      <AccSection id="vitals" icon="💓" title="Vital Signs" subtitle="BP, pulse, temperature, SpO₂, weight, height">
+        <div className="fg3">
+          <div className="ff">
+            <label>BP Systolic</label>
+            <div className="input-addon"><input type="number" name="bloodPressureSystolic" value={formData.bloodPressureSystolic} onChange={handleInputChange} placeholder="120" /><span>mmHg</span></div>
           </div>
-          <div className="form-group">
-            <label>BP Diastolic (mmHg)</label>
-            <input
-              type="number"
-              name="bloodPressureDiastolic"
-              value={formData.bloodPressureDiastolic}
-              onChange={handleInputChange}
-              placeholder="80"
-            />
+          <div className="ff">
+            <label>BP Diastolic</label>
+            <div className="input-addon"><input type="number" name="bloodPressureDiastolic" value={formData.bloodPressureDiastolic} onChange={handleInputChange} placeholder="80" /><span>mmHg</span></div>
           </div>
-          <div className="form-group">
-            <label>Pulse Rate (bpm)</label>
-            <input
-              type="number"
-              name="pulse"
-              value={formData.pulse}
-              onChange={handleInputChange}
-              placeholder="72"
-            />
+          <div className="ff">
+            <label>Pulse Rate</label>
+            <div className="input-addon"><input type="number" name="pulse" value={formData.pulse} onChange={handleInputChange} placeholder="72" /><span>bpm</span></div>
           </div>
-          <div className="form-group">
-            <label>Temperature (°F)</label>
-            <input
-              type="number"
-              step="0.1"
-              name="temperature"
-              value={formData.temperature}
-              onChange={handleInputChange}
-              placeholder="98.6"
-            />
+          <div className="ff">
+            <label>Temperature</label>
+            <div className="input-addon"><input type="number" step="0.1" name="temperature" value={formData.temperature} onChange={handleInputChange} placeholder="98.6" /><span>°F</span></div>
           </div>
-          <div className="form-group">
-            <label>Respiratory Rate (/min)</label>
-            <input
-              type="number"
-              name="respiratoryRate"
-              value={formData.respiratoryRate}
-              onChange={handleInputChange}
-              placeholder="16"
-            />
+          <div className="ff">
+            <label>Respiratory Rate</label>
+            <div className="input-addon"><input type="number" name="respiratoryRate" value={formData.respiratoryRate} onChange={handleInputChange} placeholder="16" /><span>/min</span></div>
           </div>
-          <div className="form-group">
-            <label>SpO2 (%)</label>
-            <input
-              type="number"
-              name="spO2"
-              value={formData.spO2}
-              onChange={handleInputChange}
-              placeholder="98"
-            />
+          <div className="ff">
+            <label>SpO₂</label>
+            <div className="input-addon"><input type="number" name="spO2" value={formData.spO2} onChange={handleInputChange} placeholder="98" /><span>%</span></div>
           </div>
-          <div className="form-group">
-            <label>Weight (kg)</label>
-            <input
-              type="number"
-              step="0.1"
-              name="weight"
-              value={formData.weight}
-              onChange={handleInputChange}
-              placeholder="70"
-            />
+          <div className="ff">
+            <label>Weight</label>
+            <div className="input-addon"><input type="number" step="0.1" name="weight" value={formData.weight} onChange={handleInputChange} placeholder="70" /><span>kg</span></div>
           </div>
-          <div className="form-group">
-            <label>Height (cm)</label>
-            <input
-              type="number"
-              name="height"
-              value={formData.height}
-              onChange={handleInputChange}
-              placeholder="170"
-            />
+          <div className="ff">
+            <label>Height</label>
+            <div className="input-addon"><input type="number" name="height" value={formData.height} onChange={handleInputChange} placeholder="170" /><span>cm</span></div>
           </div>
-          <div className="form-group">
-            <label>BMI (Auto-calculated)</label>
-            <input
-              type="text"
-              value={calculateBMI()}
-              readOnly
-              placeholder="--"
-              style={{ backgroundColor: "#f8f9fa" }}
-            />
+          <div className="ff">
+            <label>BMI (auto)</label>
+            <div className="input-addon readonly"><input type="text" value={calculateBMI()} readOnly placeholder="—" /><span>kg/m²</span></div>
           </div>
         </div>
-      </div>
+      </AccSection>
 
-      {/* INVESTIGATION & TREATMENT SECTION */}
-      <div className="section">
-        <h4>🔬 Investigations & Treatment</h4>
-        <div className="form-grid">
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+      {/* ── 4. Investigations & Treatment ── */}
+      <AccSection id="investigations" icon="🔬" title="Investigations & Treatment" subtitle="Lab tests, treatment advice, follow-up date">
+        <div className="fg1">
+          <div className="ff">
             <label>Investigations</label>
-            <textarea
-              name="investigations"
-              value={formData.investigations}
-              onChange={handleInputChange}
-              placeholder="Lab tests, X-rays, scans recommended"
-              rows="2"
-            />
+            <textarea name="investigations" value={formData.investigations} onChange={handleInputChange} placeholder="Lab tests, X-rays, scans recommended" rows={2} />
           </div>
-          <div className="form-group" style={{ gridColumn: "span 2" }}>
+          <div className="ff">
             <label>Treatment / Advice</label>
-            <textarea
-              name="treatmentAdvice"
-              value={formData.treatmentAdvice}
-              onChange={handleInputChange}
-              placeholder="Medications, diet, rest, follow-up instructions"
-              rows="2"
-            />
+            <textarea name="treatmentAdvice" value={formData.treatmentAdvice} onChange={handleInputChange} placeholder="Medications, diet, rest, follow-up instructions" rows={2} />
           </div>
-          <div className="form-group">
+          <div className="ff follow-date">
             <label>Follow-up Date</label>
-            <input
-              type="date"
-              name="followUpDate"
-              value={formData.followUpDate}
-              onChange={handleInputChange}
-            />
+            <input type="date" name="followUpDate" value={formData.followUpDate} onChange={handleInputChange} />
           </div>
         </div>
-      </div>
+      </AccSection>
 
-      {/* NOTES SECTION */}
-      <div className="section">
-        <h4>📝 Additional Notes</h4>
-        <div className="form-group">
-          <textarea
-            name="notes"
-            value={formData.notes}
-            onChange={handleInputChange}
-            placeholder="Any additional observations or instructions"
-            rows="2"
-          />
+      {/* ── 5. Additional Notes ── */}
+      <AccSection id="notes" icon="📝" title="Additional Notes" subtitle="Any extra observations or instructions">
+        <div className="ff">
+          <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Any additional observations or instructions" rows={3} />
         </div>
-      </div>
+      </AccSection>
 
-      {/* SAVE BUTTON */}
-      <div className="section" style={{ marginTop: "20px" }}>
-        <button
-          className="save-btn"
-          onClick={handleSaveVitals}
-          disabled={loading}
-        >
-          {loading ? "Saving..." : existingVitalId ? "🔄 Update Case Sheet" : "💾 Save Case Sheet"}
+      {/* ── Save Button ── */}
+      <div className="vitals-save-row">
+        <button className="save-case-btn" onClick={handleSaveVitals} disabled={loading}>
+          {loading ? "Saving…" : existingVitalId ? "🔄 Update Case Sheet" : "💾 Save Case Sheet"}
         </button>
-
         {message && (
-          <p style={{ marginTop: "10px", fontWeight: "500" }}>{message}</p>
+          <p className={message.startsWith("✅") ? "msg-success" : "msg-error"}>{message}</p>
         )}
       </div>
     </div>

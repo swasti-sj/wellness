@@ -14,47 +14,47 @@ export default function DoctorDashboard() {
   const [ageData, setAgeData] = useState([]);
   const [statusData, setStatusData] = useState([]);
   const [loading, setLoading] = useState(true);
-useEffect(() => {
-  // 🧪 MOCK DATA — Use this until your backend is ready
-  const mockData = {
-    sexStats: [
-      { _id: "Male", count: 45 },
-      { _id: "Female", count: 55 },
-    ],
-    weeklyStats: [
-      { week: "Week 1", count: 15 },
-      { week: "Week 2", count: 25 },
-      { week: "Week 3", count: 18 },
-      { week: "Week 4", count: 30 },
-    ],
-    monthlyStats: [
-      { month: "Jan", patients: 80 },
-      { month: "Feb", patients: 95 },
-      { month: "Mar", patients: 110 },
-      { month: "Apr", patients: 130 },
-    ],
-    ageStats: [
-      { range: "0-18", count: 10 },
-      { range: "19-35", count: 45 },
-      { range: "36-50", count: 30 },
-      { range: "51+", count: 15 },
-    ],
-    statusStats: [
-      { _id: "Completed", count: 60 },
-      { _id: "Pending", count: 25 },
-      { _id: "Cancelled", count: 15 },
-    ],
-  };
+  useEffect(() => {
+    // 🧪 MOCK DATA — Use this until your backend is ready
+    const mockData = {
+      sexStats: [
+        { _id: "Male", count: 45 },
+        { _id: "Female", count: 55 },
+      ],
+      weeklyStats: [
+        { week: "Week 1", count: 15 },
+        { week: "Week 2", count: 25 },
+        { week: "Week 3", count: 18 },
+        { week: "Week 4", count: 30 },
+      ],
+      monthlyStats: [
+        { month: "Jan", patients: 80 },
+        { month: "Feb", patients: 95 },
+        { month: "Mar", patients: 110 },
+        { month: "Apr", patients: 130 },
+      ],
+      ageStats: [
+        { range: "0-18", count: 10 },
+        { range: "19-35", count: 45 },
+        { range: "36-50", count: 30 },
+        { range: "51+", count: 15 },
+      ],
+      statusStats: [
+        { _id: "Completed", count: 60 },
+        { _id: "Pending", count: 25 },
+        { _id: "Cancelled", count: 15 },
+      ],
+    };
 
-  // 🧩 Format each dataset for Recharts
-  setSexData(mockData.sexStats.map((i) => ({ name: i._id, value: i.count })));
-  setWeeklyData(mockData.weeklyStats.map((i) => ({ week: i.week, patients: i.count })));
-  setMonthlyData(mockData.monthlyStats.map((i) => ({ month: i.month, patients: i.patients })));
-  setAgeData(mockData.ageStats.map((i) => ({ range: i.range, count: i.count })));
-  setStatusData(mockData.statusStats.map((i) => ({ name: i._id, value: i.count })));
+    // 🧩 Format each dataset for Recharts
+    setSexData(mockData.sexStats.map((i) => ({ name: i._id, value: i.count })));
+    setWeeklyData(mockData.weeklyStats.map((i) => ({ week: i.week, patients: i.count })));
+    setMonthlyData(mockData.monthlyStats.map((i) => ({ month: i.month, patients: i.patients })));
+    setAgeData(mockData.ageStats.map((i) => ({ range: i.range, count: i.count })));
+    setStatusData(mockData.statusStats.map((i) => ({ name: i._id, value: i.count })));
 
-  setLoading(false);
-}, []);
+    setLoading(false);
+  }, []);
 
   // useEffect(() => {
   //   axios

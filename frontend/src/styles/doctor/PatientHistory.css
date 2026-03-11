@@ -1,8 +1,10 @@
 /* --- Container below navbar --- */
 .patient-history-container {
-  padding: 6rem 2rem 2rem; /* space below navbar */
+  padding: 6rem 2rem 2rem;
+  /* space below navbar */
   min-height: 100vh;
-  background-color: #f9f9ff; /* soft background */
+  background-color: #f9f9ff;
+  /* soft background */
   font-family: "Poppins", sans-serif;
   width: 100%;
 }
@@ -195,6 +197,7 @@
     opacity: 0;
     transform: translateY(-5px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -215,30 +218,36 @@
     grid-template-columns: 1fr;
   }
 }
+
 /* --- Fix overflow in Note & Prescription boxes --- */
-.expand-columns > * {
+.expand-columns>* {
   background-color: #fdfcff;
   border: 1px solid #e3ddff;
   border-radius: 12px;
   padding: 1rem;
   box-sizing: border-box;
-  overflow-wrap: break-word; /* ensures long text wraps */
-  word-break: break-word;    /* prevents overflow for long words */
-  white-space: normal;       /* allows text to wrap properly */
-  max-height: 400px;         /* keeps tall notes visually contained */
-  overflow-y: auto;          /* scroll inside instead of overflowing */
+  overflow-wrap: break-word;
+  /* ensures long text wraps */
+  word-break: break-word;
+  /* prevents overflow for long words */
+  white-space: normal;
+  /* allows text to wrap properly */
+  max-height: 400px;
+  /* keeps tall notes visually contained */
+  overflow-y: auto;
+  /* scroll inside instead of overflowing */
 }
 
 /* Scrollbar styling (optional, matches theme) */
-.expand-columns > *::-webkit-scrollbar {
+.expand-columns>*::-webkit-scrollbar {
   width: 6px;
 }
-.expand-columns > *::-webkit-scrollbar-thumb {
+
+.expand-columns>*::-webkit-scrollbar-thumb {
   background-color: #c5b8ff;
   border-radius: 10px;
 }
-.expand-columns > *::-webkit-scrollbar-track {
+
+.expand-columns>*::-webkit-scrollbar-track {
   background: #f4f0ff;
 }
-
-

@@ -1,63 +1,80 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React from "react";
+import "../../styles/doctor/DoctorAppointment.css";
+import { Navigate } from "react-big-calendar";
 
-function CertificateSummary({ appointmentId }) {
-  const [certificate, setCertificate] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const token = localStorage.getItem('token');
-
-  useEffect(() => {
-    const fetchCertificate = async () => {
-      if (!appointmentId) return;
-      
-      try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
-          params: { token }
-        });
-        
-        if (res.data.certificate) {
-          setCertificate(res.data.certificate);
-        }
-      } catch (err) {
-        console.error('Error fetching certificate:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCertificate();
-  }, [appointmentId, token]);
-
-  if (isLoading) return null;
-  
-  if (!certificate || !certificate.issued) {
-    return (
-      <div className="certificate-summary">
-        <div className="summary-header">
-          <h4>Medical Certificate</h4>
-        </div>
-        <p className="no-data">No certificate issued</p>
-      </div>
-    );
+// Label for the "go to today" button changes based on current view
+const todayLabel = (view) => {
+  switch (view) {
+    case "week": return "This Week";
+    case "day": return "Today";
+    case "agenda": return "Today";
+    default: return "This Month";
   }
+};
 
+const VIEW_LABELS = {
+  month: "Month",
+  week: "Week",
+  day: "Day",
+  agenda: "Agenda",
+};
+
+const STATUS_LEGEND = [
+  { label: "Booked", color: "#E5A020" },
+  { label: "Attended", color: "#1E8A55" },
+  { label: "Cancelled", color: "#B8243A" },
+  { label: "No Show", color: "#7A6890" },
+  { label: "Walk In", color: "#4A1060" },
+];
+
+export default function CustomToolbar({ label, onNavigate, onView, views, view }) {
   return (
-    <div className="certificate-summary">
-      <div className="summary-header">
-        <h4>Medical Certificate</h4>
+    <>
+      <div className="custom-toolbar">
+        {/* Left: navigation */}
+        <div className="toolbar-left">
+          <button
+            onClick={() => onNavigate(Navigate.TODAY)}
+            className="toolbar-btn today-btn"
+          >
+            {todayLabel(view)}
+          </button>
+          <button onClick={() => onNavigate(Navigate.PREVIOUS)} className="toolbar-btn">
+            ‹ Back
+          </button>
+          <button onClick={() => onNavigate(Navigate.NEXT)} className="toolbar-btn">
+            Next ›
+          </button>
+        </div>
+
+        {/* Center: period label */}
+        <div className="toolbar-center">{label}</div>
+
+        {/* Right: view switcher */}
+        <div className="toolbar-right">
+          {views.map((v) => (
+            <button
+              key={v}
+              onClick={() => onView(v)}
+              className={`toolbar-btn view-btn${view === v ? " active-view" : ""}`}
+            >
+              {VIEW_LABELS[v] || v.charAt(0).toUpperCase() + v.slice(1)}
+            </button>
+          ))}
+        </div>
       </div>
-      
-      <div className="certificate-details">
-        <p><strong>Clinical Details:</strong> {certificate.clinicalDetails || 'N/A'}</p>
-        {certificate.imageUrl && (
-          <div className="certificate-image">
-            <img src={certificate.imageUrl} alt="Medical Certificate" />
-          </div>
-        )}
-      </div>
-    </div>
+
+      {/* Legend strip — shown on month/week/agenda */}
+      {view !== "day" && (
+        <div className="cal-legend">
+          {STATUS_LEGEND.map(({ label: l, color }) => (
+            <span key={l} className="cal-legend-item">
+              <span className="cal-legend-dot" style={{ background: color }} />
+              {l}
+            </span>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
-
-export default CertificateSummary;

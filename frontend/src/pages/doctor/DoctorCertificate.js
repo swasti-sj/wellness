@@ -93,7 +93,7 @@ function DoctorCertificate({ appointmentId }) {
     try {
       // First fetch existing data to preserve tests and hospital referral
       const existingData = await fetchExistingData();
-      
+
       let imageUrl = previewUrl;
 
       // If there's a new image file, upload it first (simplified - stores as base64 for now)
@@ -186,14 +186,14 @@ function DoctorCertificate({ appointmentId }) {
             </div>
           )}
 
-          <button 
-            className="save-certificate-btn" 
+          <button
+            className="save-certificate-btn"
             onClick={handleSave}
             disabled={uploading}
           >
             {uploading ? 'Saving...' : 'Save Certificate'}
           </button>
-          
+
           {saved && <span className="save-confirmation">✓ Saved</span>}
         </div>
       )}

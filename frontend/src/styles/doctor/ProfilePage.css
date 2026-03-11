@@ -57,6 +57,7 @@ body {
     opacity: 0;
     transform: translateY(15px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -84,11 +85,9 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(
-    circle at top right,
-    rgba(255, 255, 255, 0.08),
-    transparent
-  );
+  background: radial-gradient(circle at top right,
+      rgba(255, 255, 255, 0.08),
+      transparent);
   pointer-events: none;
 }
 
@@ -193,7 +192,7 @@ body {
   font-size: 0.95rem;
 }
 
-.weekly-slots > p {
+.weekly-slots>p {
   color: #777;
   font-style: italic;
   text-align: center;
@@ -385,6 +384,7 @@ body {
     }
   }
 }
+
 /* ============================================
    EDIT MODE (Input & Select Styling)
    ============================================ */

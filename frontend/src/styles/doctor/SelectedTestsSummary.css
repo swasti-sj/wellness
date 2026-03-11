@@ -1,0 +1,195 @@
+/* =====================================================================
+   SELECTED TESTS SUMMARY — IIT Dharwad Theme
+   All classes prefixed "sts-"
+   Palette variables inherited from DoctorAppointment.css :root
+===================================================================== */
+
+.sts-loading {
+    padding: 1rem 1.2rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.sts-root {
+    font-family: 'DM Sans', sans-serif;
+    padding: 1rem 1.2rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.sts-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.sts-title-group {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.sts-icon {
+    font-size: 1.1rem;
+}
+
+.sts-title {
+    font-size: 0.83rem;
+    font-weight: 700;
+    color: var(--text-head);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.sts-count {
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--plum-soft);
+    color: var(--plum-mid);
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+.sts-edit-btn {
+    padding: 0.42rem 1rem;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-mid) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.79rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(200, 134, 10, 0.22);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.sts-edit-btn:hover {
+    background: linear-gradient(135deg, #A86E08 0%, var(--gold) 100%);
+    box-shadow: 0 5px 14px rgba(200, 134, 10, 0.32);
+    transform: translateY(-1px);
+}
+
+.sts-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 1.4rem 1rem;
+    background: var(--plum-ghost);
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.sts-empty-icon {
+    font-size: 1.7rem;
+}
+
+.sts-empty p {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.sts-empty-btn {
+    padding: 0.38rem 1rem;
+    background: linear-gradient(135deg, var(--plum), var(--plum-mid));
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.79rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s;
+    margin-top: 0.2rem;
+}
+
+.sts-empty-btn:hover {
+    background: linear-gradient(135deg, var(--plum-mid), var(--plum-light));
+    transform: translateY(-1px);
+}
+
+.sts-tags-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+/* Base tag */
+.sts-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.32rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-body);
+    transition: all 0.15s;
+    white-space: nowrap;
+    border: 1.5px solid;
+}
+
+/* ODD tags: orange/gold theme */
+.sts-tag:nth-child(odd) {
+    background: var(--gold-ghost);
+    border-color: var(--border-gold);
+    color: var(--gold);
+}
+
+.sts-tag:nth-child(odd):hover {
+    background: var(--gold-soft);
+    border-color: var(--gold-mid);
+    color: var(--gold);
+}
+
+.sts-tag:nth-child(odd) .sts-tag-dot {
+    background: var(--gold);
+}
+
+/* EVEN tags: purple/plum theme */
+.sts-tag:nth-child(even) {
+    background: var(--plum-ghost);
+    border-color: var(--border);
+    color: var(--plum-mid);
+}
+
+.sts-tag:nth-child(even):hover {
+    background: var(--plum-soft);
+    border-color: var(--plum-light);
+    color: var(--plum);
+}
+
+.sts-tag:nth-child(even) .sts-tag-dot {
+    background: var(--plum-mid);
+}
+
+.sts-tag-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .sts-root {
+        padding: 0.75rem;
+    }
+
+    .sts-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .sts-edit-btn {
+        width: 100%;
+        text-align: center;
+    }
+}

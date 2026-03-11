@@ -4,189 +4,109 @@ import '../../styles/doctor/DoctorTests.css';
 
 const TEST_CATEGORIES = [
   {
+    icon: '🩸',
     name: 'Routine Investigations in Blood',
     tests: [
-      { name: 'ADA (Adenosine Deaminase)', selected: false },
-      { name: 'Alkaline Phosphatase', selected: false },
-      { name: 'Albumin', selected: false },
-      { name: 'Ammonia', selected: false },
-      { name: 'Amylase', selected: false },
-      { name: 'AG Ratio', selected: false },
-      { name: 'Bicarbonate', selected: false },
-      { name: 'Bilirubin Total', selected: false },
-      { name: 'Bilirubin Direct', selected: false },
-      { name: 'Blood Gas Analysis Arterial (ABG)', selected: false },
-      { name: 'Blood Gas Analysis Venous (VBG)', selected: false },
-      { name: 'Calcium Total', selected: false },
-      { name: 'Calcium (Ionised)', selected: false },
-      { name: 'Chloride', selected: false },
-      { name: 'Cholesterol Total', selected: false },
-      { name: 'Cholesterol (HDL)', selected: false },
-      { name: 'Cholesterol (LDL)', selected: false },
-      { name: 'Creatinine', selected: false },
-      { name: 'CK (CPK)', selected: false },
-      { name: 'CK-MB', selected: false },
-      { name: 'GFR', selected: false },
-      { name: 'Electrolytes (Na, K, CO2)', selected: false },
-      { name: 'GGT (Gamma Glutamyl Transferase)', selected: false },
-      { name: 'Globulin', selected: false },
-      { name: 'Glucose Fasting', selected: false },
-      { name: 'Glucose PP (Post Prandial)', selected: false },
-      { name: 'Glucose Random', selected: false },
-      { name: 'GTT (Glucose Tolerance Test)', selected: false },
-      { name: 'Glycosylated Hb (HbA1C)', selected: false },
-      { name: 'High sensitive CRP (hsCRP)', selected: false },
-      { name: 'Homocysteine', selected: false },
-      { name: 'Iron', selected: false },
-      { name: 'Lactate (Lactic Acid)', selected: false },
-      { name: 'LDH (Lactate Dehydrogenase)', selected: false },
-      { name: 'Lipase', selected: false },
-      { name: 'Magnesium', selected: false },
-      { name: 'Osmolality (Serum)', selected: false },
-      { name: 'Phosphorus', selected: false },
-      { name: 'Total Protein', selected: false },
-      { name: 'Pseudocholinesterase', selected: false },
-      { name: 'SGOT (AST)', selected: false },
-      { name: 'SGPT (ALT)', selected: false },
-      { name: 'Sodium', selected: false },
-      { name: 'TIBC', selected: false },
-      { name: 'Urea', selected: false },
-      { name: 'Uric Acid', selected: false }
+      'ADA (Adenosine Deaminase)', 'Alkaline Phosphatase', 'Albumin', 'Ammonia', 'Amylase',
+      'AG Ratio', 'Bicarbonate', 'Bilirubin Total', 'Bilirubin Direct',
+      'Blood Gas Analysis Arterial (ABG)', 'Blood Gas Analysis Venous (VBG)',
+      'Calcium Total', 'Calcium (Ionised)', 'Chloride', 'Cholesterol Total',
+      'Cholesterol (HDL)', 'Cholesterol (LDL)', 'Creatinine', 'CK (CPK)', 'CK-MB',
+      'GFR', 'Electrolytes (Na, K, CO2)', 'GGT (Gamma Glutamyl Transferase)',
+      'Globulin', 'Glucose Fasting', 'Glucose PP (Post Prandial)', 'Glucose Random',
+      'GTT (Glucose Tolerance Test)', 'Glycosylated Hb (HbA1C)',
+      'High sensitive CRP (hsCRP)', 'Homocysteine', 'Iron', 'Lactate (Lactic Acid)',
+      'LDH (Lactate Dehydrogenase)', 'Lipase', 'Magnesium', 'Osmolality (Serum)',
+      'Phosphorus', 'Total Protein', 'Pseudocholinesterase', 'SGOT (AST)', 'SGPT (ALT)',
+      'Sodium', 'TIBC', 'Urea', 'Uric Acid',
     ]
   },
   {
+    icon: '🔬',
     name: 'Immunoassay',
     tests: [
-      { name: 'AFP (Alfa Feto Protein)', selected: false },
-      { name: 'AMH (Anti Mullerian Hormone)', selected: false },
-      { name: 'ANCA CCP', selected: false },
-      { name: 'Anti TPO antibodies', selected: false },
-      { name: 'Beta HCG (Total)', selected: false },
-      { name: 'CA-125', selected: false },
-      { name: 'CA 19-9', selected: false },
-      { name: 'CEA', selected: false },
-      { name: 'Cortisol', selected: false },
-      { name: 'Estradiol (E2)/Estrogen', selected: false },
-      { name: 'Ferritin', selected: false },
-      { name: 'Folate (Folic acid)', selected: false },
-      { name: 'Free T3', selected: false },
-      { name: 'Free T4', selected: false },
-      { name: 'FSH', selected: false },
-      { name: 'PTH (intact)', selected: false },
-      { name: 'LH', selected: false },
-      { name: 'Procalcitonin', selected: false },
-      { name: 'Progesterone (P4)', selected: false },
-      { name: 'Prolactin', selected: false },
-      { name: 'PSA Total', selected: false },
-      { name: 'Testosterone', selected: false },
-      { name: 'Troponin-t hs (high sensitive Trop T)', selected: false },
-      { name: 'TSH', selected: false },
-      { name: 'Vitamin D (Total 250H Vitamin D3)', selected: false },
-      { name: 'Vitamin B12', selected: false }
+      'AFP (Alfa Feto Protein)', 'AMH (Anti Mullerian Hormone)', 'ANCA CCP',
+      'Anti TPO antibodies', 'Beta HCG (Total)', 'CA-125', 'CA 19-9', 'CEA',
+      'Cortisol', 'Estradiol (E2)/Estrogen', 'Ferritin', 'Folate (Folic acid)',
+      'Free T3', 'Free T4', 'FSH', 'PTH (intact)', 'LH', 'Procalcitonin',
+      'Progesterone (P4)', 'Prolactin', 'PSA Total', 'Testosterone',
+      'Troponin-t hs (high sensitive Trop T)', 'TSH',
+      'Vitamin D (Total 250H Vitamin D3)', 'Vitamin B12',
     ]
   },
   {
-    name: 'Routine Investigations in Urine and Other Body Fluids',
+    icon: '🧪',
+    name: 'Routine Investigations in Urine & Body Fluids',
     tests: [
-      { name: 'Random/Spot Urine', selected: false },
-      { name: '24hrs Urine', selected: false },
-      { name: 'Urine Fhedss', selected: false },
-      { name: 'Fluid Protein', selected: false },
-      { name: 'Urine Microalbumin', selected: false },
-      { name: 'Urine Sodium', selected: false },
-      { name: 'CSF Sugar', selected: false },
-      { name: 'CSF Protein', selected: false },
-      { name: 'Fluid Albumin', selected: false },
-      { name: 'Urine Potassium', selected: false },
-      { name: 'Urine Uric acid', selected: false },
-      { name: 'Fluid Amylase', selected: false },
-      { name: 'Urine Osmolality', selected: false },
-      { name: 'Urine Albumin', selected: false },
-      { name: 'Urine Calcium', selected: false },
-      { name: 'Urine Protein', selected: false },
-      { name: 'CSF Chloride', selected: false },
-      { name: 'Fluid Lipase', selected: false },
-      { name: 'Urine Phosphorus', selected: false },
-      { name: 'CSF ADA', selected: false },
-      { name: 'CSF Lactate', selected: false },
-      { name: 'Creatinine Ratio (ACR)', selected: false },
-      { name: 'Urine Creatinine', selected: false },
-      { name: 'Fluid Creatinine', selected: false },
-      { name: 'Urine Chloride', selected: false },
-      { name: 'Urine Liraa', selected: false }
+      'Random/Spot Urine', '24hrs Urine', 'Urine Fhedss', 'Fluid Protein',
+      'Urine Microalbumin', 'Urine Sodium', 'CSF Sugar', 'CSF Protein',
+      'Fluid Albumin', 'Urine Potassium', 'Urine Uric acid', 'Fluid Amylase',
+      'Urine Osmolality', 'Urine Albumin', 'Urine Calcium', 'Urine Protein',
+      'CSF Chloride', 'Fluid Lipase', 'Urine Phosphorus', 'CSF ADA', 'CSF Lactate',
+      'Creatinine Ratio (ACR)', 'Urine Creatinine', 'Fluid Creatinine', 'Urine Chloride',
     ]
   },
   {
+    icon: '⚗',
     name: 'Special Tests',
     tests: [
-      { name: 'Hemoglobin Variant screening by HPLC method', selected: false },
-      { name: 'Osmotic Fragility test', selected: false },
-      { name: 'Protein Electrophoresis', selected: false },
-      { name: 'Urinary Bence Jones Protein', selected: false },
-      { name: 'Urine Screening for EM', selected: false },
-      { name: 'Stone Analysis', selected: false },
-      { name: 'Urine Protein', selected: false },
-      { name: 'Urine Urea', selected: false },
-      { name: 'CSF Albumin', selected: false },
-      { name: 'Fluid Ursa', selected: false },
-      { name: 'Protein Creatinine Ratio (PCR)', selected: false },
-      { name: 'Urine Uric acid', selected: false },
-      { name: 'CSF LDH', selected: false },
-      { name: 'Fluid Triglycerides', selected: false },
-      { name: 'Fluid CA19-9', selected: false },
-      { name: 'Fluid AFP', selected: false }
+      'Hemoglobin Variant screening by HPLC method', 'Osmotic Fragility test',
+      'Protein Electrophoresis', 'Urinary Bence Jones Protein', 'Urine Screening for EM',
+      'Stone Analysis', 'Urine Protein', 'Urine Urea', 'CSF Albumin', 'Fluid Ursa',
+      'Protein Creatinine Ratio (PCR)', 'CSF LDH', 'Fluid Triglycerides',
+      'Fluid CA19-9', 'Fluid AFP',
     ]
   },
   {
+    icon: '📊',
     name: 'Profiles',
     tests: [
-      { name: 'Diabetic Profile', selected: false },
-      { name: 'Lipid Profile', selected: false },
-      { name: 'Renal Profile', selected: false },
-      { name: 'Liver Profile', selected: false },
-      { name: 'Acute Cardiac Profile', selected: false },
-      { name: 'Hypertension Profile', selected: false },
-      { name: 'CVD Risk assessment profile', selected: false },
-      { name: 'PIH Profile', selected: false },
-      { name: 'Pre-chemo workup', selected: false },
-      { name: 'Iron Profile', selected: false },
-      { name: 'Prostatic Profile', selected: false },
-      { name: 'Thyroid Profile', selected: false },
-      { name: 'Fertility Profile', selected: false }
+      'Diabetic Profile', 'Lipid Profile', 'Renal Profile', 'Liver Profile',
+      'Acute Cardiac Profile', 'Hypertension Profile', 'CVD Risk assessment profile',
+      'PIH Profile', 'Pre-chemo workup', 'Iron Profile', 'Prostatic Profile',
+      'Thyroid Profile', 'Fertility Profile',
     ]
-  }
+  },
 ];
 
+// Normalise category data: each test is { name, selected }
+const buildCategories = () =>
+  TEST_CATEGORIES.map(cat => ({
+    ...cat,
+    tests: cat.tests.map(name => ({ name, selected: false })),
+    open: false,
+  }));
+
 function DoctorTests({ appointmentId, patientId }) {
-  const [categories, setCategories] = useState(TEST_CATEGORIES);
+  const [categories, setCategories] = useState(buildCategories());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState('');
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     const fetchTestData = async () => {
       if (!appointmentId) return;
-
       setIsLoading(true);
       setError('');
       try {
         const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
           params: { token }
         });
-
         if (res.data.tests && res.data.tests.length > 0) {
-          // Update categories with saved selections
           const savedTests = res.data.tests;
-          const updatedCategories = categories.map(cat => ({
-            ...cat,
-            tests: cat.tests.map(test => ({
-              name: test,
-              selected: savedTests.some(s => s.testName === test && s.selected)
+          setCategories(prev =>
+            prev.map(cat => ({
+              ...cat,
+              tests: cat.tests.map(test => ({
+                ...test,
+                selected: savedTests.some(s => s.testName === test.name && s.selected),
+              })),
             }))
-          }));
-          setCategories(updatedCategories);
+          );
         }
       } catch (err) {
         console.error('Error fetching test data:', err);
@@ -194,118 +114,208 @@ function DoctorTests({ appointmentId, patientId }) {
         setIsLoading(false);
       }
     };
-
     fetchTestData();
   }, [appointmentId, token]);
 
-  const handleTestToggle = (categoryIndex, testIndex) => {
-    const updated = [...categories];
-    updated[categoryIndex].tests[testIndex].selected = !updated[categoryIndex].tests[testIndex].selected;
-    setCategories(updated);
+  const toggleCategory = (catIdx) => {
+    setCategories(prev => prev.map((cat, i) =>
+      i === catIdx ? { ...cat, open: !cat.open } : cat
+    ));
+  };
+
+  const handleTestToggle = (catIdx, testIdx) => {
+    setCategories(prev => {
+      const next = [...prev];
+      next[catIdx] = {
+        ...next[catIdx],
+        tests: next[catIdx].tests.map((t, i) =>
+          i === testIdx ? { ...t, selected: !t.selected } : t
+        ),
+      };
+      return next;
+    });
     setSaved(false);
   };
 
-  const handleSelectAllInCategory = (categoryIndex, selected) => {
-    const updated = [...categories];
-    updated[categoryIndex].tests = updated[categoryIndex].tests.map(t => ({
-      ...t,
-      selected: selected
-    }));
-    setCategories(updated);
+  const handleSelectAll = (catIdx, val) => {
+    setCategories(prev => {
+      const next = [...prev];
+      next[catIdx] = {
+        ...next[catIdx],
+        tests: next[catIdx].tests.map(t => ({ ...t, selected: val })),
+      };
+      return next;
+    });
     setSaved(false);
   };
 
-  const getSelectedTestsCount = () => {
-    return categories.reduce((count, cat) => 
-      count + cat.tests.filter(t => t.selected).length, 0
-    );
-  };
+  const totalSelected = categories.reduce(
+    (n, cat) => n + cat.tests.filter(t => t.selected).length, 0
+  );
+
+  const catSelectedCount = (cat) => cat.tests.filter(t => t.selected).length;
 
   const handleSaveTests = async () => {
     setError('');
+    setSaving(true);
     try {
-      // Flatten all selected tests
       const selectedTests = [];
       categories.forEach(cat => {
         cat.tests.forEach(test => {
           if (test.selected) {
-            selectedTests.push({
-              testName: test.name,
-              category: cat.name,
-              selected: true
-            });
+            selectedTests.push({ testName: test.name, category: cat.name, selected: true });
           }
         });
       });
-
       const response = await axios.post('http://localhost:5000/api/tests/save', {
-        token,
-        appointmentId,
-        tests: selectedTests
+        token, appointmentId, tests: selectedTests
       });
-
       if (response.data.success) {
         setSaved(true);
-        alert('Tests saved successfully!');
+        setTimeout(() => setSaved(false), 3000);
       }
     } catch (err) {
-      console.error('Error saving tests:', err);
       setError('Failed to save tests. ' + (err.response?.data?.error || ''));
+    } finally {
+      setSaving(false);
     }
   };
 
-  if (isLoading) return <p>Loading tests...</p>;
+  const filteredCategories = search.trim()
+    ? categories.map(cat => ({
+      ...cat,
+      open: true,
+      tests: cat.tests.filter(t =>
+        t.name.toLowerCase().includes(search.toLowerCase())
+      ),
+    })).filter(cat => cat.tests.length > 0)
+    : categories;
+
+  if (isLoading) return <p className="dt-loading">Loading tests…</p>;
 
   return (
-    <div className="doctor-tests">
-      <h4>Test Request Form</h4>
-      {error && <p className="error-message">{error}</p>}
+    <div className="dt-root">
+      {error && <div className="dt-error">⚠ {error}</div>}
 
-      <div className="selected-count">
-        Selected Tests: {getSelectedTestsCount()}
+      {/* ── Header row ── */}
+      <div className="dt-header">
+        <div className="dt-header-left">
+          <span className="dt-header-icon">🧪</span>
+          <span className="dt-header-title">Test Request Form</span>
+        </div>
+        {totalSelected > 0 && (
+          <span className="dt-total-badge">{totalSelected} selected</span>
+        )}
       </div>
 
-      {categories.map((category, catIndex) => (
-        <div key={catIndex} className="test-category">
-          <div className="category-header">
-            <h5>{category.name}</h5>
-            <div className="category-actions">
-              <button 
-                className="select-all-btn"
-                onClick={() => handleSelectAllInCategory(catIndex, true)}
-              >
-                Select All
-              </button>
-              <button 
-                className="deselect-all-btn"
-                onClick={() => handleSelectAllInCategory(catIndex, false)}
-              >
-                Deselect All
-              </button>
-            </div>
-          </div>
-          <div className="test-list">
-            {category.tests.map((test, testIndex) => (
-              <div key={testIndex} className="test-item">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={test.selected || false}
-                    onChange={() => handleTestToggle(catIndex, testIndex)}
-                  />
-                  <span className="test-name">{test.name}</span>
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+      {/* ── Search ── */}
+      <div className="dt-search-wrap">
+        <span className="dt-search-icon">🔍</span>
+        <input
+          className="dt-search"
+          type="text"
+          placeholder="Search tests across all categories…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button className="dt-search-clear" onClick={() => setSearch('')}>✕</button>
+        )}
+      </div>
 
-      <button className="save-tests-btn" onClick={handleSaveTests}>
-        Save Tests
-      </button>
-      
-      {saved && <span className="save-confirmation">✓ Saved</span>}
+      {/* ── Category accordions ── */}
+      <div className="dt-categories">
+        {filteredCategories.map((cat, catIdx) => {
+          const selCount = catSelectedCount(cat);
+          return (
+            <div key={cat.name} className={`dt-cat${cat.open ? ' open' : ''}`}>
+
+              {/* Category toggle */}
+              <button
+                className={`dt-cat-toggle${cat.open ? ' open' : ''}`}
+                onClick={() => !search && toggleCategory(
+                  categories.findIndex(c => c.name === cat.name)
+                )}
+              >
+                <div className="dt-cat-left">
+                  <span className="dt-cat-icon">{cat.icon}</span>
+                  <div className="dt-cat-info">
+                    <span className="dt-cat-name">{cat.name}</span>
+                    <span className="dt-cat-meta">
+                      {cat.tests.length} tests
+                      {selCount > 0 && ` · ${selCount} selected`}
+                    </span>
+                  </div>
+                </div>
+                <div className="dt-cat-right">
+                  {selCount > 0 && (
+                    <span className="dt-cat-count">{selCount}</span>
+                  )}
+                  {!search && <span className="dt-cat-chevron">{cat.open ? '▲' : '▼'}</span>}
+                </div>
+              </button>
+
+              {/* Tests panel */}
+              {(cat.open || search) && (
+                <div className="dt-cat-body">
+                  {/* Quick actions */}
+                  <div className="dt-quick-row">
+                    <button
+                      className="dt-quick-btn dt-sel-all"
+                      onClick={() => handleSelectAll(
+                        categories.findIndex(c => c.name === cat.name), true
+                      )}
+                    >
+                      ✓ Select All
+                    </button>
+                    <button
+                      className="dt-quick-btn dt-clear-all"
+                      onClick={() => handleSelectAll(
+                        categories.findIndex(c => c.name === cat.name), false
+                      )}
+                    >
+                      ✕ Clear
+                    </button>
+                  </div>
+
+                  {/* Test grid */}
+                  <div className="dt-test-grid">
+                    {cat.tests.map((test, testIdx) => {
+                      const realCatIdx = categories.findIndex(c => c.name === cat.name);
+                      const realTestIdx = categories[realCatIdx].tests.findIndex(t => t.name === test.name);
+                      return (
+                        <label
+                          key={test.name}
+                          className={`dt-test-item${test.selected ? ' selected' : ''}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={test.selected || false}
+                            onChange={() => handleTestToggle(realCatIdx, realTestIdx)}
+                          />
+                          <span className="dt-test-name">{test.name}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Footer ── */}
+      <div className="dt-footer">
+        <button
+          className="dt-save-btn"
+          onClick={handleSaveTests}
+          disabled={saving || totalSelected === 0}
+        >
+          {saving ? '⏳ Saving…' : `💾 Save Tests (${totalSelected})`}
+        </button>
+        {saved && <span className="dt-saved-badge">✓ Saved</span>}
+      </div>
     </div>
   );
 }

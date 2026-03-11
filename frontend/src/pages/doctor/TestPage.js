@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import '../../styles/doctor/DoctorTests.css';
 
 const TEST_CATEGORIES = [
@@ -161,10 +161,15 @@ const TEST_CATEGORIES = [
 function TestPage({ apiBaseUrl }) {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const appointmentId = searchParams.get('appointmentId');
   const patientId = searchParams.get('patientId');
-  const returnUrl = searchParams.get('returnUrl');
-  
+  // Prefer state-based returnUrl (set by DoctorAppointment), fall back to query param
+  const navState = location.state || {};
+  const returnUrl = navState.returnUrl || searchParams.get('returnUrl');
+  const openAppointmentId = navState.openAppointmentId || appointmentId;
+  const openSection = navState.openSection || 'tests';
+
   const [categories, setCategories] = useState(TEST_CATEGORIES);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -185,7 +190,7 @@ function TestPage({ apiBaseUrl }) {
 
         if (res.data.tests && res.data.tests.length > 0) {
           const savedTests = res.data.tests;
-          
+
           // Update categories with saved selections
           const updatedCategories = categories.map(cat => ({
             ...cat,
@@ -224,7 +229,7 @@ function TestPage({ apiBaseUrl }) {
   };
 
   const getSelectedTestsCount = () => {
-    return categories.reduce((count, cat) => 
+    return categories.reduce((count, cat) =>
       count + cat.tests.filter(t => t.selected).length, 0
     );
   };
@@ -250,7 +255,7 @@ function TestPage({ apiBaseUrl }) {
     try {
       // First fetch existing data to preserve hospital referral and certificate
       const existingData = await fetchExistingData();
-      
+
       // Flatten all selected tests
       const selectedTests = [];
       categories.forEach(cat => {
@@ -276,10 +281,14 @@ function TestPage({ apiBaseUrl }) {
 
       if (response.data.success) {
         setSaved(true);
-        alert('Tests saved successfully!');
-        // Navigate back to appointment
+        // Navigate back and signal DoctorAppointment to open the Lab Tests section
         if (returnUrl) {
-          navigate(returnUrl);
+          navigate(returnUrl, {
+            state: {
+              openAppointmentId,
+              openSection,
+            }
+          });
         }
       }
     } catch (err) {
@@ -290,7 +299,9 @@ function TestPage({ apiBaseUrl }) {
 
   const handleBack = () => {
     if (returnUrl) {
-      navigate(returnUrl);
+      navigate(returnUrl, {
+        state: { openAppointmentId, openSection }
+      });
     } else {
       navigate(-1);
     }
@@ -298,58 +309,90 @@ function TestPage({ apiBaseUrl }) {
 
   if (isLoading) return <p className="loading">Loading tests...</p>;
 
+  const CAT_ICONS = ['🩸', '🔬', '🧪', '⚗', '📊'];
+
   return (
     <div className="test-page-container">
       <div className="test-page-header">
         <h2>🧪 Test Request Form</h2>
-        <button className="back-btn" onClick={handleBack}>← Back</button>
+        <button className="back-btn" onClick={handleBack}>← Back to Appointment</button>
       </div>
-      
+
       {error && <p className="error-message">{error}</p>}
 
       <div className="selected-count">
         📋 Selected Tests: <strong>{getSelectedTestsCount()}</strong>
       </div>
 
-      {/* Test Categories */}
-      {categories.map((category, catIndex) => (
-        <div key={catIndex} className="test-category">
-          <div className="category-header">
-            <h5>{category.name}</h5>
-            <div className="category-actions">
-              <button 
-                className="select-all-btn"
-                onClick={() => handleSelectAllInCategory(catIndex, true)}
+      <div className="dt-categories" style={{ marginBottom: '1rem' }}>
+        {categories.map((category, catIndex) => {
+          const selCount = category.tests.filter(t => t.selected).length;
+          const isOpen = category.open === true;
+          return (
+            <div key={catIndex} className={`dt-cat${isOpen ? ' open' : ''}`}>
+              <button
+                className={`dt-cat-toggle${isOpen ? ' open' : ''}`}
+                onClick={() => {
+                  const updated = [...categories];
+                  updated[catIndex] = { ...updated[catIndex], open: !updated[catIndex].open };
+                  setCategories(updated);
+                }}
               >
-                Select All
+                <div className="dt-cat-left">
+                  <span className="dt-cat-icon">{CAT_ICONS[catIndex] || '🔬'}</span>
+                  <div className="dt-cat-info">
+                    <span className="dt-cat-name">{category.name}</span>
+                    <span className="dt-cat-meta">
+                      {category.tests.length} tests{selCount > 0 && ` · ${selCount} selected`}
+                    </span>
+                  </div>
+                </div>
+                <div className="dt-cat-right">
+                  {selCount > 0 && <span className="dt-cat-count">{selCount}</span>}
+                  <span className="dt-cat-chevron">{isOpen ? '▲' : '▼'}</span>
+                </div>
               </button>
-              <button 
-                className="deselect-all-btn"
-                onClick={() => handleSelectAllInCategory(catIndex, false)}
-              >
-                Clear
-              </button>
+
+              {isOpen && (
+                <div className="dt-cat-body">
+                  <div className="dt-quick-row">
+                    <button className="dt-quick-btn dt-sel-all"
+                      onClick={() => handleSelectAllInCategory(catIndex, true)}>
+                      ✓ Select All
+                    </button>
+                    <button className="dt-quick-btn dt-clear-all"
+                      onClick={() => handleSelectAllInCategory(catIndex, false)}>
+                      ✕ Clear
+                    </button>
+                  </div>
+                  <div className="dt-test-grid">
+                    {category.tests.map((test, testIndex) => (
+                      <label
+                        key={testIndex}
+                        className={`dt-test-item${test.selected ? ' selected' : ''}`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={test.selected || false}
+                          onChange={() => handleTestToggle(catIndex, testIndex)}
+                        />
+                        <span className="dt-test-name">{test.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-          <div className="test-list">
-            {category.tests.map((test, testIndex) => (
-              <div key={testIndex} className={`test-item ${test.selected ? 'selected' : ''}`}>
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={test.selected || false}
-                    onChange={() => handleTestToggle(catIndex, testIndex)}
-                  />
-                  <span className="test-name">{test.name}</span>
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
+          );
+        })}
+      </div>
 
       <div className="save-section">
-        <button className="save-tests-btn" onClick={handleSaveAll}>
+        <button
+          className="save-tests-btn"
+          onClick={handleSaveAll}
+          disabled={getSelectedTestsCount() === 0}
+        >
           💾 Save Tests ({getSelectedTestsCount()})
         </button>
         {saved && <span className="save-confirmation">✓ Saved</span>}

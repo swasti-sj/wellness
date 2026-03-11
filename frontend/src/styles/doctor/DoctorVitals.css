@@ -1,190 +1,550 @@
-/* Main Container */
+/* =====================================================================
+   DOCTOR VITALS / CASE SHEET — IIT Dharwad Theme
+   Palette: Deep Plum #4A1060 · Plum Mid #6C1B85 · Gold #C8860A · Gold Bright #F0B830
+   Font: DM Sans (body) — loaded via DoctorAppointment
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --plum: #4A1060;
+  --plum-mid: #6C1B85;
+  --plum-light: #9B4DC8;
+  --plum-ghost: #FAF4FF;
+  --plum-soft: #F0E4FA;
+  --gold: #C8860A;
+  --gold-mid: #E5A020;
+  --gold-bright: #F0B830;
+  --success: #1E8A55;
+  --danger: #B8243A;
+  --text-head: #1E0733;
+  --text-body: #3A2250;
+  --text-muted: #7A6890;
+  --border: #E0D0EF;
+  --surface: #FFFFFF;
+}
+
+/* ── Outer container ── */
 .doctor-vitals {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  margin: 15px 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e0e0e0;
-}
-
-/* Header */
-.case-header {
-  text-align: center;
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #012970;
-}
-
-.case-header h2 {
-  color: #012970;
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: 1px;
-}
-
-.badge {
-  display: inline-block;
-  background: #28a745;
-  color: white;
-  padding: 4px 12px;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
   border-radius: 12px;
-  font-size: 12px;
-  margin-top: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
 }
 
-/* Section Headers */
-.section {
-  margin-top: 25px;
-  padding: 15px;
-  background: #f8f9fa;
+/* ── Case Sheet Title ── */
+.case-sheet-title {
+  text-align: center;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.25rem;
+  color: var(--plum);
+  padding: 1.1rem 1.5rem 0.9rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: var(--plum-ghost);
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-badge {
+  background: linear-gradient(135deg, var(--success), #2CB870);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.4px;
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   ACCORDION SECTION  —  alternates Purple-Orange / Orange-Purple
+   matching the main modal sub-section dropdowns
+══════════════════════════════════════════════════════════════════ */
+.acc-section {
+  border-top: 1px solid var(--border);
+  overflow: hidden;
+}
+
+/* ODD sections (1st, 3rd, 5th): purple-orange
+   Closed: plum-ghost bg · Open: plum → gold gradient */
+.acc-section:nth-child(odd) .acc-toggle {
+  background: var(--plum-ghost);
+}
+
+.acc-section:nth-child(odd) .acc-toggle:hover {
+  background: var(--plum-soft);
+}
+
+.acc-section:nth-child(odd) .acc-toggle.open {
+  background: linear-gradient(135deg, var(--plum) 0%, var(--plum-mid) 55%, var(--gold) 100%);
+}
+
+.acc-section:nth-child(odd) .acc-chevron {
+  background: rgba(74, 16, 96, 0.09);
+  color: var(--plum-mid);
+}
+
+.acc-section:nth-child(odd) .acc-icon-wrap {
+  background: rgba(74, 16, 96, 0.09);
+}
+
+/* EVEN sections (2nd, 4th): orange-purple
+   Closed: gold-ghost bg · Open: gold → plum gradient */
+.acc-section:nth-child(even) {
+  border-top-color: #F0D898;
+}
+
+.acc-section:nth-child(even) .acc-toggle {
+  background: #FFFBF0;
+}
+
+.acc-section:nth-child(even) .acc-toggle:hover {
+  background: #FFF4DC;
+}
+
+.acc-section:nth-child(even) .acc-toggle.open {
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-mid) 50%, var(--plum-mid) 100%);
+}
+
+.acc-section:nth-child(even) .acc-chevron {
+  background: rgba(200, 134, 10, 0.12);
+  color: var(--gold);
+}
+
+/* Base toggle button */
+.acc-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.88rem 1.3rem;
+  border: none;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  text-align: left;
+  transition: background 0.2s ease;
+  gap: 0.5rem;
+}
+
+.acc-toggle-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.acc-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 8px;
+  background: rgba(200, 134, 10, 0.12);
 }
 
-.section h4 {
-  color: #012970;
-  font-size: 16px;
-  font-weight: 600;
-  margin: 0 0 15px 0;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #dee2e6;
+.acc-section:nth-child(even) .acc-icon {
+  background: rgba(74, 16, 96, 0.09);
 }
 
-/* Form Grid */
-.form-grid {
+.acc-toggle.open .acc-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.acc-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-head);
+  letter-spacing: 0.1px;
+  line-height: 1.3;
+}
+
+.acc-toggle.open .acc-title {
+  color: #fff;
+}
+
+.acc-subtitle {
+  font-size: 0.71rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: 400;
+  line-height: 1.3;
+}
+
+.acc-toggle.open .acc-subtitle {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.acc-chevron {
+  font-size: 0.6rem;
+  transition: transform 0.28s ease;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acc-toggle.open .acc-chevron {
+  transform: rotate(180deg);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+/* Accordion body */
+.acc-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+    padding 0.3s ease;
+  padding: 0 1.3rem;
+}
+
+/* ODD body: gold-ghost tint (header is orange→purple, so body is gold) */
+.acc-section:nth-child(odd) .acc-body {
+  background: #FFFEF8;
+  border-top: 1px solid #F0D898;
+}
+
+/* EVEN body: plum-ghost tint (header is purple→orange, so body is plum) */
+.acc-section:nth-child(even) .acc-body {
+  background: #FDFBFF;
+  border-top: 1px solid var(--border);
+}
+
+.acc-body.open {
+  max-height: 1400px;
+  padding: 1.2rem 1.3rem 1.4rem;
+}
+
+/* ── Input/label colours scoped per odd section (gold accent) ── */
+.acc-section:nth-child(odd) .ff label {
+  color: var(--gold);
+}
+
+.acc-section:nth-child(odd) .ff input,
+.acc-section:nth-child(odd) .ff select,
+.acc-section:nth-child(odd) .ff textarea {
+  background: #fff;
+  border-color: #F0D898;
+}
+
+.acc-section:nth-child(odd) .ff input:focus,
+.acc-section:nth-child(odd) .ff select:focus,
+.acc-section:nth-child(odd) .ff textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.acc-section:nth-child(odd) .input-addon {
+  border-color: #F0D898;
+}
+
+.acc-section:nth-child(odd) .input-addon:focus-within {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.acc-section:nth-child(odd) .input-addon span {
+  background: #FFF4DC;
+  color: var(--gold);
+  border-left-color: #F0D898;
+}
+
+.acc-section:nth-child(odd) .ff select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%23C8860A' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 11px 11px;
+}
+
+/* ── Input/label colours scoped per even section (plum accent) ── */
+.acc-section:nth-child(even) .ff label {
+  color: var(--plum-mid);
+}
+
+.acc-section:nth-child(even) .ff input,
+.acc-section:nth-child(even) .ff select,
+.acc-section:nth-child(even) .ff textarea {
+  background: #fff;
+  border-color: #E0D0EF;
+}
+
+.acc-section:nth-child(even) .ff input:focus,
+.acc-section:nth-child(even) .ff select:focus,
+.acc-section:nth-child(even) .ff textarea:focus {
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
+}
+
+.acc-section:nth-child(even) .input-addon {
+  border-color: #E0D0EF;
+}
+
+.acc-section:nth-child(even) .input-addon:focus-within {
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
+}
+
+.acc-section:nth-child(even) .input-addon span {
+  background: var(--plum-ghost);
+  color: var(--plum-mid);
+  border-left-color: #E0D0EF;
+}
+
+.acc-section:nth-child(even) .ff select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236C1B85' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 11px 11px;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   FORM LAYOUT HELPERS
+══════════════════════════════════════════════════════════════════ */
+
+/* 2-column grid */
+.fg2 {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 15px;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.9rem 1.1rem;
 }
 
-/* Form Groups */
-.form-group {
+/* 1-column stack */
+.fg1 {
   display: flex;
   flex-direction: column;
+  gap: 0.9rem;
 }
 
-.form-group label {
-  font-size: 13px;
-  color: #495057;
-  margin-bottom: 6px;
-  font-weight: 500;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
-  padding: 10px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  font-size: 14px;
-  font-family: inherit;
-  transition: border-color 0.2s, box-shadow 0.2s;
-  background: #fff;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #012970;
-  box-shadow: 0 0 0 3px rgba(1, 41, 112, 0.1);
-}
-
-.form-group input::placeholder,
-.form-group textarea::placeholder {
-  color: #adb5bd;
-}
-
-/* Vitals Input Grid */
-.vitals-input-grid {
+/* 3-column grid (vitals) */
+.fg3 {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
+  gap: 0.9rem 1.1rem;
 }
 
-/* Textarea */
-textarea {
+/* Individual field */
+.ff {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ff label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 1px;
+}
+
+.req {
+  color: var(--danger);
+  margin-left: 2px;
+}
+
+.ff input,
+.ff select,
+.ff textarea {
+  width: 100%;
+  padding: 0.58rem 0.85rem;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-body);
+  background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+  line-height: 1.4;
+}
+
+.ff input:focus,
+.ff select:focus,
+.ff textarea:focus {
+  outline: none;
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
+}
+
+.ff input::placeholder,
+.ff textarea::placeholder {
+  color: #C0B0D0;
+  font-weight: 400;
+}
+
+.ff select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236C1B85' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.8rem center;
+  background-size: 11px 11px;
+  padding-right: 2.2rem;
+  cursor: pointer;
+}
+
+.ff textarea {
   resize: vertical;
-  min-height: 60px;
+  min-height: 66px;
+  line-height: 1.55;
 }
 
-/* Save Button */
-.save-btn {
-  background: #012970;
+/* Follow-up date — don't stretch full width */
+.ff.follow-date input {
+  max-width: 240px;
+}
+
+/* Input with unit addon */
+.input-addon {
+  display: flex;
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.input-addon:focus-within {
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
+}
+
+.input-addon input {
+  flex: 1;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0.58rem 0.75rem;
+  font-size: 0.9rem;
+  background: transparent;
+  outline: none;
+  min-width: 0;
+}
+
+.input-addon span {
+  background: var(--plum-ghost);
+  color: var(--plum-mid);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0 0.7rem;
+  display: flex;
+  align-items: center;
+  border-left: 1px solid var(--border);
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+/* Read-only BMI field */
+.input-addon.readonly input {
+  background: var(--plum-ghost);
+  color: var(--plum-mid);
+  font-weight: 600;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   SAVE BUTTON ROW
+══════════════════════════════════════════════════════════════════ */
+.vitals-save-row {
+  padding: 1.1rem 1.3rem 1.3rem;
+  background: #FDFBFF;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.save-case-btn {
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, var(--success) 0%, #2CB870 100%);
   color: #fff;
   border: none;
-  padding: 12px 30px;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 600;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.22s ease;
+  box-shadow: 0 4px 14px rgba(30, 138, 85, 0.28);
 }
 
-.save-btn:hover {
-  background: #011b55;
-  transform: translateY(-1px);
+.save-case-btn:hover {
+  background: linear-gradient(135deg, #186840 0%, #1E8A55 100%);
+  box-shadow: 0 6px 20px rgba(30, 138, 85, 0.38);
+  transform: translateY(-2px);
 }
 
-.save-btn:active {
+.save-case-btn:active {
   transform: translateY(0);
 }
 
-.save-btn:disabled {
-  background: #6c757d;
+.save-case-btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
   transform: none;
 }
 
-/* Messages */
-.success-message {
-  color: #28a745;
-  background: #d4edda;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-top: 15px;
-  font-size: 14px;
+.msg-success {
+  color: var(--success);
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: #E8F8EF;
+  padding: 0.5rem 0.9rem;
+  border-radius: 7px;
+  border-left: 3px solid var(--success);
 }
 
-.error-message {
-  color: #dc3545;
-  background: #f8d7da;
-  padding: 10px 15px;
-  border-radius: 6px;
-  margin-top: 15px;
-  font-size: 14px;
+.msg-error {
+  color: var(--danger);
+  font-size: 0.88rem;
+  font-weight: 600;
+  background: #FDE8EB;
+  padding: 0.5rem 0.9rem;
+  border-radius: 7px;
+  border-left: 3px solid var(--danger);
 }
 
-/* Responsive Design */
+/* ── Responsive ── */
 @media (max-width: 768px) {
-  .form-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .form-group[style*="grid-column"] {
-    grid-column: span 1 !important;
-  }
-  
-  .vitals-input-grid {
-    grid-template-columns: repeat(2, 1fr);
+
+  .fg2,
+  .fg3 {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .doctor-vitals {
-    padding: 15px;
-  }
-  
-  .vitals-input-grid {
+
+  .fg2,
+  .fg3 {
     grid-template-columns: 1fr;
   }
-  
-  .section {
-    padding: 10px;
+
+  .acc-toggle {
+    padding: 0.8rem 1rem;
   }
-  
-  .save-btn {
+
+  .acc-body.open {
+    padding: 1rem 1rem 1.2rem;
+  }
+
+  .vitals-save-row {
+    padding: 1rem;
+  }
+
+  .save-case-btn {
     width: 100%;
   }
 }

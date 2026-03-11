@@ -1,198 +1,269 @@
+/* =====================================================================
+   DOCTOR CERTIFICATE — IIT Dharwad Theme
+   Same class names as original — CSS-only restyle
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
 .doctor-certificate {
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin-top: 15px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .doctor-certificate h4 {
-  margin-bottom: 15px;
-  color: #012970;
+  display: none;
 }
 
-.issue-certificate-section {
-  text-align: center;
-  padding: 20px;
-  background: white;
+.doctor-certificate .error-message {
+  background: #FDE8EB;
+  color: #B8243A;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  border-left: 3px solid #B8243A;
+  margin: 0;
+}
+
+/* ── Issue prompt ── */
+.issue-certificate-section {
+  display: flex;
+  justify-content: center;
+  padding: 1.6rem 1rem;
+  background: #FAF4FF;
+  border: 1.5px dashed #E0D0EF;
+  border-radius: 12px;
 }
 
 .issue-certificate-btn {
-  padding: 12px 24px;
-  background: #28a745;
-  color: white;
+  padding: 0.55rem 1.4rem;
+  background: linear-gradient(135deg, #C8860A 0%, #4A1060 100%);
+  color: #fff;
   border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 15px;
-  font-weight: 600;
-  transition: background 0.2s;
-}
-
-.issue-certificate-btn:hover {
-  background: #218838;
-}
-
-.certificate-form {
-  background: white;
-  padding: 15px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.certificate-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #e7f1ff;
-}
-
-.issued-badge {
-  background: #28a745;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.remove-certificate-btn {
-  padding: 6px 12px;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 4px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s;
-}
-
-.remove-certificate-btn:hover {
-  background: #c82333;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-
-.form-group textarea {
-  width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  resize: vertical;
-  transition: border-color 0.2s;
-}
-
-.form-group textarea:focus {
-  outline: none;
-  border-color: #012970;
-}
-
-.file-upload-container {
-  position: relative;
-  border: 2px dashed #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(200, 134, 10, 0.25);
   transition: all 0.2s;
 }
 
+.issue-certificate-btn:hover {
+  box-shadow: 0 5px 18px rgba(200, 134, 10, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ── Certificate form ── */
+.certificate-form {
+  background: #FFFBF0;
+  border: 1.5px solid #F0D898;
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+/* ── Header row ── */
+.certificate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid #F0D898;
+}
+
+.issued-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: #E8F8EF;
+  color: #1E8A55;
+  padding: 0.28rem 0.75rem;
+  border-radius: 20px;
+}
+
+.remove-certificate-btn {
+  padding: 0.3rem 0.7rem;
+  background: #FDE8EB;
+  color: #B8243A;
+  border: 1px solid #F5C6CB;
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.77rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.remove-certificate-btn:hover {
+  background: #B8243A;
+  color: #fff;
+  border-color: #B8243A;
+}
+
+/* ── Form groups ── */
+.certificate-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
+}
+
+.certificate-form .form-group label {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: #1E0733;
+  margin: 0;
+}
+
+.certificate-form .form-group textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid #E0D0EF;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem;
+  color: #3A2250;
+  background: #fff;
+  box-sizing: border-box;
+  resize: vertical;
+  line-height: 1.55;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.certificate-form .form-group textarea:focus {
+  outline: none;
+  border-color: #C8860A;
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.certificate-form .form-group textarea::placeholder {
+  color: #C0B0D0;
+  font-size: 0.79rem;
+}
+
+/* ── File upload ── */
+.file-upload-container {
+  position: relative;
+  border: 2px dashed #F0D898;
+  border-radius: 10px;
+  padding: 1.1rem;
+  text-align: center;
+  cursor: pointer;
+  background: #fff;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
 .file-upload-container:hover {
-  border-color: #012970;
-  background: #f8f9fa;
+  border-color: #C8860A;
+  background: #FFFBF0;
 }
 
 .file-input {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   opacity: 0;
   cursor: pointer;
+  width: 100%;
+  height: 100%;
 }
 
 .upload-instructions {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  color: #666;
-  font-size: 14px;
+  pointer-events: none;
+}
+
+.upload-instructions span {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #3A2250;
 }
 
 .file-types {
-  font-size: 12px;
-  color: #999;
+  font-size: 0.7rem !important;
+  color: #7A6890 !important;
+  font-weight: 400 !important;
 }
 
+/* ── Preview ── */
 .certificate-preview {
-  margin-bottom: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .certificate-preview label {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: #1E0733;
   display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #333;
 }
 
 .preview-container {
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  background: #f8f9fa;
+  border: 1.5px solid #F0D898;
+  border-radius: 9px;
+  padding: 0.6rem;
+  background: #fff;
 }
 
 .preview-container img {
   max-width: 100%;
-  max-height: 300px;
-  border-radius: 4px;
-}
-
-.save-certificate-btn {
-  padding: 10px 20px;
-  background: #012970;
-  color: white;
-  border: none;
+  max-height: 260px;
   border-radius: 6px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
+  object-fit: contain;
+  display: block;
 }
 
-.save-certificate-btn:hover {
-  background: #011954;
+/* ── Save button ── */
+.save-certificate-btn {
+  align-self: flex-start;
+  padding: 0.5rem 1.3rem;
+  background: linear-gradient(135deg, #C8860A 0%, #4A1060 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(200, 134, 10, 0.22);
+  transition: all 0.2s;
+}
+
+.save-certificate-btn:hover:not(:disabled) {
+  box-shadow: 0 5px 16px rgba(200, 134, 10, 0.32);
+  transform: translateY(-1px);
 }
 
 .save-certificate-btn:disabled {
-  background: #6c757d;
+  opacity: 0.5;
   cursor: not-allowed;
+  transform: none;
 }
 
-.save-confirmation {
-  margin-left: 10px;
-  color: #28a745;
-  font-weight: 600;
+.doctor-certificate .save-confirmation {
+  font-size: 0.79rem;
+  font-weight: 700;
+  background: #E8F8EF;
+  color: #1E8A55;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  margin-left: 0.6rem;
 }
 
-.error-message {
-  color: #dc3545;
-  padding: 8px;
-  background: #f8d7da;
-  border-radius: 4px;
-  margin-bottom: 10px;
+@media (max-width: 480px) {
+  .doctor-certificate {
+    padding: 0.75rem;
+  }
+
+  .save-certificate-btn {
+    width: 100%;
+    text-align: center;
+  }
 }

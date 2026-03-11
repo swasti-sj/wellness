@@ -77,3 +77,30 @@
 .save-btn:hover {
   background-color: #89288f;
 }
+
+@media (max-width: 768px) {
+  .prescription-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .save-btn {
+    align-self: stretch;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .prescription-row {
+    grid-template-columns: 1fr;
+  }
+
+  .add-btn,
+  .save-btn {
+    width: 100%;
+  }
+
+  .prescription-row input {
+    font-size: 16px;
+  }
+}

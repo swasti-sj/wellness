@@ -136,28 +136,28 @@ export default function PatientHistory({ apiBaseUrl }) {
 
       {/* --- Patient Search --- */}
       <form
-  className="appointment-form"
-  style={{ marginBottom: "1.5rem" }}
-  onSubmit={(e) => {
-    e.preventDefault(); // prevent page reload
-    searchPatient();
-  }}
->
-  <input
-    type="text"
-    className="appointment-select"
-    placeholder="Enter patient name, roll number or email"
-    value={query}
-    onChange={(e) => setQuery(e.target.value)}
-  />
-  <button
-    type="submit"
-    className="appointment-btn"
-    disabled={isLoading}
-  >
-    {isLoading ? "Searching..." : "Search"}
-  </button>
-</form>
+        className="appointment-form"
+        style={{ marginBottom: "1.5rem" }}
+        onSubmit={(e) => {
+          e.preventDefault(); // prevent page reload
+          searchPatient();
+        }}
+      >
+        <input
+          type="text"
+          className="appointment-select"
+          placeholder="Enter patient name, roll number or email"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+        />
+        <button
+          type="submit"
+          className="appointment-btn"
+          disabled={isLoading}
+        >
+          {isLoading ? "Searching..." : "Search"}
+        </button>
+      </form>
 
 
       {error && <p className="error-text">{error}</p>}
@@ -269,16 +269,16 @@ export default function PatientHistory({ apiBaseUrl }) {
                               apiBaseUrl={apiBaseUrl}
                             />
                             {/* Test Summary Section - displays tests like in appointment */}
-                            <SelectedTestsSummary 
+                            <SelectedTestsSummary
                               appointmentId={a._id}
                               onEditClick={() => navigate(`/docdashboard/test-page?appointmentId=${a._id}&patientId=${a.user?._id}&returnUrl=/docdashboard/history`)}
                             />
                             {/* Hospital Referral Summary Section - displays referral data */}
-                            <HospitalReferralSummary 
+                            <HospitalReferralSummary
                               appointmentId={a._id}
                             />
                             {/* Certificate Summary Section - displays certificate data */}
-                            <CertificateSummary 
+                            <CertificateSummary
                               appointmentId={a._id}
                             />
                           </div>

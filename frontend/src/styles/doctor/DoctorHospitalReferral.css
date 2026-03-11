@@ -1,121 +1,348 @@
+/* =====================================================================
+   DOCTOR HOSPITAL REFERRAL — IIT Dharwad Theme
+   Same class names as original — CSS-only restyle
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
+
 .hospital-referral {
-  padding: 15px;
-  background: #f8f9fa;
-  border-radius: 8px;
-  margin-top: 15px;
+  font-family: 'DM Sans', sans-serif;
+  padding: 1rem 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
 }
 
 .hospital-referral h4 {
-  margin-bottom: 15px;
-  color: #012970;
+  display: none;
 }
 
-.refer-option {
-  margin-bottom: 15px;
-  padding: 12px;
-  background: white;
-  border-radius: 6px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.refer-label {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
+.hospital-referral .error-message {
+  background: #FDE8EB;
+  color: #B8243A;
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border-left: 3px solid #B8243A;
   margin: 0;
 }
 
-.refer-label input[type="checkbox"] {
-  margin-right: 10px;
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-}
-
-.refer-text {
-  font-size: 15px;
-  font-weight: 600;
-  color: #333;
-}
-
+/* ── Referral fields panel ── */
 .referral-fields {
-  background: white;
-  padding: 15px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  background: #FFFBF0;
+  border: 1.5px solid #F0D898;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
-.form-group {
-  margin-bottom: 15px;
+/* ── Form groups ── */
+.hospital-referral .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin: 0;
 }
 
-.form-group label {
-  display: block;
-  margin-bottom: 6px;
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
+.hospital-referral .form-group label {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: #1E0733;
+  margin: 0;
 }
 
-.form-group input[type="text"],
-.form-group textarea {
+.hospital-referral .form-group input[type="text"] {
   width: 100%;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  transition: border-color 0.2s;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid #E0D0EF;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem;
+  color: #3A2250;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
-.form-group input[type="text"]:focus,
-.form-group textarea:focus {
+.hospital-referral .form-group input[type="text"]:focus {
   outline: none;
-  border-color: #012970;
+  border-color: #6C1B85;
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
 }
 
-.form-group textarea {
+.hospital-referral .form-group input[type="text"]::placeholder {
+  color: #C0B0D0;
+  font-size: 0.79rem;
+}
+
+.hospital-referral .form-group textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid #E0D0EF;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem;
+  color: #3A2250;
+  background: #fff;
+  box-sizing: border-box;
   resize: vertical;
+  line-height: 1.55;
+  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
+.hospital-referral .form-group textarea:focus {
+  outline: none;
+  border-color: #C8860A;
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.hospital-referral .form-group textarea::placeholder {
+  color: #C0B0D0;
+  font-size: 0.79rem;
+}
+
+/* ── Ambulance checkbox ── */
 .checkbox-label {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
   cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  border: 1.5px solid #E0D0EF;
+  border-radius: 7px;
+  transition: all 0.16s;
+  user-select: none;
+}
+
+.checkbox-label:hover {
+  background: #F0E4FA;
+  border-color: #9B4DC8;
 }
 
 .checkbox-label input[type="checkbox"] {
-  margin-right: 8px;
+  accent-color: #C8860A;
   width: 16px;
   height: 16px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
+.checkbox-label span {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #3A2250;
+}
+
+/* ── Save button ── */
 .save-referral-btn {
-  margin-top: 15px;
-  padding: 10px 20px;
-  background: #012970;
-  color: white;
+  align-self: flex-start;
+  padding: 0.5rem 1.3rem;
+  background: linear-gradient(135deg, #4A1060 0%, #C8860A 100%);
+  color: #fff;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 14px;
-  transition: background 0.2s;
+  box-shadow: 0 3px 12px rgba(74, 16, 96, 0.22);
+  transition: all 0.2s;
 }
 
 .save-referral-btn:hover {
-  background: #011954;
+  box-shadow: 0 5px 16px rgba(74, 16, 96, 0.32);
+  transform: translateY(-1px);
 }
 
-.save-confirmation {
-  margin-left: 10px;
-  color: #28a745;
+.hospital-referral .save-confirmation {
+  font-size: 0.79rem;
+  font-weight: 700;
+  background: #E8F8EF;
+  color: #1E8A55;
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  margin-left: 0.6rem;
+}
+
+@media (max-width: 480px) {
+  .hospital-referral {
+    padding: 0.75rem;
+  }
+
+  .save-referral-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ── View Mode Summary Card ── */
+.hospital-referral.view-mode {
+  padding: 0.5rem 1rem 1rem;
+}
+
+.referral-summary-card {
+  background: #FFFBF0;
+  border: 1.5px solid #F0D898;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(200, 134, 10, 0.08);
+}
+
+.summary-header {
+  background: linear-gradient(135deg, #FAF4FF 0%, #FFFBF0 100%);
+  padding: 0.8rem 1.2rem;
+  border-bottom: 1.5px solid #F0D898;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.summary-title {
+  margin: 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1E0733;
+}
+
+.saved-badge {
+  background: #E8F8EF;
+  color: #1E8A55;
+  padding: 0.2rem 0.6rem;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid #1E8A55;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.2rem;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.summary-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.summary-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #7A6890;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summary-value {
+  font-size: 0.9rem;
   font-weight: 600;
+  color: #1E0733;
 }
 
-.error-message {
-  color: #dc3545;
-  padding: 8px;
-  background: #f8d7da;
+.remarks-box {
+  background: #fff;
+  border: 1px solid #E0D0EF;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.badge-yes {
+  background: #E8F8EF;
+  color: #166640;
+  padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  margin-bottom: 10px;
+  font-size: 0.8rem;
+  border: 1px solid #1E8A55;
+}
+
+.badge-no {
+  background: #F0F0F4;
+  color: #5A5A70;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  border: 1px solid #5A5A70;
+}
+
+.view-mode-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 0 1.2rem 1.2rem;
+}
+
+.edit-referral-btn {
+  padding: 0.45rem 1rem;
+  background: #fff;
+  color: #6C1B85;
+  border: 1.5px solid #6C1B85;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.edit-referral-btn:hover {
+  background: #FAF4FF;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(74, 16, 96, 0.1);
+}
+
+.delete-referral-btn {
+  padding: 0.45rem 1rem;
+  background: #fff;
+  color: #B8243A;
+  border: 1.5px solid #B8243A;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.delete-referral-btn:hover {
+  background: #B8243A;
+  color: #fff;
+  border-color: #B8243A;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(184, 36, 58, 0.25);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.cancel-edit-btn {
+  background: transparent;
+  color: #7A6890;
+  border: none;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 0.5rem;
+}
+
+.cancel-edit-btn:hover {
+  color: #1E0733;
 }

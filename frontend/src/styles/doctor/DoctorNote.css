@@ -1,689 +1,606 @@
-/* ============================================
-   DOCTOR_NOTE.CSS - IIT DHARWAD MEDICAL PORTAL
-   Clinical Notes Section Styling
-   ============================================ */
+/* =====================================================================
+   DOCTOR NOTE — IIT Dharwad Theme  (plum-primary · gold-accent)
+   All classes prefixed "dn-" to avoid global leaks
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap');
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+:root {
+  --plum: #4A1060;
+  --plum-mid: #6C1B85;
+  --plum-light: #9B4DC8;
+  --plum-soft: #F0E4FA;
+  --plum-ghost: #FAF4FF;
+  --gold: #C8860A;
+  --gold-mid: #E5A020;
+  --gold-soft: #FFF4DC;
+  --gold-ghost: #FFFBF0;
+  --border-gold: #F0D898;
+  --success: #1E8A55;
+  --danger: #B8243A;
+  --text-head: #1E0733;
+  --text-body: #3A2250;
+  --text-muted: #7A6890;
+  --border: #E0D0EF;
+  --surface: #FFFFFF;
 }
 
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #f5f7fa 0%, #ede9f6 100%);
-  color: #333;
-}
-
-/* ============================================
-   DOCTOR NOTES CONTAINER
-   ============================================ */
-
-.doctor-notes {
-  max-width: 900px;
-  margin: 2rem auto;
-  background: #fff;
-  border-radius: 14px;
-  padding: 2.5rem;
-  box-shadow: 0 6px 24px rgba(106, 27, 111, 0.12);
-  border-left: 5px solid #6a1b6f;
-  animation: slideUp 0.5s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(25px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ============================================
-   SECTION HEADING
-   ============================================ */
-
-.doctor-notes h3 {
-  color: #6a1b6f;
-  font-size: 1.8rem;
-  margin-bottom: 2rem;
-  letter-spacing: 0.6px;
-  font-weight: 700;
-  padding-bottom: 1rem;
-  border-bottom: 3px solid #ffad4a;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.doctor-notes h3::before {
-  content: '📋';
-  font-size: 1.6rem;
-}
-
-/* ============================================
-   NOTE FORM
-   ============================================ */
-
-.note-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  margin-bottom: 2.5rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
-  border-radius: 12px;
-  border: 2px solid #f0f0f0;
-  transition: all 0.3s ease;
-}
-/* 
-.note-form:hover {
-  border-color: #ffad4a;
-  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.1);
-} */
-
-.note-form:focus-within {
-  border-color: #6a1b6f;
-  box-shadow: 0 4px 16px rgba(106, 27, 111, 0.15);
-}
-
-/* ============================================
-   TEXTAREA STYLING
-   ============================================ */
-
-.note-form textarea {
-  width: 100%;
-  min-height: 140px;
-  padding: 1.2rem;
-  border: 2px solid #ddd;
-  border-radius: 10px;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 0.95rem;
-  resize: vertical;
-  transition: all 0.3s ease;
-  color: #333;
-  background: #fff;
-  line-height: 1.6;
-}
-
-.note-form textarea:focus {
-  outline: none;
-  border-color: #6a1b6f;
-  box-shadow: 0 0 0 3px rgba(106, 27, 111, 0.1);
-  background: #fff;
-}
-
-.note-form textarea:hover {
-  border-color: #89288f;
-}
-
-.note-form textarea::placeholder {
-  color: #aaa;
-  font-weight: 500;
-}
-
-/* ============================================
-   SUBMIT BUTTON
-   ============================================ */
-
-.note-form button[type="submit"] {
-  align-self: flex-start;
-  padding: 0.85rem 2rem;
-  background: linear-gradient(135deg, #ffad4a 0%, #ff9800 100%);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  letter-spacing: 0.4px;
-  box-shadow: 0 4px 12px rgba(255, 173, 74, 0.25);
-  text-transform: uppercase;
-}
-
-.note-form button[type="submit"]:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
-}
-
-.note-form button[type="submit"]:active {
-  transform: translateY(0);
-}
-
-.note-form button[type="submit"]:focus-visible {
-  outline: 2px solid #6a1b6f;
-  outline-offset: 2px;
-}
-
-/* ============================================
-   NOTES LIST CONTAINER
-   ============================================ */
-
-.notes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-  animation: fadeIn 0.4s ease-out 0.2s backwards;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.notes-list > p {
-  color: #999;
-  text-align: center;
-  padding: 2.5rem 1.5rem;
-  font-style: italic;
-  font-size: 1rem;
-  background: linear-gradient(135deg, #f9f9f9 0%, #f5f5f5 100%);
-  border-radius: 12px;
-  border: 2px dashed #ddd;
-}
-
-/* ============================================
-   INDIVIDUAL NOTE CARD
-   ============================================ */
-
-.note-card {
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
-  padding: 1.5rem;
-  border-radius: 12px;
-  border-left: 4px solid #89288f;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
-  animation: noteSlideIn 0.4s ease-out;
-  position: relative;
-  overflow: hidden;
-}
-
-@keyframes noteSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.note-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(135deg, #6a1b6f 0%, #ffad4a 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.note-card:hover {
-  box-shadow: 0 6px 20px rgba(106, 27, 111, 0.15);
-  transform: translateX(4px);
-  background: linear-gradient(135deg, #fff 0%, #fafafa 100%);
-}
-
-.note-card:hover::before {
-  opacity: 1;
-}
-
-/* ============================================
-   NOTE TEXT & TIMESTAMP
-   ============================================ */
-
-.note-card p {
-  color: #333;
-  font-size: 0.95rem;
-  margin-bottom: 1rem;
-  line-height: 1.7;
-  word-wrap: break-word;
-  font-weight: 500;
-}
-
-.note-card small {
-  color: #999;
-  font-size: 0.8rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-}
-
-.note-card small::before {
-  content: '⏰';
-  font-size: 0.85rem;
-}
-
-/* ============================================
-   RESPONSIVE DESIGN - TABLET
-   ============================================ */
-
-@media (max-width: 1024px) {
-  .doctor-notes {
-    margin: 1.5rem;
-    padding: 2rem;
-  }
-
-  .doctor-notes h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-
-  .note-form {
-    padding: 1.5rem;
-    gap: 1rem;
-  }
-
-  .note-form textarea {
-    min-height: 120px;
-    padding: 1rem;
-    font-size: 0.9rem;
-  }
-
-  .note-form button[type="submit"] {
-    padding: 0.75rem 1.75rem;
-    font-size: 0.9rem;
-  }
-
-  .note-card {
-    padding: 1.25rem;
-  }
-
-  .note-card p {
-    font-size: 0.9rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .note-card small {
-    font-size: 0.75rem;
-  }
-}
-
-@media (max-width: 768px) {
-  .doctor-notes {
-    max-width: 100%;
-    margin: 1.25rem 0.75rem;
-    padding: 1.5rem;
-    border-radius: 12px;
-  }
-
-  .doctor-notes h3 {
-    font-size: 1.3rem;
-    margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-  }
-
-  .note-form {
-    padding: 1.25rem;
-    gap: 0.9rem;
-  }
-
-  .note-form textarea {
-    min-height: 110px;
-    padding: 0.9rem;
-    font-size: 0.9rem;
-    border-radius: 8px;
-  }
-
-  .note-form button[type="submit"] {
-    padding: 0.7rem 1.5rem;
-    font-size: 0.85rem;
-    align-self: center;
-    width: 100%;
-  }
-
-  .note-card {
-    padding: 1rem;
-    border-radius: 10px;
-  }
-
-  .note-card p {
-    font-size: 0.85rem;
-    margin-bottom: 0.6rem;
-    line-height: 1.6;
-  }
-
-  .note-card small {
-    font-size: 0.75rem;
-  }
-
-  .notes-list > p {
-    padding: 2rem 1rem;
-    font-size: 0.9rem;
-  }
-}
-
-@media (max-width: 480px) {
-  .doctor-notes {
-    margin: 1rem 0;
-    padding: 1.25rem;
-    border-radius: 10px;
-  }
-
-  .doctor-notes h3 {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.6rem;
-  }
-
-  .doctor-notes h3::before {
-    font-size: 1.2rem;
-  }
-
-  .note-form {
-    padding: 1rem;
-    gap: 0.75rem;
-    border-radius: 10px;
-  }
-
-  .note-form textarea {
-    min-height: 100px;
-    padding: 0.8rem;
-    font-size: 0.85rem;
-    border-radius: 8px;
-  }
-
-  .note-form textarea::placeholder {
-    font-size: 0.8rem;
-  }
-
-  .note-form button[type="submit"] {
-    padding: 0.65rem 1.25rem;
-    font-size: 0.8rem;
-    width: 100%;
-    border-radius: 8px;
-  }
-
-  .note-card {
-    padding: 0.9rem;
-    border-radius: 8px;
-    border-left-width: 3px;
-  }
-
-  .note-card p {
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .note-card small {
-    font-size: 0.7rem;
-    gap: 0.3rem;
-  }
-
-  .notes-list > p {
-    padding: 1.5rem 0.75rem;
-    font-size: 0.8rem;
-  }
-}
-
-/* ============================================
-   ACCESSIBILITY & FOCUS STATES
-   ============================================ */
-
-.note-form textarea:focus-visible,
-.note-form button:focus-visible {
-  outline: 2px solid #ffad4a;
-  outline-offset: 2px;
-}
-
-.note-card:focus-visible {
-  outline: 2px solid #6a1b6f;
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .doctor-notes,
-  .note-form,
-  .note-card,
-  .notes-list {
-    animation: none;
-    transition: none;
-  }
-}
-
-/* ============================================
-   ERROR MESSAGE
-   ============================================ */
-
-.error-message {
-  background: #fee2e2;
-  color: #dc2626;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-  font-size: 0.9rem;
-  border-left: 4px solid #dc2626;
-}
-
-.loading {
-  text-align: center;
-  color: #6a1b6f;
-  padding: 1.5rem;
-  font-size: 0.95rem;
-}
-
-.no-notes {
-  color: #999;
-  text-align: center;
-  padding: 2rem;
-  font-style: italic;
-  background: #f9f9f9;
-  border-radius: 10px;
-  border: 2px dashed #ddd;
-}
-
-/* ============================================
-   EDIT MODE
-   ============================================ */
-
-.note-edit-mode {
+/* ── Root ─────────────────────────────────────────────────────── */
+.dn-root {
+  font-family: 'DM Sans', sans-serif;
+  padding: 1rem 1.2rem 1.4rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.edit-textarea {
-  width: 100%;
-  min-height: 120px;
-  padding: 1rem;
-  border: 2px solid #6a1b6f;
-  border-radius: 8px;
-  font-family: 'Segoe UI', sans-serif;
-  font-size: 0.95rem;
-  resize: vertical;
-  line-height: 1.6;
-}
-
-.edit-textarea:focus {
-  outline: none;
-  border-color: #ffad4a;
-  box-shadow: 0 0 0 3px rgba(255, 173, 74, 0.2);
-}
-
-.edit-actions {
+/* ── Error ─────────────────────────────────────────────────────── */
+.dn-error {
   display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #FDE8EB;
+  color: var(--danger);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--danger);
+}
+
+/* ── Composer ──────────────────────────────────────────────────── */
+.dn-composer {
+  background: var(--plum-ghost);
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.dn-composer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: linear-gradient(90deg, var(--plum-soft), var(--plum-ghost));
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.dn-composer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--plum-mid);
+}
+
+.dn-composer-hint {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.dn-textarea {
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.9rem;
+  color: var(--text-body);
+  background: var(--surface);
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.6;
+  box-sizing: border-box;
+  transition: box-shadow 0.2s;
+}
+
+.dn-textarea:focus {
+  outline: none;
+  box-shadow: inset 0 -2px 0 var(--plum-mid);
+  background: var(--plum-ghost);
+}
+
+.dn-textarea::placeholder {
+  color: #C8BAD8;
+  font-size: 0.83rem;
+}
+
+/* Pending image strip */
+.dn-pending-strip {
+  padding: 0.65rem 1rem 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+
+.dn-pending-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--plum-mid);
+  display: block;
+  margin-bottom: 0.45rem;
+}
+
+.dn-pending-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  padding-bottom: 0.65rem;
+}
+
+.dn-pending-item {
+  position: relative;
+  width: 68px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.dn-pending-item img {
+  width: 68px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+}
+
+.dn-pending-x {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dn-pending-name {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  text-align: center;
+  word-break: break-all;
+}
+
+/* Composer action bar */
+.dn-composer-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1rem;
+  background: var(--plum-ghost);
   gap: 0.75rem;
 }
 
-.edit-actions button {
-  padding: 0.5rem 1.25rem;
+.dn-attach-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.44rem 0.9rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: var(--plum-mid);
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.dn-attach-btn:hover {
+  background: var(--plum-soft);
+  border-color: var(--plum-mid);
+}
+
+.dn-add-btn {
+  padding: 0.48rem 1.3rem;
+  background: linear-gradient(135deg, var(--plum) 0%, var(--plum-mid) 60%, var(--gold) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 3px 10px rgba(74, 16, 96, 0.2);
+  white-space: nowrap;
+}
+
+.dn-add-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--plum-mid) 0%, var(--plum-light) 60%, var(--gold-mid) 100%);
+  box-shadow: 0 5px 14px rgba(74, 16, 96, 0.3);
+  transform: translateY(-1px);
+}
+
+.dn-add-btn:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── Notes List ────────────────────────────────────────────────── */
+.dn-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.dn-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 1.8rem 1rem;
+  background: var(--plum-ghost);
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.dn-state-icon {
+  font-size: 1.9rem;
+}
+
+.dn-state p {
+  font-size: 0.83rem;
+  margin: 0;
+}
+
+/* ── Note Card ─────────────────────────────────────────────────── */
+.dn-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.18s;
+}
+
+.dn-card:hover {
+  box-shadow: 0 4px 16px rgba(200, 134, 10, 0.13);
+  transform: translateY(-1px);
+}
+
+.dn-card.editing {
+  border-color: var(--gold-mid);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.13);
+}
+
+/* Top stripe alternates gold / plum */
+.dn-card-stripe {
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold) 60%, var(--plum-light) 100%);
+}
+
+.dn-card:nth-child(even) .dn-card-stripe {
+  background: linear-gradient(90deg, var(--plum) 60%, var(--gold-mid) 100%);
+}
+
+.dn-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.85rem 0;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.dn-note-badge {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  background: var(--gold-soft);
+  color: var(--gold);
+  padding: 2px 7px;
+  border-radius: 20px;
+}
+
+.dn-note-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.dn-edited {
+  color: var(--plum-mid);
+  font-style: italic;
+}
+
+.dn-note-body {
+  padding: 0.6rem 0.85rem 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--text-body);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Attached images inside card ───────────────────────────────── */
+.dn-imgs-wrap {
+  padding: 0 0.85rem 0.6rem;
+}
+
+.dn-imgs-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--plum-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 0.45rem;
+}
+
+.dn-imgs-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dn-img-card {
+  position: relative;
+  width: 76px;
+  height: 65px;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.18s;
+}
+
+.dn-img-card:hover {
+  transform: scale(1.05);
+}
+
+.dn-img-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.dn-img-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: rgba(184, 36, 58, 0.9);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 9px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.dn-img-card:hover .dn-img-del {
+  display: flex;
+}
+
+/* ── Card action buttons ────────────────────────────────────────── */
+.dn-actions {
+  display: flex;
+  gap: 0.45rem;
+  padding: 0.45rem 0.85rem 0.6rem;
+  border-top: 1px solid var(--border-gold);
+  flex-wrap: wrap;
+}
+
+.dn-act {
+  padding: 0.3rem 0.8rem;
   border-radius: 6px;
-  font-size: 0.85rem;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.77rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.edit-actions .save-btn {
-  background: #10b981;
-  color: white;
   border: none;
+  transition: all 0.15s;
+  white-space: nowrap;
 }
 
-.edit-actions .save-btn:hover {
-  background: #059669;
+.dn-act-edit {
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
 }
 
-.edit-actions .cancel-btn {
-  background: #f3f4f6;
-  color: #374151;
-  border: 1px solid #d1d5db;
+.dn-act-edit:hover {
+  background: var(--gold-mid);
+  color: #fff;
 }
 
-.edit-actions .cancel-btn:hover {
-  background: #e5e7eb;
+.dn-act-img {
+  background: var(--plum-soft);
+  color: var(--plum-mid);
 }
 
-/* ============================================
-   NOTE ACTIONS
-   ============================================ */
+.dn-act-img:hover {
+  background: var(--plum-mid);
+  color: #fff;
+}
 
-.note-actions {
+.dn-act-img:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dn-act-del {
+  background: #FDE8EB;
+  color: var(--danger);
+  margin-left: auto;
+}
+
+.dn-act-del:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/* ── Edit mode ──────────────────────────────────────────────────── */
+.dn-edit-wrap {
+  padding: 0.85rem;
   display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--plum-ghost);
 }
 
-.note-actions button {
-  padding: 0.4rem 0.85rem;
+.dn-edit-ta {
+  width: 100%;
+  padding: 0.65rem 0.8rem;
+  border: 1.5px solid var(--plum-mid);
+  border-radius: 7px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-body);
+  resize: vertical;
+  min-height: 85px;
+  box-sizing: border-box;
+  line-height: 1.6;
+}
+
+.dn-edit-ta:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.12);
+}
+
+.dn-edit-btns {
+  display: flex;
+  gap: 0.55rem;
+}
+
+.dn-btn-ok {
+  padding: 0.42rem 1.1rem;
+  background: var(--success);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.dn-btn-ok:hover {
+  background: #166640;
+}
+
+.dn-btn-cx {
+  padding: 0.42rem 0.9rem;
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1.5px solid var(--border);
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border: none;
+  transition: background 0.18s;
 }
 
-.edit-note-btn {
-  background: #3b82f6;
-  color: white;
+.dn-btn-cx:hover {
+  background: var(--plum-soft);
 }
 
-.edit-note-btn:hover {
-  background: #2563eb;
-}
-
-.add-image-btn {
-  background: #8b5cf6;
-  color: white;
-}
-
-.add-image-btn:hover {
-  background: #7c3aed;
-}
-
-.add-image-btn:disabled {
-  background: #a78bfa;
-  cursor: not-allowed;
-}
-
-.delete-note-btn {
-  background: #fee2e2;
-  color: #dc2626;
-}
-
-.delete-note-btn:hover {
-  background: #fecaca;
-}
-
-/* ============================================
-   NOTE IMAGES
-   ============================================ */
-
-.note-images {
-  margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid #e5e7eb;
-}
-
-.note-images h5 {
-  color: #6a1b6f;
-  font-size: 0.9rem;
-  margin-bottom: 0.75rem;
-  font-weight: 600;
-}
-
-.images-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 0.75rem;
-}
-
-.image-item {
-  position: relative;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.image-item img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  cursor: pointer;
-  transition: transform 0.2s ease;
-}
-
-.image-item img:hover {
-  transform: scale(1.05);
-}
-
-.delete-image-btn {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: rgba(220, 38, 38, 0.9);
-  color: white;
-  border: none;
-  cursor: pointer;
+/* ── Lightbox ───────────────────────────────────────────────────── */
+.dn-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 2, 20, 0.85);
+  z-index: 9999;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  padding: 1.5rem;
 }
 
-.image-item:hover .delete-image-btn {
-  opacity: 1;
+.dn-lightbox img {
+  max-width: 90vw;
+  max-height: 85vh;
+  border-radius: 10px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+  object-fit: contain;
 }
 
-.delete-image-btn:hover {
-  background: #dc2626;
+.dn-lb-close {
+  position: fixed;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 34px;
+  height: 34px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.image-caption {
-  display: block;
-  padding: 0.35rem;
-  font-size: 0.75rem;
-  color: #666;
-  background: #f9f9f9;
-  text-align: center;
+.dn-lb-close:hover {
+  background: rgba(255, 255, 255, 0.35);
 }
 
-/* ============================================
-   EDITED LABEL
-   ============================================ */
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .dn-root {
+    padding: 0.75rem;
+    gap: 0.75rem;
+  }
 
-.edited-label {
-  color: #6a1b6f;
-  font-style: italic;
-  margin-left: 0.25rem;
+  .dn-composer-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dn-attach-btn,
+  .dn-add-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .dn-act-del {
+    margin-left: 0;
+  }
+
+  .dn-img-card {
+    width: 64px;
+    height: 56px;
+  }
+}
+
+@media (max-width: 400px) {
+  .dn-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dn-pending-item {
+    width: 58px;
+  }
+
+  .dn-pending-item img {
+    width: 58px;
+    height: 48px;
+  }
 }

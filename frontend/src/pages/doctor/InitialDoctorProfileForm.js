@@ -106,7 +106,7 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
                   value={t.time}
                   onChange={e => handleSlotChange(dayIdx, timeIdx, 'time', e.target.value)}
                   style={{ marginRight: 5 }}
-                  // The 'required' attribute has been removed
+                // The 'required' attribute has been removed
                 />
                 {/* The status select dropdown has been removed */}
               </span>
