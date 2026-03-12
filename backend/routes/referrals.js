@@ -10,7 +10,7 @@ const Doctor = require('../models/Doctor');
 // ------------------------------
 const verifyDoctor = (req, res, next) => {
   const token =
-    req.headers.authorization?.split(" ")[1] || // Bearer token
+    req.headers.authorization?.split(" ")[1] ||
     req.body?.token ||
     req.query?.token;
 
@@ -25,7 +25,6 @@ const verifyDoctor = (req, res, next) => {
     return res.status(401).json({ error: "Invalid token" });
   }
 };
-
 
 // ------------------------------
 // Create a referral
@@ -46,7 +45,8 @@ router.post('/', verifyDoctor, async (req, res) => {
       fromDoctor: req.doctorId,
       toDoctor: referredDoctorId,
       appointment: appointmentId || null,
-      reason
+      reason,
+      status: 'pending' // NEW: default status
     });
 
     await referral.save();
@@ -58,12 +58,11 @@ router.post('/', verifyDoctor, async (req, res) => {
 });
 
 // ------------------------------
-// Get referrals for a single patient (optional)
+// Get referrals for a single patient
 // ------------------------------
 router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
   try {
     const patientEmail = req.params.patientEmail.toLowerCase();
-
     const patient = await User.findOne({ email: patientEmail });
     if (!patient) return res.status(404).json({ error: 'Patient not found' });
 
@@ -86,9 +85,8 @@ router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
 });
 
 // ------------------------------
-// Get referrals made by this doctor (sent referrals)
-// ------------------------------
 // Get all incoming referrals (toDoctor)
+// ------------------------------
 router.get('/all', verifyDoctor, async (req, res) => {
   try {
     const referrals = await Referral.find({ toDoctor: req.doctorId })
@@ -102,7 +100,9 @@ router.get('/all', verifyDoctor, async (req, res) => {
       text: r.reason || "No reason provided",
       doctor: r.fromDoctor ? { name: r.fromDoctor.name, email: r.fromDoctor.email } : { name: "Unknown", email: "" },
       createdAt: r.createdAt,
-      read: r.read
+      read: r.read || false,
+      status: r.status || 'pending',           // NEW
+      responseNote: r.responseNote || ''        // NEW
     }));
 
     res.json({ success: true, notes });
@@ -112,7 +112,9 @@ router.get('/all', verifyDoctor, async (req, res) => {
   }
 });
 
-// Get all referrals created by this doctor (sent)
+// ------------------------------
+// Get all sent referrals (fromDoctor)
+// ------------------------------
 router.get('/mine', verifyDoctor, async (req, res) => {
   try {
     const referrals = await Referral.find({ fromDoctor: req.doctorId })
@@ -126,6 +128,8 @@ router.get('/mine', verifyDoctor, async (req, res) => {
       referredTo: r.toDoctor ? { name: r.toDoctor.name, specialization: r.toDoctor.specialization } : { name: "Unknown", specialization: "" },
       text: r.reason || "No reason provided",
       createdAt: r.createdAt,
+      status: r.status || 'pending',           // NEW
+      responseNote: r.responseNote || ''        // NEW
     }));
 
     res.json({ success: true, notes });
@@ -135,8 +139,9 @@ router.get('/mine', verifyDoctor, async (req, res) => {
   }
 });
 
-
-// routes/referral.js
+// ------------------------------
+// Mark referral as read (existing)
+// ------------------------------
 router.patch('/:id/read', verifyDoctor, async (req, res) => {
   try {
     const { id } = req.params;
@@ -147,7 +152,7 @@ router.patch('/:id/read', verifyDoctor, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
 
     referral.read = true;
-    referral.status = 'viewed';
+    referral.status = referral.status === 'pending' ? 'viewed' : referral.status;
     referral.viewedAt = new Date();
     await referral.save();
 
@@ -158,5 +163,56 @@ router.patch('/:id/read', verifyDoctor, async (req, res) => {
   }
 });
 
+// ------------------------------
+// NEW: Accept a referral
+// ------------------------------
+router.patch('/:id/accept', verifyDoctor, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { responseNote } = req.body;
+
+    const referral = await Referral.findById(id);
+    if (!referral) return res.status(404).json({ error: 'Referral not found' });
+    if (referral.toDoctor.toString() !== req.doctorId)
+      return res.status(403).json({ error: 'Access denied' });
+
+    referral.status = 'accepted';
+    referral.read = true;
+    referral.responseNote = responseNote || '';
+    referral.respondedAt = new Date();
+    await referral.save();
+
+    res.json({ success: true, message: 'Referral accepted' });
+  } catch (err) {
+    console.error("Error accepting referral:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ------------------------------
+// NEW: Reject a referral
+// ------------------------------
+router.patch('/:id/reject', verifyDoctor, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { responseNote } = req.body;
+
+    const referral = await Referral.findById(id);
+    if (!referral) return res.status(404).json({ error: 'Referral not found' });
+    if (referral.toDoctor.toString() !== req.doctorId)
+      return res.status(403).json({ error: 'Access denied' });
+
+    referral.status = 'rejected';
+    referral.read = true;
+    referral.responseNote = responseNote || '';
+    referral.respondedAt = new Date();
+    await referral.save();
+
+    res.json({ success: true, message: 'Referral rejected' });
+  } catch (err) {
+    console.error("Error rejecting referral:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 module.exports = router;

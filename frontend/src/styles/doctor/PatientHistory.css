@@ -1,253 +1,604 @@
-/* --- Container below navbar --- */
-.patient-history-container {
-  padding: 6rem 2rem 2rem;
-  /* space below navbar */
+/* =====================================================================
+   PATIENT HISTORY — IIT Dharwad Theme
+   Plum #4A1060 · Gold #C8860A · DM Sans
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --plum: #4A1060;
+  --plum-mid: #6C1B85;
+  --plum-light: #9B4DC8;
+  --plum-soft: #F0E4FA;
+  --plum-ghost: #FAF4FF;
+  --gold: #C8860A;
+  --gold-mid: #E5A020;
+  --gold-bright: #F0B830;
+  --gold-soft: #FFF4DC;
+  --gold-ghost: #FFFBF0;
+  --border: #E0D0EF;
+  --border-gold: #F0D898;
+  --surface: #FFFFFF;
+  --text-head: #1E0733;
+  --text-body: #3A2250;
+  --text-muted: #7A6890;
+  --success: #1E8A55;
+  --danger: #B8243A;
+  --shadow-sm: 0 2px 8px rgba(74, 16, 96, 0.10);
+  --shadow-md: 0 4px 18px rgba(74, 16, 96, 0.14);
+}
+
+/* ── Page container ── */
+.ph-container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 6rem 1.5rem 4rem;
+  font-family: 'DM Sans', sans-serif;
   min-height: 100vh;
-  background-color: #f9f9ff;
-  /* soft background */
-  font-family: "Poppins", sans-serif;
+  background: #FAF7FF;
+}
+
+/* ── Title ── */
+.ph-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.9rem;
+  color: var(--plum);
+  text-align: center;
+  margin-bottom: 1.75rem;
+  position: relative;
+  display: inline-block;
   width: 100%;
 }
 
-/* --- Search Input --- */
-.search-input {
-  width: 100%;
-  max-width: 400px;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid #ccc;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
-  outline: none;
-  transition: 0.2s;
-  background-color: #faf7ff;
+.ph-title::after {
+  content: '';
+  display: block;
+  width: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--gold-mid), var(--gold-bright));
+  border-radius: 2px;
+  margin: 6px auto 0;
 }
 
-.search-input:focus {
-  border-color: #a18ee5;
-  box-shadow: 0 0 5px rgba(150, 120, 255, 0.2);
+/* ── Search form ── */
+.ph-search-form {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
 }
 
-/* --- Search Button --- */
-.search-btn {
-  padding: 0.6rem 1rem;
-  border: none;
+.ph-search-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border);
   border-radius: 10px;
-  background-color: #7e68c4;
-  color: white;
-  cursor: pointer;
-  font-weight: 500;
-  transition: 0.2s;
-}
-
-.search-btn:hover {
-  background-color: #6b57b5;
-}
-
-/* --- Grid Layout for Patient Cards --- */
-.patient-card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1rem;
-}
-
-/* --- Patient Card --- */
-.patient-card {
-  background: #faf7ff;
-  border: 1px solid #ddd;
-  padding: 1rem;
-  border-radius: 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.patient-card:hover {
-  transform: scale(1.02);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* --- Patient Basic Info --- */
-.patient-card h3 {
-  margin-bottom: 0.5rem;
-  color: #4a3c73;
-}
-
-.patient-card p {
-  color: #555;
+  font-family: 'DM Sans', sans-serif;
   font-size: 0.95rem;
-  margin: 0.3rem 0;
+  color: var(--text-body);
+  background: var(--surface);
+  transition: border-color 0.18s, box-shadow 0.18s;
 }
 
-.expand-hint {
-  text-align: right;
-  font-size: 0.85rem;
-  color: #7e68c4;
+.ph-search-input:focus {
+  outline: none;
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
 }
 
-/* --- Expanded Details (Appointments + Referral) --- */
-.expanded-details {
-  margin-top: 1rem;
-  border-top: 1px solid #eee;
-  padding-top: 1rem;
-  animation: fadeIn 0.3s ease-in;
+.ph-search-input::placeholder {
+  color: #C0B0D0;
 }
 
-/* --- Patient Info Box --- */
-.patient-summary {
-  background-color: #f2edff;
-  padding: 0.8rem 1rem;
-  border-radius: 12px;
-  margin-bottom: 1rem;
-}
-
-.patient-summary p {
-  margin: 0.4rem 0;
-  color: #333;
-}
-
-/* --- Referral Section --- */
-.referral-section {
-  background-color: #fdfcff;
-  border: 1px solid #e3ddff;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-}
-
-.referral-section h4 {
-  color: #4a3c73;
-  margin-bottom: 0.6rem;
-}
-
-.referral-section select,
-.referral-section textarea {
-  width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  padding: 0.6rem;
-  background-color: #faf7ff;
-  margin-bottom: 0.8rem;
-  resize: none;
-}
-
-.referral-section button {
-  background-color: #7e68c4;
+.ph-search-btn {
+  padding: 0.7rem 1.5rem;
+  background: linear-gradient(135deg, var(--plum) 0%, var(--plum-mid) 55%, var(--gold) 100%);
   color: #fff;
   border: none;
-  padding: 0.6rem 1rem;
   border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: 0.2s;
+  box-shadow: 0 4px 14px rgba(74, 16, 96, 0.22);
+  transition: all 0.2s;
+  white-space: nowrap;
 }
 
-.referral-section button:hover {
-  background-color: #6b57b5;
+.ph-search-btn:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(74, 16, 96, 0.32);
+  transform: translateY(-1px);
 }
 
-/* --- Appointment Cards inside each patient --- */
-.appointment-card {
-  background-color: #fff;
-  border: 1px solid #e8e4ff;
-  border-radius: 14px;
-  padding: 1rem;
-  margin-top: 1rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  transition: 0.2s;
+.ph-search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-.appointment-card:hover {
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+/* ── Recent patients chips ── */
+.ph-recent {
+  margin-bottom: 1.5rem;
 }
 
-/* --- Medication Section --- */
-.medications-section {
-  background-color: #f8f6ff;
-  padding: 0.8rem;
-  border-radius: 10px;
-  margin-bottom: 1rem;
-}
-
-.medications-section h5 {
-  color: #4a3c73;
+.ph-recent-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
   margin-bottom: 0.5rem;
 }
 
-.medication-item {
+.ph-recent-chips {
   display: flex;
-  align-items: center;
-  margin: 0.3rem 0;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
-.medication-item label {
-  margin-left: 0.5rem;
-  color: #444;
+.ph-recent-chip {
+  padding: 0.32rem 0.85rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 20px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--plum-mid);
+  cursor: pointer;
+  transition: all 0.15s;
 }
 
-/* --- Columns for Note & Prescription --- */
-.expand-columns {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+.ph-recent-chip:hover {
+  background: var(--plum-soft);
+  border-color: var(--plum-mid);
+}
+
+/* ── Error ── */
+.ph-error {
+  background: #FDE8EB;
+  color: var(--danger);
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border-left: 3px solid var(--danger);
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* ── Patient list ── */
+.ph-patient-list {
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
 }
 
-/* --- Small Effects --- */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* ── Patient card ── */
+.ph-patient-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow 0.2s;
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .patient-history-container {
-    padding: 5rem 1rem 1rem;
-  }
-
-  .patient-card-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .expand-columns {
-    grid-template-columns: 1fr;
-  }
+.ph-patient-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
-/* --- Fix overflow in Note & Prescription boxes --- */
-.expand-columns>* {
-  background-color: #fdfcff;
-  border: 1px solid #e3ddff;
-  border-radius: 12px;
-  padding: 1rem;
-  box-sizing: border-box;
-  overflow-wrap: break-word;
-  /* ensures long text wraps */
-  word-break: break-word;
-  /* prevents overflow for long words */
-  white-space: normal;
-  /* allows text to wrap properly */
-  max-height: 400px;
-  /* keeps tall notes visually contained */
-  overflow-y: auto;
-  /* scroll inside instead of overflowing */
+.ph-patient-card.frequent {
+  border-color: var(--gold);
+  border-left: 4px solid var(--gold);
 }
 
-/* Scrollbar styling (optional, matches theme) */
-.expand-columns>*::-webkit-scrollbar {
-  width: 6px;
+/* Patient top row */
+.ph-patient-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.3rem;
+  cursor: pointer;
+  gap: 1rem;
+  background: linear-gradient(90deg, var(--plum-ghost), var(--surface));
+  border-bottom: 1px solid var(--border);
+  transition: background 0.18s;
 }
 
-.expand-columns>*::-webkit-scrollbar-thumb {
-  background-color: #c5b8ff;
+.ph-patient-top:hover {
+  background: var(--plum-soft);
+}
+
+.ph-patient-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ph-patient-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-head);
+  margin-bottom: 0.2rem;
+}
+
+.ph-patient-meta {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ph-patient-right {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-shrink: 0;
+}
+
+.ph-frequent-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: var(--gold-soft);
+  color: var(--gold);
+  border: 1px solid var(--border-gold);
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.ph-visit-count {
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--plum-soft);
+  color: var(--plum-mid);
+  padding: 0.25rem 0.65rem;
+  border-radius: 20px;
+}
+
+.ph-expand-icon {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(74, 16, 96, 0.07);
+  border-radius: 50%;
+}
+
+/* Patient body */
+.ph-patient-body {
+  padding: 1.25rem 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Quick info strip */
+.ph-quick-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  background: var(--plum-ghost);
+  border: 1px solid var(--border);
   border-radius: 10px;
+  padding: 0.75rem 1rem;
+  font-size: 0.86rem;
+  color: var(--text-body);
 }
 
-.expand-columns>*::-webkit-scrollbar-track {
-  background: #f4f0ff;
+.ph-quick-info strong {
+  color: var(--plum-mid);
+}
+
+/* Section title */
+.ph-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+/* ── Refer form inside patient card ── */
+.ph-refer-form {
+  background: var(--gold-ghost);
+  border: 1.5px solid var(--border-gold);
+  border-radius: 10px;
+  padding: 1rem 1.1rem;
+}
+
+.ph-refer-row {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.65rem;
+  align-items: center;
+}
+
+.ph-refer-row select {
+  flex: 1;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.87rem;
+  color: var(--text-body);
+  background: var(--surface);
+  transition: border-color 0.18s;
+}
+
+.ph-refer-row select:focus {
+  outline: none;
+  border-color: var(--plum-mid);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.1);
+}
+
+.ph-refer-btn {
+  padding: 0.55rem 1.2rem;
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-mid) 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+  box-shadow: 0 3px 10px rgba(200, 134, 10, 0.22);
+}
+
+.ph-refer-btn:hover {
+  box-shadow: 0 5px 14px rgba(200, 134, 10, 0.32);
+  transform: translateY(-1px);
+}
+
+.ph-refer-form textarea {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.87rem;
+  color: var(--text-body);
+  resize: vertical;
+  box-sizing: border-box;
+  line-height: 1.5;
+  background: var(--surface);
+}
+
+.ph-refer-form textarea:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+/* ── Appointment list ── */
+.ph-appt-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* Appointment card */
+.ph-appt-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.ph-appt-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  background: linear-gradient(90deg, #FFFBF0, var(--surface));
+  border-bottom: 1px solid var(--border-gold);
+  gap: 0.5rem;
+  transition: background 0.18s;
+}
+
+.ph-appt-top:hover {
+  background: var(--gold-soft);
+}
+
+.ph-appt-date {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-head);
+}
+
+.ph-appt-meta {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+.ph-appt-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ph-print-btn {
+  padding: 0.32rem 0.8rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--plum-mid);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.ph-print-btn:hover {
+  background: var(--plum-soft);
+  border-color: var(--plum-mid);
+}
+
+/* ── Appointment body ── */
+.ph-appt-body {
+  padding: 1rem;
+  background: #FDFBFF;
+}
+
+/* 6 section buttons */
+.ph-section-btns {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.ph-sec-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.65rem 0.5rem;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+}
+
+.ph-sec-btn:hover {
+  background: var(--plum-soft);
+  border-color: var(--plum-light);
+  color: var(--plum-mid);
+}
+
+.ph-sec-btn.active {
+  background: linear-gradient(135deg, var(--plum) 0%, var(--plum-mid) 60%, var(--gold) 100%);
+  border-color: var(--plum);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(74, 16, 96, 0.22);
+}
+
+.ph-sec-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+/* Section panel */
+.ph-section-panel {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+  animation: phFadeIn 0.25s ease;
+}
+
+@keyframes phFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Print area — hidden normally, visible only when printing ── */
+#ph-print-area {
+  display: none;
+}
+
+@media print {
+  #root {
+    display: none !important;
+  }
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  #ph-print-area {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 12px !important;
+    color: #1E0733 !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+  }
+  @page {
+    margin: 12mm 15mm;
+    size: A4 portrait;
+  }
+}
+
+.ph-print-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid #333;
+}
+
+.ph-print-header h1 {
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.ph-print-patient {
+  margin-bottom: 1rem;
+}
+
+.ph-print-patient h2 {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .ph-container {
+    padding: 5rem 0.75rem 3rem;
+  }
+
+  .ph-search-form {
+    flex-direction: column;
+  }
+
+  .ph-search-btn {
+    width: 100%;
+  }
+
+  .ph-section-btns {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .ph-patient-top {
+    flex-wrap: wrap;
+  }
+
+  .ph-quick-info {
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .ph-refer-row {
+    flex-direction: column;
+  }
+
+  .ph-refer-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 400px) {
+  .ph-section-btns {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

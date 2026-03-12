@@ -8,9 +8,11 @@ const referralSchema = new Schema({
   toDoctor: { type: Schema.Types.ObjectId, ref: 'Doctor', required: true },
   appointment: { type: Schema.Types.ObjectId, ref: 'Appointment', default: null },
   reason: { type: String },
-  status: { type: String, default: 'pending' }, // pending / viewed / completed
-  read: { type: Boolean, default: false },      // NEW FIELD
-  viewedAt: { type: Date, default: null },      // When the doctor viewed it
+  status: { type: String, enum: ['pending', 'viewed', 'accepted', 'rejected'], default: 'pending' }, // UPDATED
+  read: { type: Boolean, default: false },
+  viewedAt: { type: Date, default: null },
+  responseNote: { type: String, default: '' },   // NEW — doctor ka accept/reject note
+  respondedAt: { type: Date, default: null },     // NEW — kab respond kiya
   createdAt: { type: Date, default: Date.now }
 });
 

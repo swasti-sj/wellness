@@ -1,80 +1,67 @@
-import React from "react";
-import "../../styles/doctor/DoctorAppointment.css";
-import { Navigate } from "react-big-calendar";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-// Label for the "go to today" button changes based on current view
-const todayLabel = (view) => {
-  switch (view) {
-    case "week": return "This Week";
-    case "day": return "Today";
-    case "agenda": return "Today";
-    default: return "This Month";
-  }
-};
+function CertificateSummary({ appointmentId }) {
+  const [certificate, setCertificate] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const token = localStorage.getItem("token");
 
-const VIEW_LABELS = {
-  month: "Month",
-  week: "Week",
-  day: "Day",
-  agenda: "Agenda",
-};
+  useEffect(() => {
+    const fetchCertificate = async () => {
+      if (!appointmentId) return;
+      try {
+        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+          params: { token },
+        });
+        if (res.data.certificate) {
+          setCertificate(res.data.certificate);
+        }
+      } catch (err) {
+        console.error("Error fetching certificate:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchCertificate();
+  }, [appointmentId, token]);
 
-const STATUS_LEGEND = [
-  { label: "Booked", color: "#E5A020" },
-  { label: "Attended", color: "#1E8A55" },
-  { label: "Cancelled", color: "#B8243A" },
-  { label: "No Show", color: "#7A6890" },
-  { label: "Walk In", color: "#4A1060" },
-];
+  if (isLoading) return null;
 
-export default function CustomToolbar({ label, onNavigate, onView, views, view }) {
-  return (
-    <>
-      <div className="custom-toolbar">
-        {/* Left: navigation */}
-        <div className="toolbar-left">
-          <button
-            onClick={() => onNavigate(Navigate.TODAY)}
-            className="toolbar-btn today-btn"
-          >
-            {todayLabel(view)}
-          </button>
-          <button onClick={() => onNavigate(Navigate.PREVIOUS)} className="toolbar-btn">
-            ‹ Back
-          </button>
-          <button onClick={() => onNavigate(Navigate.NEXT)} className="toolbar-btn">
-            Next ›
-          </button>
+  if (!certificate || !certificate.issued) {
+    return (
+      <div className="certificate-summary">
+        <div className="summary-header">
+          <h4>Medical Certificate</h4>
         </div>
-
-        {/* Center: period label */}
-        <div className="toolbar-center">{label}</div>
-
-        {/* Right: view switcher */}
-        <div className="toolbar-right">
-          {views.map((v) => (
-            <button
-              key={v}
-              onClick={() => onView(v)}
-              className={`toolbar-btn view-btn${view === v ? " active-view" : ""}`}
-            >
-              {VIEW_LABELS[v] || v.charAt(0).toUpperCase() + v.slice(1)}
-            </button>
-          ))}
-        </div>
+        <p className="no-data">No certificate issued</p>
       </div>
+    );
+  }
 
-      {/* Legend strip — shown on month/week/agenda */}
-      {view !== "day" && (
-        <div className="cal-legend">
-          {STATUS_LEGEND.map(({ label: l, color }) => (
-            <span key={l} className="cal-legend-item">
-              <span className="cal-legend-dot" style={{ background: color }} />
-              {l}
-            </span>
-          ))}
+  return (
+    <div className="certificate-summary">
+      <div className="summary-header">
+        <h4>Medical Certificate</h4>
+        <span className="issued-badge">✓ Issued</span>
+      </div>
+      {certificate.clinicalDetails && (
+        <div className="certificate-details">
+          <p>
+            <strong>Clinical Details:</strong> {certificate.clinicalDetails}
+          </p>
         </div>
       )}
-    </>
+      {certificate.imageUrl && (
+        <div className="certificate-image-preview">
+          <img
+            src={certificate.imageUrl}
+            alt="Certificate"
+            style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "0.5rem" }}
+          />
+        </div>
+      )}
+    </div>
   );
 }
+
+export default CertificateSummary;
