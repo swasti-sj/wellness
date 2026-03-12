@@ -2,6 +2,32 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "../../styles/doctor/DoctorVitals.css";
 
+// Reusable accordion section wrapper
+const AccSection = ({ id, icon, title, subtitle, children, openSection, toggleSection }) => {
+  const isOpen = openSection === id;
+  return (
+    <div className="acc-section">
+      <button
+        type="button"
+        className={`acc-toggle${isOpen ? " open" : ""}`}
+        onClick={() => toggleSection(id)}
+      >
+        <div className="acc-toggle-left">
+          <span className="acc-icon">{icon}</span>
+          <div>
+            <div className="acc-title">{title}</div>
+            {subtitle && <div className="acc-subtitle">{subtitle}</div>}
+          </div>
+        </div>
+        <span className="acc-chevron">▼</span>
+      </button>
+      <div className={`acc-body${isOpen ? " open" : ""}`}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
 const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
   const token = localStorage.getItem("token");
 
@@ -115,32 +141,6 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
     return "—";
   };
 
-  // Reusable accordion section wrapper
-  const AccSection = ({ id, icon, title, subtitle, children }) => {
-    const isOpen = openSection === id;
-    return (
-      <div className="acc-section">
-        <button
-          type="button"
-          className={`acc-toggle${isOpen ? " open" : ""}`}
-          onClick={() => toggleSection(id)}
-        >
-          <div className="acc-toggle-left">
-            <span className="acc-icon">{icon}</span>
-            <div>
-              <div className="acc-title">{title}</div>
-              {subtitle && <div className="acc-subtitle">{subtitle}</div>}
-            </div>
-          </div>
-          <span className="acc-chevron">▼</span>
-        </button>
-        <div className={`acc-body${isOpen ? " open" : ""}`}>
-          {children}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="doctor-vitals">
       {/* ── Case Sheet Title ── */}
@@ -150,7 +150,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
       </div>
 
       {/* ── 1. Basic Details ── */}
-      <AccSection id="basic" icon="📋" title="Basic Details" subtitle="Department, UHID, blood group, time">
+      <AccSection id="basic" icon="📋" title="Basic Details" subtitle="Department, UHID, blood group, time" openSection={openSection} toggleSection={toggleSection}>
         <div className="fg2">
           <div className="ff">
             <label>Department <span className="req">*</span></label>
@@ -182,7 +182,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
       </AccSection>
 
       {/* ── 2. Medical History ── */}
-      <AccSection id="history" icon="🏥" title="Medical History" subtitle="Past illnesses, allergies, chief complaints">
+      <AccSection id="history" icon="🏥" title="Medical History" subtitle="Past illnesses, allergies, chief complaints" openSection={openSection} toggleSection={toggleSection}>
         <div className="fg1">
           <div className="ff">
             <label>Past Medical History</label>
@@ -208,7 +208,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
       </AccSection>
 
       {/* ── 3. Vital Signs ── */}
-      <AccSection id="vitals" icon="💓" title="Vital Signs" subtitle="BP, pulse, temperature, SpO₂, weight, height">
+      <AccSection id="vitals" icon="💓" title="Vital Signs" subtitle="BP, pulse, temperature, SpO₂, weight, height" openSection={openSection} toggleSection={toggleSection}>
         <div className="fg3">
           <div className="ff">
             <label>BP Systolic</label>
@@ -250,7 +250,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
       </AccSection>
 
       {/* ── 4. Investigations & Treatment ── */}
-      <AccSection id="investigations" icon="🔬" title="Investigations & Treatment" subtitle="Lab tests, treatment advice, follow-up date">
+      <AccSection id="investigations" icon="🔬" title="Investigations & Treatment" subtitle="Lab tests, treatment advice, follow-up date" openSection={openSection} toggleSection={toggleSection}>
         <div className="fg1">
           <div className="ff">
             <label>Investigations</label>
@@ -268,7 +268,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
       </AccSection>
 
       {/* ── 5. Additional Notes ── */}
-      <AccSection id="notes" icon="📝" title="Additional Notes" subtitle="Any extra observations or instructions">
+      <AccSection id="notes" icon="📝" title="Additional Notes" subtitle="Any extra observations or instructions" openSection={openSection} toggleSection={toggleSection}>
         <div className="ff">
           <textarea name="notes" value={formData.notes} onChange={handleInputChange} placeholder="Any additional observations or instructions" rows={3} />
         </div>

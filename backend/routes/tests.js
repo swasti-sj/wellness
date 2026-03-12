@@ -4,6 +4,36 @@ const jwt = require('jsonwebtoken');
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const Test = require('../models/Test');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = 'backend/uploads/certificates';
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ 
+  storage: storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+    if (extname && mimetype) {
+      return cb(null, true);
+    }
+    cb(new Error('Only image files are allowed!'));
+  }
+});
 
 // Test categories and their tests (static data)
 const TEST_CATEGORIES = {
@@ -156,9 +186,32 @@ router.get('/categories', (req, res) => {
 });
 
 // Save or update tests for an appointment
-router.post('/save', async (req, res) => {
+router.post('/save', upload.single('certificateImage'), async (req, res) => {
   try {
-    const { token, appointmentId, tests, hospitalReferral, certificate } = req.body;
+    const { token, appointmentId } = req.body;
+    
+    let tests = [];
+    if (req.body.tests) {
+      tests = typeof req.body.tests === 'string' ? JSON.parse(req.body.tests) : req.body.tests;
+    }
+    
+    let hospitalReferral = { refer: false };
+    if (req.body.hospitalReferral) {
+      hospitalReferral = typeof req.body.hospitalReferral === 'string' ? JSON.parse(req.body.hospitalReferral) : req.body.hospitalReferral;
+    }
+    
+    let certificate = { issued: false };
+    if (req.body.certificate) {
+      const parsedCert = typeof req.body.certificate === 'string' ? JSON.parse(req.body.certificate) : req.body.certificate;
+      certificate = { ...certificate, ...parsedCert };
+    }
+    
+    if (req.file) {
+      certificate.imageUrl = `/uploads/certificates/${req.file.filename}`;
+    } else if (req.body.existingImageUrl) {
+      certificate.imageUrl = req.body.existingImageUrl;
+    }
+
     if (!token || !appointmentId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -206,15 +259,15 @@ router.get('/:appointmentId', async (req, res) => {
 
     const test = await Test.findOne({ appointment: appointmentId });
     if (!test) {
-      return res.json({ 
-        tests: [], 
+      return res.json({
+        tests: [],
         hospitalReferral: { refer: false },
         certificate: { issued: false }
       });
     }
 
-    res.json({ 
-      tests: test.tests, 
+    res.json({
+      tests: test.tests,
       hospitalReferral: test.hospitalReferral,
       certificate: test.certificate
     });

@@ -11,6 +11,7 @@ function DoctorCertificate({ appointmentId }) {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
 
   const token = localStorage.getItem('token');
@@ -26,8 +27,10 @@ function DoctorCertificate({ appointmentId }) {
           params: { token }
         });
 
-        if (res.data.certificate) {
-          setIssued(res.data.certificate.issued || false);
+        if (res.data.certificate && res.data.certificate.issued) {
+          setIssued(true);
+          setSaved(true);
+          setIsEditing(false);
           setClinicalDetails(res.data.certificate.clinicalDetails || '');
           if (res.data.certificate.imageUrl) {
             setPreviewUrl(res.data.certificate.imageUrl);
@@ -58,16 +61,42 @@ function DoctorCertificate({ appointmentId }) {
   const handleIssueCertificate = () => {
     setIssued(true);
     setSaved(false);
+    setIsEditing(true);
   };
 
-  const handleRemoveCertificate = () => {
-    setIssued(false);
-    setCertificateImage(null);
-    setPreviewUrl('');
-    setClinicalDetails('');
-    setSaved(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+  const handleRemoveCertificate = async () => {
+    if (window.confirm("Are you sure you want to delete this certificate?")) {
+      setIssued(false);
+      setCertificateImage(null);
+      setPreviewUrl('');
+      setClinicalDetails('');
+      setSaved(false);
+      setIsEditing(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
+      // Auto-save the deletion to backend
+      setUploading(true);
+      try {
+        const existingData = await fetchExistingData();
+        const formData = new FormData();
+        formData.append('token', token);
+        formData.append('appointmentId', appointmentId);
+        formData.append('tests', JSON.stringify(existingData.tests));
+        formData.append('hospitalReferral', JSON.stringify(existingData.hospitalReferral));
+        formData.append('certificate', JSON.stringify({
+          issued: false,
+          clinicalDetails: ''
+        }));
+        await axios.post('http://localhost:5000/api/tests/save', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } catch (err) {
+        console.error('Error removing certificate:', err);
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -94,31 +123,33 @@ function DoctorCertificate({ appointmentId }) {
       // First fetch existing data to preserve tests and hospital referral
       const existingData = await fetchExistingData();
 
-      let imageUrl = previewUrl;
+      const formData = new FormData();
+      formData.append('token', token);
+      formData.append('appointmentId', appointmentId);
+      formData.append('tests', JSON.stringify(existingData.tests));
+      formData.append('hospitalReferral', JSON.stringify(existingData.hospitalReferral));
+      formData.append('certificate', JSON.stringify({
+        issued,
+        clinicalDetails
+      }));
 
-      // If there's a new image file, upload it first (simplified - stores as base64 for now)
-      // In production, you'd upload to cloud storage and get the URL
       if (certificateImage && !previewUrl.startsWith('http')) {
-        // Keep the base64 image for now
-        imageUrl = previewUrl;
+        formData.append('certificateImage', certificateImage);
+      } else if (previewUrl) {
+        formData.append('existingImageUrl', previewUrl);
       }
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', {
-        token,
-        appointmentId,
-        tests: existingData.tests,
-        hospitalReferral: existingData.hospitalReferral,
-        certificate: {
-          issued,
-          imageUrl: imageUrl || '',
-          clinicalDetails
-        }
+      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.success) {
         setSaved(true);
+        setIsEditing(false);
         setCertificateImage(null); // Reset after save
-        alert('Certificate saved successfully!');
+        if (response.data.test?.certificate?.imageUrl) {
+          setPreviewUrl(response.data.test.certificate.imageUrl);
+        }
       }
     } catch (err) {
       console.error('Error saving certificate:', err);
@@ -141,12 +172,53 @@ function DoctorCertificate({ appointmentId }) {
             Issue Certificate
           </button>
         </div>
+      ) : saved && !isEditing ? (
+        <div className="certificate-preview-page">
+          <div className="certificate-header">
+            <span className="issued-badge">✓ Certificate Issued</span>
+            <div className="certificate-actions">
+              <button className="edit-certificate-btn" onClick={() => setIsEditing(true)}>
+                Edit
+              </button>
+              <button className="remove-certificate-btn" onClick={handleRemoveCertificate}>
+                Delete
+              </button>
+            </div>
+          </div>
+          
+          <div className="preview-content">
+            {clinicalDetails && (
+              <div className="preview-details">
+                <label>Clinical Details:</label>
+                <p className="clinical-text">{clinicalDetails}</p>
+              </div>
+            )}
+            
+            {previewUrl && (
+              <div className="certificate-preview">
+                <label>Certificate Image:</label>
+                <div className="preview-container view-only">
+                  <img src={previewUrl.startsWith('/') ? `http://localhost:5000${previewUrl}` : previewUrl} alt="Certificate preview" />
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       ) : (
         <div className="certificate-form">
           <div className="certificate-header">
-            <span className="issued-badge">✓ Certificate Issued</span>
-            <button className="remove-certificate-btn" onClick={handleRemoveCertificate}>
-              Remove
+            <span className="form-title">{saved ? "Edit Certificate" : "New Certificate"}</span>
+            <button className="cancel-edit-btn" onClick={() => {
+              if (saved) {
+                setIsEditing(false);
+              } else {
+                setIssued(false);
+                setCertificateImage(null);
+                setPreviewUrl('');
+                setClinicalDetails('');
+              }
+            }}>
+              Cancel
             </button>
           </div>
 
@@ -181,20 +253,20 @@ function DoctorCertificate({ appointmentId }) {
             <div className="certificate-preview">
               <label>Preview:</label>
               <div className="preview-container">
-                <img src={previewUrl} alt="Certificate preview" />
+                <img src={previewUrl.startsWith('/') && !certificateImage ? `http://localhost:5000${previewUrl}` : previewUrl} alt="Certificate preview" />
               </div>
             </div>
           )}
 
-          <button
-            className="save-certificate-btn"
-            onClick={handleSave}
-            disabled={uploading}
-          >
-            {uploading ? 'Saving...' : 'Save Certificate'}
-          </button>
-
-          {saved && <span className="save-confirmation">✓ Saved</span>}
+          <div className="form-actions">
+            <button
+              className="save-certificate-btn"
+              onClick={handleSave}
+              disabled={uploading}
+            >
+              {uploading ? 'Saving...' : 'Save Certificate'}
+            </button>
+          </div>
         </div>
       )}
     </div>
