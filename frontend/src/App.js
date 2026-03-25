@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 
 import LoginPage from "./pages/LoginPage";
+import OthersLoginPage from "./pages/OthersLoginPage";
 import Dashboard from "./pages/patient/Dashboard";
 import Navbar from "./pages/patient/Navbar";
 import "./App.css";
@@ -25,6 +26,12 @@ import DoctorAppointment from "./pages/doctor/DoctorAppointment";
 import DoctorNavbar from "./pages/doctor/DoctorNavbar";
 import VisitHistory from "./pages/patient/VisitHistory";
 import TestPage from "./pages/doctor/TestPage";
+import ReceptionistDashboard from "./pages/receptionist/ReceptionistDashboard";
+import InitialReceptionistProfileForm from "./pages/receptionist/InitialReceptionistProfileForm";
+import NurseDashboard from "./pages/nurse/NurseDashboard";
+import InitialNurseProfileForm from "./pages/nurse/InitialNurseProfileForm";
+import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
+import InitialPharmacistProfileForm from "./pages/pharmacist/InitialPharmacistProfileForm";
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
   console.log("🛠️ Rendering LayoutWithNavbar");
@@ -93,6 +100,15 @@ function LoginRedirect() {
       if (role === "doctor") {
         console.log("👨‍⚕️ Redirecting doctor to initial doctor profile setup...");
         navigate("/docdashboard/initial-doctor-profile");
+      } else if (role === "receptionist") {
+        console.log("👩‍💼 Redirecting receptionist to initial profile setup...");
+        navigate("/receptionist/initial-profile");
+      } else if (role === "nurse") {
+        console.log("👩‍⚕️ Redirecting nurse to initial profile setup...");
+        navigate("/nurse/initial-profile");
+      } else if (role === "pharmacist") {
+        console.log("💊 Redirecting pharmacist to initial profile setup...");
+        navigate("/pharmacist/initial-profile");
       } else {
         console.log("🙋 Redirecting patient to initial profile setup...");
         navigate("/patdashboard/initial-profile");
@@ -101,6 +117,12 @@ function LoginRedirect() {
       console.log("➡️ Not first login. Redirecting to dashboard...");
       if (role === "doctor") {
         navigate("/docdashboard");
+      } else if (role === "receptionist") {
+        navigate("/receptionist-dashboard");
+      } else if (role === "nurse") {
+        navigate("/nurse-dashboard");
+      } else if (role === "pharmacist") {
+        navigate("/pharmacist-dashboard");
       } else {
         navigate("/patdashboard");
       }
@@ -148,9 +170,10 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LoginPage />} />
+        <Route path="/others-login" element={<OthersLoginPage />} />
         <Route path="/login" element={<LoginRedirect />} />
         {/* Patient routes */}
-        <Route path="/patdashboard" element={<PatientDashboardLayout />}>
+        <Route path="/dashboard" element={<PatientDashboardLayout />}>
           <Route index element={<Dashboard />} />{" "}
           {/* default patient dashboard */}
           <Route path="book" element={<AppointmentBooking />} />
@@ -183,7 +206,7 @@ function App() {
             path="doctor-profile"
             element={<DoctorProfilePage apiBaseUrl={apiBaseUrl} />}
           />
-<Route
+          <Route
             path="history"
             element={<PatientHistory apiBaseUrl={apiBaseUrl} />}
           />
@@ -197,6 +220,16 @@ function App() {
           path="/docdashboard/initial-doctor-profile"
           element={<InitialDoctorProfile apiBaseUrl={apiBaseUrl} />}
         />
+
+        {/* Pharmacist routes */}
+        <Route path="/receptionist-dashboard" element={<ReceptionistDashboard />} />
+        <Route path="/receptionist/initial-profile" element={<InitialReceptionistProfileForm />} />
+
+        <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+        <Route path="/nurse/initial-profile" element={<InitialNurseProfileForm />} />
+
+        <Route path="/pharmacist-dashboard" element={<PharmacistDashboard />} />
+        <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>
   );

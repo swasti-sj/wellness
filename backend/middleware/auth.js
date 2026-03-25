@@ -29,6 +29,33 @@ function requirePatient(req, res, next) {
   next();
 }
 
+// Optional: Middleware to require receptionist role
+function requireReceptionist(req, res, next) {
+  if (req.user?.role !== 'receptionist') {
+    return res.status(403).json({ error: 'Receptionist access only' });
+  }
+  next();
+}
+
+// Optional: Middleware to require nurse role
+function requireNurse(req, res, next) {
+  if (req.user?.role !== 'nurse') {
+    return res.status(403).json({ error: 'Nurse access only' });
+  }
+  next();
+}
+
+// Optional: Middleware to require pharmacist role
+function requirePharmacist(req, res, next) {
+  if (req.user?.role !== 'pharmacist') {
+    return res.status(403).json({ error: 'Pharmacist access only' });
+  }
+  next();
+}
+
 module.exports = authMiddleware;
 module.exports.requireDoctor = requireDoctor;
 module.exports.requirePatient = requirePatient;
+module.exports.requireReceptionist = requireReceptionist;
+module.exports.requireNurse = requireNurse;
+module.exports.requirePharmacist = requirePharmacist;

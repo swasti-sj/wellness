@@ -51,8 +51,13 @@ export default function LoginPage() {
       if(role==='doctor'){
         console.log('LoginPage: Role is doctor, navigating to doctor dashboard.');
         navigate('/docdashboard');
-      }
-      else{
+      } else if (role === 'receptionist') {
+        navigate('/receptionist-dashboard');
+      } else if (role === 'nurse') {
+        navigate('/nurse-dashboard');
+      } else if (role === 'pharmacist') {
+        navigate('/pharmacist-dashboard');
+      } else {
         console.log('LoginPage: Role is patient, navigating to patient dashboard.');
         navigate('/dashboard');
       }
@@ -67,24 +72,34 @@ export default function LoginPage() {
     console.log('LoginPage: First login detected, checking role.', { role });
     if (role === 'doctor') {
       console.log('LoginPage: Role is doctor, navigating to initial doctor profile.');
-      navigate('/initial-doctor-profile');
+      navigate('/docdashboard/initial-doctor-profile');
       return <div>Redirecting to doctor profile...</div>;
+    } else if (role === 'receptionist') {
+      console.log('LoginPage: Role is receptionist, navigating to receptionist initial profile.');
+      navigate('/receptionist/initial-profile');
+      return <div>Redirecting to receptionist profile...</div>;
+    } else if (role === 'nurse') {
+      console.log('LoginPage: Role is nurse, navigating to nurse initial profile.');
+      navigate('/nurse/initial-profile');
+      return <div>Redirecting to nurse profile...</div>;
+    } else if (role === 'pharmacist') {
+      console.log('LoginPage: Role is pharmacist, navigating to pharmacist initial profile.');
+      navigate('/pharmacist/initial-profile');
+      return <div>Redirecting to pharmacist profile...</div>;
     }
-    
-    console.log('LoginPage: Role is not doctor, rendering InitialProfileForm.');
+
+    console.log('LoginPage: Role is not doctor or other, rendering InitialProfileForm.');
     return <InitialProfileForm />;
   }
 
   if (!token) {
-    console.log('LoginPage: No token, rendering login buttons.');
-    // Not logged in → show Google login buttons
     return (
       <div className="login-container-horizontal">
         <div className="login-left">
           <img src="/college-logo.png" alt="College Logo" className="login-logo" />
           <h2>WELCOME BACK!</h2>
-          <p className="login-subtitle" style={{color: 'black'}}>
-            Access your dashboard and manage your profile. Login as a Student or Doctor to continue.
+          <p className="login-subtitle" style={{ color: 'black' }}>
+            Access your dashboard and manage your profile. Login as a Patient, Doctor, or Pharmacist to continue.
           </p>
         </div>
 
@@ -101,6 +116,12 @@ export default function LoginPage() {
           >
             Login as Doctor
           </a>
+          <button
+            onClick={() => navigate('/others-login')}
+            className="google-btn others"
+          >
+            Login as Others
+          </button>
         </div>
       </div>
     );

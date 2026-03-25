@@ -21,12 +21,14 @@ const referralRoutes = require("./routes/referrals");
 const vitalsRoutes = require("./routes/vitals");
 const testRoutes = require("./routes/tests");
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const Nurse = require("./models/Nurse");
+const Receptionist = require("./models/Receptionist");
+const Pharmacist = require("./models/Pharmacist");
 
 
 // Middleware
 console.log("⚙️ Setting up middleware...");
 app.use(cors());
-app.use('/api', dashboardRoutes);
 app.use(express.json());
 
 // Serve uploaded files statically
@@ -178,7 +180,104 @@ app.get(
       res.redirect(
         `http://localhost:3000/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
       );
-    } else {
+    } else if (role === "nurse") {
+  let nurse = await Nurse.findOne({ email });
+
+  if (!nurse) {
+    nurse = new Nurse({
+      email,
+      name,
+      googleId,
+      picture,
+      googleAccessToken: accessToken,
+      googleRefreshToken: refreshToken,
+    });
+    await nurse.save();
+    firstLogin = true;
+  } else {
+    nurse.googleAccessToken = accessToken;
+    if (refreshToken) nurse.googleRefreshToken = refreshToken;
+    await nurse.save();
+
+    if (!nurse.phone) firstLogin = true;
+  }
+
+  const token = jwt.sign(
+    { id: nurse._id, email: nurse.email, role: "nurse" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  return res.redirect(
+    `http://localhost:3000/login?token=${token}&role=nurse&firstLogin=${firstLogin}`
+  );
+}
+else if (role === "receptionist") {
+  let receptionist = await Receptionist.findOne({ email });
+
+  if (!receptionist) {
+    receptionist = new Receptionist({
+      email,
+      name,
+      googleId,
+      picture,
+      googleAccessToken: accessToken,
+      googleRefreshToken: refreshToken,
+    });
+    await receptionist.save();
+    firstLogin = true;
+  } else {
+    receptionist.googleAccessToken = accessToken;
+    if (refreshToken) receptionist.googleRefreshToken = refreshToken;
+    await receptionist.save();
+
+    if (!receptionist.phone) firstLogin = true;
+  }
+
+  const token = jwt.sign(
+    { id: receptionist._id, email: receptionist.email, role: "receptionist" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  return res.redirect(
+    `http://localhost:3000/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`
+  );
+}
+else if (role === "pharmacist") {
+  let pharmacist = await Pharmacist.findOne({ email });
+
+  if (!pharmacist) {
+    pharmacist = new Pharmacist({
+      email,
+      name,
+      googleId,
+      picture,
+      googleAccessToken: accessToken,
+      googleRefreshToken: refreshToken,
+    });
+    await pharmacist.save();
+    firstLogin = true;
+  } else {
+    pharmacist.googleAccessToken = accessToken;
+    if (refreshToken) pharmacist.googleRefreshToken = refreshToken;
+    await pharmacist.save();
+
+    if (!pharmacist.phone) firstLogin = true;
+  }
+
+  const token = jwt.sign(
+    { id: pharmacist._id, email: pharmacist.email, role: "pharmacist" },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  return res.redirect(
+    `http://localhost:3000/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`
+  );
+}
+   
+    else {
       console.log("🙋 Handling patient login/signup...");
       let user = await User.findOne({ email });
 
@@ -227,6 +326,7 @@ app.get(
 
 // Routes
 console.log("🛣️ Mounting API routes...");
+app.use('/api', dashboardRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/users", userRoutes);
@@ -236,6 +336,9 @@ app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/referrals", referralRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/tests", testRoutes);
+app.use("/api/nurse", require("./routes/nurses"));
+app.use("/api/receptionist", require("./routes/receptionists"));
+app.use("/api/pharmacist", require("./routes/pharmacists"));
 const PORT = process.env.PORT || 5000;
 app.get("/config", (req, res) => {
   // Return a sensible default when LOCALHOST_URL isn't set so frontend
