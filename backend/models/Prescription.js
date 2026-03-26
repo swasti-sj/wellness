@@ -2,7 +2,17 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const PrescriptionItemSchema = new Schema({
-  medication: { type: String, required: true },
+  medication: { type: String, required: true }, // Fallback free-text
+  medicine: { 
+    type: Schema.Types.ObjectId, 
+    ref: 'Medicine' 
+  },
+  quantity: { 
+    type: Number, 
+    required: true,
+    min: 1,
+    default: 1
+  },
   dosage: { type: String, required: true },
   frequency: { type: String, required: true },
   notes: { type: String },

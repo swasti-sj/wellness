@@ -4,6 +4,8 @@ const jwt = require("jsonwebtoken");
 const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
 const Prescription = require("../models/Prescription");
+const Medicine = require("../models/Medicine");
+const MedicineIssuance = require("../models/MedicineIssuance");
 
 // Add or update a prescription for an appointment
 router.post("/save", async (req, res) => {
@@ -22,6 +24,30 @@ router.post("/save", async (req, res) => {
     const appointment = await Appointment.findById(appointmentId);
     if (!appointment || !appointment.doctor.equals(doctor._id)) {
       return res.status(403).json({ error: "Appointment not found or you do not have permission." });
+    }
+
+    // New stock management logic for medicines with medicine ID
+    for (const p of prescriptions) {
+      if (p.medicine) {
+        const med = await Medicine.findById(p.medicine);
+        if (!med) {
+          return res.status(400).json({ error: `Medicine not found: ${p.medication}` });
+        }
+        if (med.stockCount < p.quantity) {
+          return res.status(400).json({ error: `Insufficient stock for ${med.name}. Available: ${med.stockCount}, required: ${p.quantity}` });
+        }
+        // Deduct stock
+        med.stockCount -= p.quantity;
+        await med.save();
+
+        // Log issuance
+        await new MedicineIssuance({
+          patient: appointment.user,
+          medicine: p.medicine,
+          quantityIssued: p.quantity,
+          doctor: doctor._id
+        }).save();
+      }
     }
 
     // Use findOneAndUpdate with 'upsert' to create a new prescription or update if it exists

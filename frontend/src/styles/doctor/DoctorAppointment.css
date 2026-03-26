@@ -404,7 +404,7 @@
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: 5rem 1rem 2rem;
+  padding: 3rem 1rem 2rem;
   z-index: 9999;
   overflow-y: auto;
   animation: modalBgIn 0.25s ease;
@@ -423,9 +423,10 @@
 .modal-content {
   background: var(--surface);
   border-radius: 16px;
-  width: 100%;
-  max-width: 700px;
-  max-height: 88vh;
+  width: 80vw;
+  max-width: 85vw;
+  height: 85vh;
+  max-height: 85vh;
   overflow-x: hidden;
   box-shadow: var(--shadow-lg);
   border: 1px solid var(--border);
@@ -434,6 +435,8 @@
   scrollbar-color: var(--plum-light) var(--plum-ghost);
   overflow-y: auto;
   padding-bottom: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .modal-content::-webkit-scrollbar {
@@ -1060,22 +1063,44 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .modal-content {
+    width: 90vw;
+    max-width: 90vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    width: 95vw;
+    max-width: 95vw;
+    height: 90vh;
+  }
+
+  .modal-body {
+    padding: 1.2rem;
+  }
+}
+
 @media (max-width: 480px) {
   .appointment-modal {
-    padding: 4rem 0.5rem 1.5rem;
+    padding: 3rem 0.5rem 1.5rem;
   }
 
   .modal-content {
-    max-width: 100%;
+    width: 95vw;
+    max-width: 95vw;
+    height: auto;
+    max-height: 95vh;
     border-radius: 12px;
   }
 
   .modal-header-bar {
-    padding: 1.1rem 1.1rem 0.9rem;
+    padding: 1rem 1rem 0.9rem;
   }
 
   .modal-body {
-    padding: 1rem 1rem 1.4rem;
+    padding: 1rem;
   }
 
   .modal-patient-name {
