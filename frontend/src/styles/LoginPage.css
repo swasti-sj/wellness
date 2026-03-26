@@ -59,6 +59,31 @@ body.login-page, body.login-page html {
   justify-content: center;
   align-items: center;
   text-align: center;
+  position: relative;
+}
+
+/* Back button */
+.back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: #4A1060;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(74, 16, 96, 0.3);
+  font-family: 'Roboto', sans-serif;
+}
+
+.back-btn:hover {
+  background: #6C1B85;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 16, 96, 0.4);
 }
 
 /* Logo */
@@ -152,5 +177,12 @@ body.login-page, body.login-page html {
   }
   .google-btn {
     width: 100%;
+  }
+  .back-btn {
+    position: relative;
+    top: auto;
+    left: auto;
+    margin-bottom: 20px;
+    align-self: flex-start;
   }
 }

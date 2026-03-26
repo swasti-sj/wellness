@@ -1,12 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import PharmacistNavbar from './PharmacistNavbar';
 import '../../styles/pharmacist/PharmacistDashboard.css';
 
-export default function PharmacistDashboard() {
+export default function PharmacistMedicineStock() {
   const [medicines, setMedicines] = useState([]);
-  const [issuances, setIssuances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -14,28 +11,23 @@ export default function PharmacistDashboard() {
   const [editingMed, setEditingMed] = useState(null);
   const [updateForm, setUpdateForm] = useState({ stockCount: '' });
   const token = localStorage.getItem('token');
-  const navigate = useNavigate();
 
   const apiBaseUrl = 'http://localhost:5000/api';
 
   useEffect(() => {
-    if (token) {
-      loadData();
-    }
-  }, [token]);
+    loadMedicines();
+  }, []);
 
-  const loadData = async () => {
+  const loadMedicines = async () => {
     setLoading(true);
     setError('');
     try {
-      const [medRes, issRes] = await Promise.all([
-        axios.get(`${apiBaseUrl}/medicines`, { params: { token } }),
-        axios.get(`${apiBaseUrl}/issuances`, { params: { token } })
-      ]);
+      const medRes = await axios.get(`${apiBaseUrl}/medicines`, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setMedicines(medRes.data.medicines || []);
-      setIssuances(issRes.data.issuances || []);
     } catch (e) {
-      setError('Failed to load data. Check backend server and your login.');
+      setError('Failed to load medicines. Check backend server and your login.');
     } finally {
       setLoading(false);
     }
@@ -48,10 +40,12 @@ export default function PharmacistDashboard() {
 
   const handleAdd = async () => {
     try {
-      await axios.post(`${apiBaseUrl}/medicines`, addForm, { params: { token } });
+      await axios.post(`${apiBaseUrl}/medicines`, addForm, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setShowAddForm(false);
       setAddForm({ name: '', stockCount: '', expiryDate: '', batchNumber: '', manufacturer: '' });
-      loadData();
+      loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to add medicine');
     }
@@ -59,10 +53,12 @@ export default function PharmacistDashboard() {
 
   const handleUpdateStock = async (id) => {
     try {
-      await axios.put(`${apiBaseUrl}/medicines/${id}`, updateForm, { params: { token } });
+      await axios.put(`${apiBaseUrl}/medicines/${id}`, updateForm, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setEditingMed(null);
       setUpdateForm({ stockCount: '' });
-      loadData();
+      loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to update stock');
     }
@@ -71,33 +67,34 @@ export default function PharmacistDashboard() {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this medicine?')) return;
     try {
-      await axios.delete(`${apiBaseUrl}/medicines/${id}`, { params: { token } });
-      loadData();
+      await axios.delete(`${apiBaseUrl}/medicines/${id}`, { 
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to delete');
     }
   };
 
-  if (loading) return <div className="pharm-loading">⏳ Loading dashboard...</div>;
-  if (error) return <div className="pharm-error">⚠ {error} <button onClick={loadData}>Retry</button></div>;
+  if (loading) return <div className="pharm-loading">⏳ Loading medicines...</div>;
+  if (error) return <div className="pharm-error">⚠ {error} <button onClick={loadMedicines}>Retry</button></div>;
 
   const isExpiringSoon = (days) => days <= 28;
 
-  return (
+return (
     <div className="pharm-layout">
-{/* <!--- Navbar handled by LayoutWithPharmNavbar ---> */}
       <div className="pharm-root">
       <div className="pharm-header">
-        <h1 className="pharm-title">🏥 Pharmacy Dashboard</h1>
-        <button className="pharm-btn pharm-btn-primary" onClick={loadData}>
+        <h1 className="pharm-title"> Medicine Stock</h1>
+        <button className="pharm-btn pharm-btn-primary" onClick={loadMedicines}>
           🔄 Refresh
         </button>
       </div>
 
       {/* Medicine Stock Section */}
-      <div className="pharm-section">
+      <div className="pharm-stock-section pharm-section">
         <div className="pharm-section-header">
-          💊 Medicine Stock
+          <span>📦 Medicine Inventory</span>
           <span>({medicines.length})</span>
           <button className="pharm-btn pharm-btn-primary" onClick={() => setShowAddForm(true)}>
             + Add New
@@ -111,14 +108,15 @@ export default function PharmacistDashboard() {
             <input name="expiryDate" type="date" value={addForm.expiryDate} onChange={handleAddChange} required />
             <input name="batchNumber" value={addForm.batchNumber} onChange={handleAddChange} placeholder="Batch #" />
             <input name="manufacturer" value={addForm.manufacturer} onChange={handleAddChange} placeholder="Manufacturer" />
-            <div>
+            <div style={{ display: 'flex', gap: '1rem' }}>
               <button className="pharm-btn pharm-btn-success" onClick={handleAdd}>Add Medicine</button>
-              <button className="pharm-btn" onClick={() => setShowAddForm(false)}>Cancel</button>
+              <button className="pharm-btn pharm-btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
             </div>
           </div>
         )}
 
-        <table className="pharm-table">
+        <div className="pharm-table-container">
+          <table className="pharm-table">
           <thead>
             <tr>
               <th>Name</th>
@@ -147,7 +145,7 @@ export default function PharmacistDashboard() {
                       setUpdateForm({ stockCount: med.stockCount });
                     }}
                   >
-                    Edit Stock
+                    Edit
                   </button>
                   <button className="pharm-btn pharm-btn-danger" onClick={() => handleDelete(med._id)}>
                     Delete
@@ -158,11 +156,12 @@ export default function PharmacistDashboard() {
           </tbody>
         </table>
       </div>
+      </div>
 
       {editingMed && (
         <div className="pharm-section">
           <div className="pharm-section-header">
-            Edit Stock for selected medicine
+            <span>📝 Edit Stock</span>
           </div>
           <div className="pharm-form-group">
             <input 
@@ -171,45 +170,14 @@ export default function PharmacistDashboard() {
               onChange={(e) => setUpdateForm({ stockCount: parseInt(e.target.value) || 0 })}
               placeholder="New stock count"
             />
-            <button className="pharm-btn pharm-btn-success" onClick={() => handleUpdateStock(editingMed)}>Update</button>
-            <button className="pharm-btn" onClick={() => setEditingMed(null)}>Cancel</button>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="pharm-btn pharm-btn-success" onClick={() => handleUpdateStock(editingMed)}>Update</button>
+              <button className="pharm-btn pharm-btn-secondary" onClick={() => setEditingMed(null)}>Cancel</button>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Issuance Records */}
-      <div className="pharm-section">
-        <div className="pharm-section-header">
-          📋 Issuance Records
-          <span>({issuances.length})</span>
-        </div>
-        <table className="pharm-table">
-          <thead>
-            <tr>
-            <th>Patient</th>
-              <th>Email</th>
-              <th>Medicine</th>
-              <th>Qty</th>
-              <th>Date</th>
-              <th>Doctor</th>
-            </tr>
-          </thead>
-          <tbody>
-            {issuances.map((iss) => (
-              <tr key={iss._id}>
-                <td>{iss.patient?.name || 'N/A'}</td>
-                <td>{iss.patient?.email || 'N/A'}</td>
-                <td>{iss.medicine?.name || 'N/A'}</td>
-                <td>{iss.quantityIssued}</td>
-                <td>{new Date(iss.issuedDate).toLocaleDateString()}</td>
-                <td>{iss.doctor?.name || 'N/A'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      </div>
     </div>
-  );
+  </div>
+);
 }
-

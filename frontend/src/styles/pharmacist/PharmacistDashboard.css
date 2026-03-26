@@ -1,0 +1,795 @@
+/* ══════════════════════════════════════════════════════════════════
+   PHARMACIST DASHBOARD — College Wellness Centre
+   IIT Dharwad · Regal Plum & Warm Amber
+   Cormorant Garamond (display) · Outfit (body)
+══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
+/* ── Design Tokens ── */
+:root {
+  /* Plum Palette */
+  --plum-900: #1E0730;
+  --plum-800: #2E0A48;
+  --plum-700: #4A1060;
+  --plum-600: #631580;
+  --plum-500: #7E1FA0;
+  --plum-400: #9B4DC8;
+  --plum-300: #C085E0;
+  --plum-100: #EDD6F9;
+  --plum-50:  #F8F0FF;
+  --plum-ghost: #FDFAFF;
+
+  /* Amber Palette */
+  --amber-900: #6B3800;
+  --amber-700: #A05A00;
+  --amber-600: #C8730A;
+  --amber-500: #E5901A;
+  --amber-400: #F0B030;
+  --amber-300: #F5C84A;
+  --amber-100: #FDE8B0;
+  --amber-50:  #FFF8E8;
+  --amber-ghost: #FFFDF5;
+
+  /* Neutrals */
+  --white: #FFFFFF;
+  --surface: #FDFCFF;
+  --surface-2: #F7F3FC;
+  --border: #E8DDEF;
+  --border-soft: #F0EAF6;
+  --text-primary: #1A0828;
+  --text-secondary: #432460;
+  --text-muted: #8A75A0;
+  --text-light: #B8A8CC;
+
+  /* Semantic */
+  --danger: #C62828;
+  --danger-soft: #FFEBEE;
+  --success: #1B6B3A;
+  --success-soft: #E8F5EE;
+  --warning: #E65100;
+  --warning-soft: #FFF3E0;
+
+  /* Gradients */
+  --grad-plum: linear-gradient(135deg, var(--plum-700) 0%, var(--plum-600) 50%, var(--plum-500) 100%);
+  --grad-amber: linear-gradient(135deg, var(--amber-600) 0%, var(--amber-500) 60%, var(--amber-400) 100%);
+  --grad-plum-amber: linear-gradient(135deg, var(--plum-700) 0%, var(--plum-600) 40%, var(--amber-600) 100%);
+  --grad-page: linear-gradient(160deg, #F9F5FF 0%, #FDFAFF 40%, #FFF9F0 80%, #FFFCF5 100%);
+  --grad-header: linear-gradient(135deg, rgba(74,16,96,0.04) 0%, rgba(200,115,10,0.03) 100%);
+
+  /* Shadows */
+  --shadow-xs: 0 1px 3px rgba(46,10,72,0.08);
+  --shadow-sm: 0 2px 8px rgba(46,10,72,0.10);
+  --shadow-md: 0 4px 16px rgba(46,10,72,0.12);
+  --shadow-lg: 0 8px 32px rgba(46,10,72,0.14);
+  --shadow-xl: 0 16px 48px rgba(46,10,72,0.16);
+  --shadow-amber: 0 4px 20px rgba(200,115,10,0.18);
+  --shadow-plum: 0 4px 20px rgba(126,31,160,0.22);
+
+  /* Geometry */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
+
+  /* Spacing */
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1.25rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+
+  /* Transitions */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ── Reset & Base ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* ══════════════════════════════════════════════════
+   LAYOUT
+══════════════════════════════════════════════════ */
+.pharm-layout {
+  background: var(--grad-page);
+  min-height: 100vh;
+  padding: 2.5rem 0 5rem;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  position: relative;
+}
+
+/* Subtle decorative grain overlay */
+.pharm-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+.pharm-root {
+  padding: 0 2.5rem;
+  max-width: 1360px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* ══════════════════════════════════════════════════
+   HEADER
+══════════════════════════════════════════════════ */
+.pharm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 3rem;
+  padding: 2.5rem 3rem;
+  background: var(--white);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-soft);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Left accent bar */
+.pharm-header::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 5px;
+  bottom: 0;
+  background: var(--grad-plum-amber);
+  border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+}
+
+/* Soft decorative corner blob */
+.pharm-header::after {
+  content: '';
+  position: absolute;
+  top: -60px;
+  right: -60px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(200,115,10,0.06) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.pharm-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  color: var(--plum-700);
+  margin: 0 0 0.3rem 0;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.pharm-stats {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+
+/* ══════════════════════════════════════════════════
+   STAT CARDS
+══════════════════════════════════════════════════ */
+.pharm-stat-card {
+  background: var(--white);
+  padding: 1.4rem 1.8rem;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border-soft);
+  text-align: center;
+  min-width: 110px;
+  transition: transform 0.25s var(--ease), box-shadow 0.25s var(--ease);
+  position: relative;
+  overflow: hidden;
+}
+
+.pharm-stat-card::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad-amber);
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+.pharm-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-xl);
+}
+
+.pharm-stat-number {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--plum-700);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.pharm-stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ══════════════════════════════════════════════════
+   SECTION CARDS
+══════════════════════════════════════════════════ */
+@keyframes pharmFadeIn {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pharm-section {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease);
+  animation: pharmFadeIn 0.5s var(--ease) both;
+  position: relative;
+}
+
+.pharm-section:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+/* Top accent stripe — default plum */
+.pharm-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--grad-plum);
+}
+
+/* Stock section — amber accent */
+.pharm-stock-section.pharm-section::before {
+  background: var(--grad-amber);
+}
+
+/* Records section — plum→amber */
+.pharm-records-section.pharm-section::before {
+  background: var(--grad-plum-amber);
+}
+
+/* ── Section Header ── */
+.pharm-section-header {
+  padding: 1.6rem 2.2rem;
+  border-bottom: 1px solid var(--border-soft);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--plum-700);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: linear-gradient(135deg, var(--plum-ghost) 0%, var(--amber-ghost) 100%);
+}
+
+.pharm-section-header span:first-child {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--plum-700);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex: 1;
+}
+
+/* Override the generic emoji prepend from original */
+.pharm-section-header span:first-child::before {
+  display: none;
+}
+
+.pharm-section-header span:nth-child(2) {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--plum-50);
+  border: 1px solid var(--plum-100);
+  padding: 0.2rem 0.75rem;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+.pharm-section-content {
+  padding: 2rem 2.2rem;
+}
+
+/* ══════════════════════════════════════════════════
+   TABLE
+══════════════════════════════════════════════════ */
+.pharm-table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pharm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.pharm-table thead {
+  background: var(--grad-plum);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.pharm-table th {
+  padding: 1rem 1.4rem;
+  text-align: left;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  font-size: 0.72rem;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.92);
+  white-space: nowrap;
+  border: none;
+}
+
+.pharm-table th:first-child { border-radius: var(--radius-sm) 0 0 0; }
+.pharm-table th:last-child  { border-radius: 0 var(--radius-sm) 0 0; }
+
+.pharm-table td {
+  padding: 1rem 1.4rem;
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  font-weight: 400;
+  border-bottom: 1px solid var(--border-soft);
+  vertical-align: middle;
+  transition: color 0.2s var(--ease);
+}
+
+.pharm-table td strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Zebra striping */
+.pharm-table tbody tr:nth-child(even) td {
+  background: var(--plum-ghost);
+}
+
+/* Row hover */
+.pharm-table tbody tr {
+  transition: background 0.18s var(--ease);
+  position: relative;
+}
+
+.pharm-table tbody tr:hover td {
+  background: linear-gradient(90deg, rgba(200,115,10,0.06), rgba(200,115,10,0.02));
+  color: var(--text-primary);
+}
+
+/* Left accent on hover */
+.pharm-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--amber-500);
+}
+
+/* ══════════════════════════════════════════════════
+   BUTTONS
+══════════════════════════════════════════════════ */
+.pharm-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.3rem;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  transition: all 0.22s var(--ease);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+  min-height: 38px;
+  text-decoration: none;
+}
+
+/* Shine sweep on hover */
+.pharm-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent);
+  transform: skewX(-20deg);
+  transition: left 0.45s var(--ease);
+}
+
+.pharm-btn:hover::after {
+  left: 160%;
+}
+
+/* Primary */
+.pharm-btn-primary {
+  background: var(--grad-plum);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(100,25,128,0.25);
+}
+
+.pharm-btn-primary:hover {
+  background: linear-gradient(135deg, var(--plum-600) 0%, var(--plum-500) 100%);
+  box-shadow: 0 4px 18px rgba(100,25,128,0.35);
+  transform: translateY(-2px);
+}
+
+.pharm-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Success */
+.pharm-btn-success {
+  background: linear-gradient(135deg, var(--amber-600) 0%, var(--amber-500) 100%);
+  color: #fff;
+  box-shadow: var(--shadow-amber);
+}
+
+.pharm-btn-success:hover {
+  background: linear-gradient(135deg, var(--amber-700) 0%, var(--amber-600) 100%);
+  box-shadow: 0 6px 22px rgba(200,115,10,0.38);
+  transform: translateY(-2px);
+}
+
+/* Danger */
+.pharm-btn-danger {
+  background: linear-gradient(135deg, #c62828 0%, #ef5350 100%);
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(198,40,40,0.22);
+}
+
+.pharm-btn-danger:hover {
+  background: linear-gradient(135deg, #b71c1c 0%, #c62828 100%);
+  box-shadow: 0 4px 18px rgba(198,40,40,0.34);
+  transform: translateY(-2px);
+}
+
+/* Secondary / ghost */
+.pharm-btn-secondary {
+  background: var(--white);
+  color: var(--plum-600);
+  border: 1.5px solid var(--plum-300);
+  box-shadow: var(--shadow-xs);
+}
+
+.pharm-btn-secondary:hover {
+  background: var(--plum-50);
+  border-color: var(--plum-500);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
+
+/* ══════════════════════════════════════════════════
+   FORM
+══════════════════════════════════════════════════ */
+.pharm-form-container {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.pharm-form-header {
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--grad-header);
+  font-weight: 600;
+  color: var(--plum-700);
+  font-size: 1rem;
+}
+
+.pharm-form-group {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem 2rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  background: linear-gradient(135deg, var(--plum-ghost), var(--amber-ghost));
+  border-top: 1px solid var(--border-soft);
+}
+
+.pharm-form-group input,
+.pharm-form-group select {
+  padding: 0.7rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-primary);
+  background: var(--white);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s;
+  font-weight: 400;
+  min-width: 160px;
+  flex: 1;
+  outline: none;
+}
+
+.pharm-form-group input::placeholder {
+  color: var(--text-light);
+  font-weight: 300;
+}
+
+.pharm-form-group input:focus,
+.pharm-form-group select:focus {
+  border-color: var(--plum-500);
+  box-shadow: 0 0 0 3px rgba(126,31,160,0.10);
+  background: var(--plum-ghost);
+}
+
+/* ══════════════════════════════════════════════════
+   STATUS INDICATORS
+══════════════════════════════════════════════════ */
+
+/* Out-of-stock / low stock row */
+.pharm-low-stock td {
+  background: linear-gradient(90deg, rgba(198,40,40,0.05), rgba(198,40,40,0.02));
+  color: var(--danger) !important;
+  font-weight: 600;
+}
+
+.pharm-low-stock td:first-child {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+/* Expiry warning cell */
+.pharm-expiry-soon {
+  color: var(--warning) !important;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+/* ══════════════════════════════════════════════════
+   LOADING & ERROR STATES
+══════════════════════════════════════════════════ */
+@keyframes pharmSpin {
+  to { transform: rotate(360deg); }
+}
+
+.pharm-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  font-weight: 500;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pharm-loading::before {
+  content: '';
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid var(--plum-100);
+  border-top-color: var(--plum-500);
+  border-radius: 50%;
+  animation: pharmSpin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.pharm-error {
+  background: var(--danger-soft);
+  border: 1px solid rgba(198,40,40,0.25);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.6rem;
+  margin-bottom: 1.5rem;
+  color: var(--danger);
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: 'Outfit', sans-serif;
+}
+
+.pharm-error button {
+  margin-left: auto;
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.35rem 1rem;
+  border-radius: var(--radius-sm);
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pharm-error button:hover {
+  background: #b71c1c;
+}
+
+/* ══════════════════════════════════════════════════
+   EMPTY STATE
+══════════════════════════════════════════════════ */
+.pharm-table tbody td[colspan] {
+  text-align: center;
+  padding: 3.5rem 2rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  font-style: italic;
+  background: var(--plum-ghost) !important;
+}
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE
+══════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .pharm-root {
+    padding: 0 1.75rem;
+  }
+
+  .pharm-header {
+    padding: 2rem 2rem;
+  }
+
+  .pharm-title {
+    font-size: 2.2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .pharm-layout {
+    padding: 1.5rem 0 3rem;
+  }
+
+  .pharm-root {
+    padding: 0 1rem;
+  }
+
+  .pharm-header {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1.5rem 1.25rem;
+    border-radius: var(--radius-xl);
+  }
+
+  .pharm-title {
+    font-size: 1.9rem;
+  }
+
+  .pharm-stats {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .pharm-stat-card {
+    min-width: 90px;
+    padding: 1rem 1.2rem;
+  }
+
+  .pharm-section-header {
+    padding: 1.2rem 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .pharm-section-header span:first-child {
+    font-size: 1.15rem;
+  }
+
+  .pharm-table th,
+  .pharm-table td {
+    padding: 0.75rem 0.75rem;
+  }
+
+  .pharm-form-group {
+    flex-direction: column;
+    padding: 1.25rem 1.25rem;
+    gap: 0.75rem;
+  }
+
+  .pharm-form-group input,
+  .pharm-form-group select {
+    min-width: 100%;
+    width: 100%;
+  }
+
+  .pharm-btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.8rem;
+  }
+
+  .pharm-table {
+    min-width: 600px;
+    font-size: 0.82rem;
+  }
+
+  .pharm-table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+@media (max-width: 480px) {
+  .pharm-title {
+    font-size: 1.65rem;
+  }
+
+  .pharm-section {
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.25rem;
+  }
+
+  .pharm-header {
+    border-radius: var(--radius-lg);
+  }
+}
+
+/* ══════════════════════════════════════════════════
+   PRINT
+══════════════════════════════════════════════════ */
+@media print {
+  .pharm-layout {
+    background: white;
+    padding: 0;
+  }
+
+  .pharm-layout::before {
+    display: none;
+  }
+
+  .pharm-header {
+    box-shadow: none;
+    border: 1px solid #ddd;
+  }
+
+  .pharm-header::after {
+    display: none;
+  }
+
+  .pharm-section {
+    box-shadow: none;
+    border: 1px solid #ddd;
+    page-break-inside: avoid;
+    transform: none !important;
+  }
+
+  .pharm-btn {
+    display: none;
+  }
+
+  .pharm-table th {
+    background: #4A1060 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+}

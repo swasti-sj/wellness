@@ -1,29 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import Fuse from 'fuse.js';
 import '../../styles/doctor/DoctorPrescription.css';
 
 function DoctorPrescription({ appointmentId, patientId }) {
   const [current, setCurrent] = useState([]);
   const [previous, setPrevious] = useState([]);
+  const [medicinesList, setMedicinesList] = useState([]);
+  const [fuse, setFuse] = useState(null);
+  const [dropdownIndex, setDropdownIndex] = useState(-1);
+  const [dropdownSearch, setDropdownSearch] = useState('');
   const [isLoading, setLoading] = useState(true);
   const [isSaving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [saved, setSaved] = useState(false);
-  const token = localStorage.getItem('token');
+        const [error, setError] = useState('');
+        const [saved, setSaved] = useState(false);
+        const token = localStorage.getItem('token');
+        const dropdownRef = useRef(null);
+        const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       if (!appointmentId || !patientId) return;
       setLoading(true); setError('');
       try {
-        const [cur, prev] = await Promise.all([
+        const [cur, prev, meds] = await Promise.all([
           axios.get(`http://localhost:5000/api/prescriptions/${appointmentId}`, { params: { token } }),
           axios.get(`http://localhost:5000/api/prescriptions/latest/${patientId}`, { params: { token } }),
+          axios.get(`http://localhost:5000/api/medicines?inStock=true`, { params: { token } })
         ]);
         setCurrent(cur.data.prescriptions || []);
         setPrevious(prev.data.prescriptions || []);
+        const medsList = meds.data.medicines || [];
+        setMedicinesList(medsList);
+        setFuse(new Fuse(medsList, { 
+          keys: ['name'], 
+          threshold: 0.4,
+          includeScore: true 
+        }));
       } catch (e) {
-        setError('Could not load prescription data.');
+        const errorMsg = e.response?.data?.error || e.message || 'Unknown error';
+        setError('Could not load data: ' + errorMsg);
+        console.error('Error loading prescription data:', e);
       } finally { setLoading(false); }
     };
     load();
@@ -35,8 +52,28 @@ function DoctorPrescription({ appointmentId, patientId }) {
     setCurrent(v); setSaved(false);
   };
 
+  const selectMedicine = (i, med) => {
+    const v = [...current];
+    v[i].medication = med.name;
+    v[i].medicine = med._id;
+    v[i].stockInfo = `Stock: ${med.stockCount}, Expires: ${med.daysToExpiry} days`;
+    setCurrent(v);
+    setDropdownIndex(-1);
+    setDropdownSearch('');
+  };
+
+  const handleMedInput = (i, value) => {
+    const v = [...current];
+    v[i].medication = value;
+    v[i].medicine = '';
+    v[i].stockInfo = '';
+    setCurrent(v);
+    setDropdownSearch(value);
+    setDropdownIndex(i);
+  };
+
   const addRow = () => {
-    setCurrent([...current, { medication: '', dosage: '', frequency: '', notes: '', status: 'new' }]);
+    setCurrent([...current, { medication: '', dosage: '', frequency: '', notes: '', quantity: 1, status: 'new' }]);
     setSaved(false);
   };
 
@@ -114,6 +151,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
           <div className="rx-table-head">
             <span>#</span>
             <span>Medication</span>
+            <span>Qty</span>
             <span>Dosage</span>
             <span>Frequency</span>
             <span>Instructions</span>
@@ -122,8 +160,32 @@ function DoctorPrescription({ appointmentId, patientId }) {
           {current.map((rx, i) => (
             <div key={i} className={`rx-row${rx.status === 'continued' ? ' continued' : ''}`}>
               <span className="rx-num">{i + 1}</span>
-              <input name="medication" value={rx.medication}
-                onChange={e => change(i, e)} placeholder="e.g. Paracetamol" />
+              <div className="rx-med-container">
+                <input 
+                  value={rx.medication}
+                  onChange={(e) => handleMedInput(i, e.target.value)}
+                  placeholder="Type to search medicines..."
+                />
+                {rx.stockInfo && <small>{rx.stockInfo}</small>}
+                {dropdownIndex === i && dropdownSearch && fuse && (
+                  <div className="rx-dropdown">
+                    {fuse.search(dropdownSearch).slice(0, 8).map((result, idx) => (
+                      <div 
+                        key={result.item._id || idx}
+                        className="rx-dropdown-item"
+                        onClick={() => selectMedicine(i, result.item)}
+                      >
+                        {result.item.name} (Stock: {result.item.stockCount})
+                        {result.item.daysToExpiry <= 28 && (
+                          <span className="rx-expiry-alert"> ⚠️ {result.item.daysToExpiry}d</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <input name="quantity" type="number" min="1" value={rx.quantity || 1}
+                onChange={e => change(i, e)} placeholder="Qty" />
               <input name="dosage" value={rx.dosage}
                 onChange={e => change(i, e)} placeholder="e.g. 500mg" />
               <input name="frequency" value={rx.frequency}

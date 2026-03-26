@@ -31,7 +31,12 @@ import InitialReceptionistProfileForm from "./pages/receptionist/InitialReceptio
 import NurseDashboard from "./pages/nurse/NurseDashboard";
 import InitialNurseProfileForm from "./pages/nurse/InitialNurseProfileForm";
 import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
+import PharmacistMedicineStock from "./pages/pharmacist/PharmacistMedicineStock";
+import PharmacistIssuanceRecords from "./pages/pharmacist/PharmacistIssuanceRecords";
 import InitialPharmacistProfileForm from "./pages/pharmacist/InitialPharmacistProfileForm";
+import PharmacistNavbar from "./pages/pharmacist/PharmacistNavbar";
+import PharmacistProfile from "./pages/pharmacist/PharmacistProfile";
+
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
   console.log("🛠️ Rendering LayoutWithNavbar");
@@ -44,6 +49,17 @@ function LayoutWithNavbar() {
     </>
   );
 }
+function LayoutWithPharmNavbar({ children }) {
+  return (
+    <>
+      <PharmacistNavbar />
+      <div style={{ paddingTop: "60px" }}>
+        {children}
+      </div>
+    </>
+  );
+}
+
 function LayoutWithDocNavbar() {
   console.log("🛠️ Rendering LayoutWithDocNavbar");
   return (
@@ -180,6 +196,14 @@ function App() {
           <Route path="history" element={<VisitHistory />} />
           <Route path="profile" element={<ProfilePage />} />
         </Route>
+        {/* Patient dashboard */}
+        <Route path="/patdashboard" element={<PatientDashboardLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="book" element={<AppointmentBooking />} />
+          <Route path="history" element={<VisitHistory />} />
+          <Route path="profile" element={<ProfilePage />} />
+        </Route>
+
         {/* Patient onboarding without navbar */}
         <Route
           path="/patdashboard/initial-profile"
@@ -228,7 +252,11 @@ function App() {
         <Route path="/nurse-dashboard" element={<NurseDashboard />} />
         <Route path="/nurse/initial-profile" element={<InitialNurseProfileForm />} />
 
-        <Route path="/pharmacist-dashboard" element={<PharmacistDashboard />} />
+        {/* Pharmacist routes */}
+        <Route path="/pharmacist-dashboard" element={<LayoutWithPharmNavbar><PharmacistDashboard /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
         <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>

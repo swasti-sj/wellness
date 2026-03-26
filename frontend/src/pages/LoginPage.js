@@ -59,7 +59,7 @@ export default function LoginPage() {
         navigate('/pharmacist-dashboard');
       } else {
         console.log('LoginPage: Role is patient, navigating to patient dashboard.');
-        navigate('/dashboard');
+        navigate('/patdashboard');
       }
     } else {
       console.log('LoginPage: Conditions for dashboard navigation not met.');
