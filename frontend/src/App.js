@@ -28,6 +28,7 @@ import VisitHistory from "./pages/patient/VisitHistory";
 import TestPage from "./pages/doctor/TestPage";
 import ReceptionistDashboard from "./pages/receptionist/ReceptionistDashboard";
 import InitialReceptionistProfileForm from "./pages/receptionist/InitialReceptionistProfileForm";
+import ReceptionistProfilePage from "./pages/receptionist/ReceptionistProfilePage";
 import NurseDashboard from "./pages/nurse/NurseDashboard";
 import InitialNurseProfileForm from "./pages/nurse/InitialNurseProfileForm";
 import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
@@ -223,6 +224,7 @@ function App() {
 
         {/* Pharmacist routes */}
         <Route path="/receptionist-dashboard" element={<ReceptionistDashboard />} />
+        <Route path="/receptionist-dashboard/profile" element={<ReceptionistProfilePage />} />
         <Route path="/receptionist/initial-profile" element={<InitialReceptionistProfileForm />} />
 
         <Route path="/nurse-dashboard" element={<NurseDashboard />} />

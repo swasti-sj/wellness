@@ -751,6 +751,36 @@ router.patch("/:appointmentId/status", async (req, res) => {
   }
 });
 
+// Get ALL appointments from ALL doctors (for receptionist)
+router.get("/all-appointments", async (req, res) => {
+  try {
+    console.log("[API] GET /all-appointments called");
+
+    // Fetch all appointments and populate user and doctor details
+    const appointments = await Appointment.find()
+      .populate("user", "name roll email phone")
+      .populate("doctor", "name specialization email")
+      .sort({ startDateTime: -1 });
+
+    const formattedAppointments = appointments.map(appt => ({
+      _id: appt._id,
+      patientName: appt.user?.name || "Unknown",
+      roll: appt.user?.roll || "-",
+      doctorName: appt.doctor?.name || "Unknown",
+      date: appt.startDateTime,
+      time: appt.slotTime || "-",
+      status: appt.status,
+      email: appt.user?.email || "-",
+      phone: appt.user?.phone || "-",
+    }));
+
+    res.json({ appointments: formattedAppointments });
+  } catch (err) {
+    console.error("Error fetching all appointments:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Get a doctor's appointments (enhanced)
 router.get("/doctor-appointments", async (req, res) => {
   try {
