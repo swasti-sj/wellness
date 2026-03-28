@@ -43,7 +43,8 @@ const VitalSchema = new mongoose.Schema({
   respiratoryRate: Number,
   spO2: Number,
   bmi: Number,
-  notes: String
+  notes: String,
+  caseSheetDocumentUrl: { type: String, default: "" }
 
 }, { timestamps: true });
 

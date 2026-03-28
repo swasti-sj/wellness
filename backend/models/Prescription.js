@@ -40,7 +40,10 @@ const PrescriptionSchema = new Schema({
     ref: 'Doctor', 
     required: true 
   },
-  prescriptions: [PrescriptionItemSchema]
+  prescriptions: [PrescriptionItemSchema],
+  documentUrl: { type: String, default: '' },
+  bookNo: { type: String, default: '' },
+  prescriptionNo: { type: String, default: '' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Prescription', PrescriptionSchema);

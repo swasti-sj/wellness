@@ -9,6 +9,8 @@ const userSchema = new mongoose.Schema({
   sex: { type: String, enum: ["Male", "Female", "Other"] },
   age: Number,
   phone: String,
+  allergies: String,
+  consentAccepted: { type: Boolean, default: false },
   role: { type: String, default: 'user' }, // Add role field
   isVerified: { type: Boolean, default: false }, // Add verification status
 

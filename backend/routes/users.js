@@ -5,10 +5,10 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 router.post('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name, roll, sex, age, phone } = req.body;
+    const { name, roll, sex, age, phone, allergies, consentAccepted } = req.body;
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name, roll, sex, age, phone },
+      { name, roll, sex, age, phone, allergies, consentAccepted },
       { new: true }
     );
     res.json(user);

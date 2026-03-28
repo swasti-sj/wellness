@@ -25,10 +25,13 @@ const TestSchema = new Schema({
     required: true 
   },
   tests: [TestItemSchema],
+  labTestDocumentUrl: { type: String, default: '' },
   hospitalReferral: {
     refer: { type: Boolean, default: false },
     hospitalName: { type: String, default: '' },
     ambulanceUsed: { type: Boolean, default: false },
+    cashlessFormUsed: { type: Boolean, default: false },
+    cashlessFormDocumentUrl: { type: String, default: '' },
     staffWent: { type: String, default: '' },
     remarks: { type: String, default: '' }
   },

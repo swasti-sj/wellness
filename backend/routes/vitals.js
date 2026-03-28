@@ -3,6 +3,41 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+
+const createStorage = (folder) => multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join('backend', 'uploads', folder);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const allowedMimeTypes = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'application/pdf'
+];
+
+const upload = multer({
+  storage: createStorage('case-sheets'),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    cb(new Error('Only JPG, PNG, WEBP, and PDF files are allowed.'));
+  }
+});
 
 // =============================
 // GET VITALS BY APPOINTMENT
@@ -36,7 +71,7 @@ router.get("/:appointmentId", async (req, res) => {
 // =============================
 // CREATE / UPDATE VITALS
 // =============================
-router.post("/save", async (req, res) => {
+router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -53,7 +88,7 @@ router.post("/save", async (req, res) => {
       return res.status(401).json({ error: "Unauthorized doctor" });
     }
 
-    const { appointmentId, patientId, ...caseData } = req.body;
+    const { appointmentId, patientId, existingCaseSheetDocumentUrl, ...caseData } = req.body;
 
     if (!appointmentId || !patientId) {
       return res.status(400).json({ error: "Missing appointment or patient" });
@@ -69,6 +104,12 @@ router.post("/save", async (req, res) => {
     }
 
     Object.assign(vital, caseData);
+
+    if (req.file) {
+      vital.caseSheetDocumentUrl = `/uploads/case-sheets/${req.file.filename}`;
+    } else if (typeof existingCaseSheetDocumentUrl === "string") {
+      vital.caseSheetDocumentUrl = existingCaseSheetDocumentUrl;
+    }
 
     // Auto BMI calculation
     if (vital.weight && vital.height) {

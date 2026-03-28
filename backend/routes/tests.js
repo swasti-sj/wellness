@@ -10,7 +10,12 @@ const fs = require('fs');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    const uploadDir = 'backend/uploads/certificates';
+    const fieldDirMap = {
+      certificateImage: path.join('backend', 'uploads', 'certificates'),
+      labTestDocument: path.join('backend', 'uploads', 'lab-tests'),
+      cashlessFormDocument: path.join('backend', 'uploads', 'cashless-forms')
+    };
+    const uploadDir = fieldDirMap[file.fieldname] || path.join('backend', 'uploads', 'misc');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
@@ -21,17 +26,23 @@ const storage = multer.diskStorage({
   }
 });
 
+const allowedMimeTypes = [
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf'
+];
+
 const upload = multer({ 
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
+    if (allowedMimeTypes.includes(file.mimetype)) {
       return cb(null, true);
     }
-    cb(new Error('Only image files are allowed!'));
+    cb(new Error('Only JPG, PNG, GIF, WEBP, and PDF files are allowed!'));
   }
 });
 
@@ -186,7 +197,11 @@ router.get('/categories', (req, res) => {
 });
 
 // Save or update tests for an appointment
-router.post('/save', upload.single('certificateImage'), async (req, res) => {
+router.post('/save', upload.fields([
+  { name: 'certificateImage', maxCount: 1 },
+  { name: 'labTestDocument', maxCount: 1 },
+  { name: 'cashlessFormDocument', maxCount: 1 }
+]), async (req, res) => {
   try {
     const { token, appointmentId } = req.body;
     
@@ -206,10 +221,28 @@ router.post('/save', upload.single('certificateImage'), async (req, res) => {
       certificate = { ...certificate, ...parsedCert };
     }
     
-    if (req.file) {
-      certificate.imageUrl = `/uploads/certificates/${req.file.filename}`;
+    const certificateImage = req.files?.certificateImage?.[0];
+    const labTestDocument = req.files?.labTestDocument?.[0];
+    const cashlessFormDocument = req.files?.cashlessFormDocument?.[0];
+
+    if (certificateImage) {
+      certificate.imageUrl = `/uploads/certificates/${certificateImage.filename}`;
     } else if (req.body.existingImageUrl) {
       certificate.imageUrl = req.body.existingImageUrl;
+    }
+
+    if (labTestDocument) {
+      req.body.labTestDocumentUrl = `/uploads/lab-tests/${labTestDocument.filename}`;
+    }
+
+    if (cashlessFormDocument) {
+      hospitalReferral.cashlessFormDocumentUrl = `/uploads/cashless-forms/${cashlessFormDocument.filename}`;
+    } else if (req.body.existingCashlessFormDocumentUrl) {
+      hospitalReferral.cashlessFormDocumentUrl = req.body.existingCashlessFormDocumentUrl;
+    }
+
+    if (typeof req.body.existingLabTestDocumentUrl === 'string' && !req.body.labTestDocumentUrl) {
+      req.body.labTestDocumentUrl = req.body.existingLabTestDocumentUrl;
     }
 
     if (!token || !appointmentId) {
@@ -235,6 +268,7 @@ router.post('/save', upload.single('certificateImage'), async (req, res) => {
         patient: appointment.user,
         doctor: doctor._id,
         tests: tests || [],
+        labTestDocumentUrl: req.body.labTestDocumentUrl || '',
         hospitalReferral: hospitalReferral || { refer: false },
         certificate: certificate || { issued: false }
       },
@@ -268,6 +302,7 @@ router.get('/:appointmentId', async (req, res) => {
 
     res.json({
       tests: test.tests,
+      labTestDocumentUrl: test.labTestDocumentUrl || '',
       hospitalReferral: test.hospitalReferral,
       certificate: test.certificate
     });

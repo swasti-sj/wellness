@@ -6,11 +6,50 @@ const Appointment = require("../models/Appointment");
 const Prescription = require("../models/Prescription");
 const Medicine = require("../models/Medicine");
 const MedicineIssuance = require("../models/MedicineIssuance");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+
+const prescriptionStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadDir = path.join("backend", "uploads", "prescriptions");
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const allowedMimeTypes = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "application/pdf"
+];
+
+const upload = multer({
+  storage: prescriptionStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      return cb(null, true);
+    }
+    cb(new Error("Only JPG, PNG, WEBP, and PDF files are allowed."));
+  }
+});
 
 // Add or update a prescription for an appointment
-router.post("/save", async (req, res) => {
+router.post("/save", upload.single("prescriptionDocument"), async (req, res) => {
   try {
-    const { token, appointmentId, prescriptions } = req.body;
+    const { token, appointmentId, bookNo = "", prescriptionNo = "", existingDocumentUrl = "" } = req.body;
+    const prescriptions = req.body.prescriptions
+      ? (typeof req.body.prescriptions === "string" ? JSON.parse(req.body.prescriptions) : req.body.prescriptions)
+      : null;
+
     if (!token || !appointmentId || !Array.isArray(prescriptions)) {
       return res.status(400).json({ error: "Missing required fields or invalid data format." });
     }
@@ -57,7 +96,12 @@ router.post("/save", async (req, res) => {
         appointment: appointmentId,
         patient: appointment.user,
         doctor: doctor._id,
-        prescriptions: prescriptions 
+        prescriptions: prescriptions,
+        bookNo,
+        prescriptionNo,
+        documentUrl: req.file
+          ? `/uploads/prescriptions/${req.file.filename}`
+          : existingDocumentUrl
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
@@ -85,7 +129,12 @@ router.get("/:appointmentId", async (req, res) => {
       return res.json({ prescriptions: [] });
     }
 
-    res.json({ prescriptions: prescription.prescriptions });
+    res.json({
+      prescriptions: prescription.prescriptions,
+      documentUrl: prescription.documentUrl || "",
+      bookNo: prescription.bookNo || "",
+      prescriptionNo: prescription.prescriptionNo || ""
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error while fetching prescriptions." });
@@ -110,7 +159,12 @@ router.get("/latest/:patientId", async (req, res) => {
       return res.json({ prescriptions: [] }); // No previous prescriptions found
     }
 
-    res.json({ prescriptions: latestPrescription.prescriptions });
+    res.json({
+      prescriptions: latestPrescription.prescriptions,
+      documentUrl: latestPrescription.documentUrl || "",
+      bookNo: latestPrescription.bookNo || "",
+      prescriptionNo: latestPrescription.prescriptionNo || ""
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error while fetching latest prescription." });
