@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { buildDocumentUrl, getDocumentName } from './documentHelpers';
 
 function HospitalReferralSummary({ appointmentId }) {
   const [referral, setReferral] = useState(null);
@@ -51,8 +52,17 @@ function HospitalReferralSummary({ appointmentId }) {
       <div className="referral-details">
         <p><strong>Hospital:</strong> {referral.hospitalName || 'N/A'}</p>
         <p><strong>Ambulance Used:</strong> {referral.ambulanceUsed ? 'Yes' : 'No'}</p>
+        <p><strong>Cashless Form:</strong> {referral.cashlessFormUsed ? 'Yes' : 'No'}</p>
         <p><strong>Staff Went:</strong> {referral.staffWent || 'N/A'}</p>
         <p><strong>Remarks:</strong> {referral.remarks || 'N/A'}</p>
+        {referral.cashlessFormUsed && referral.cashlessFormDocumentUrl && (
+          <p>
+            <strong>Cashless Form Document:</strong>{' '}
+            <a href={buildDocumentUrl(referral.cashlessFormDocumentUrl)} target="_blank" rel="noreferrer">
+              {getDocumentName(referral.cashlessFormDocumentUrl, 'View cashless form')}
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );

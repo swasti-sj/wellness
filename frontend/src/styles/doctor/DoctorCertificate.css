@@ -222,6 +222,80 @@
   display: block;
 }
 
+.document-upload-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.upload-label {
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: #1E0733;
+}
+
+.doc-file-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.doc-file-icon {
+  min-width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: #F4EFFF;
+  color: #4A1060;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.doc-file-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.doc-file-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #3A2250;
+}
+
+.doc-file-link {
+  font-size: 0.78rem;
+  color: #6C1B85;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.doc-file-link:hover {
+  text-decoration: underline;
+}
+
+.remove-doc-btn {
+  margin-left: auto;
+  border: 1px solid #F5C6CB;
+  background: #FDE8EB;
+  color: #B8243A;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+}
+
+.remove-doc-btn:hover {
+  background: #B8243A;
+  color: #fff;
+}
+
+.no-document-msg {
+  font-size: 0.8rem;
+  color: #7A6890;
+}
+
 /* ── Save button ── */
 .save-certificate-btn {
   align-self: flex-start;

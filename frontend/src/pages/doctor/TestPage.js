@@ -174,6 +174,8 @@ function TestPage({ apiBaseUrl }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [labTestDocument, setLabTestDocument] = useState(null);
+  const [labTestDocumentUrl, setLabTestDocumentUrl] = useState('');
 
   const token = localStorage.getItem('token');
 
@@ -192,7 +194,7 @@ function TestPage({ apiBaseUrl }) {
           const savedTests = res.data.tests;
 
           // Update categories with saved selections
-          const updatedCategories = categories.map(cat => ({
+          const updatedCategories = TEST_CATEGORIES.map(cat => ({
             ...cat,
             tests: cat.tests.map(test => ({
               name: test.name,
@@ -201,6 +203,7 @@ function TestPage({ apiBaseUrl }) {
           }));
           setCategories(updatedCategories);
         }
+        setLabTestDocumentUrl(res.data.labTestDocumentUrl || '');
       } catch (err) {
         console.error('Error fetching test data:', err);
       } finally {
@@ -270,17 +273,27 @@ function TestPage({ apiBaseUrl }) {
         });
       });
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', {
-        token,
-        appointmentId,
-        patientId,
-        tests: selectedTests,
-        hospitalReferral: existingData.hospitalReferral,
-        certificate: existingData.certificate
+      const formData = new FormData();
+      formData.append('token', token);
+      formData.append('appointmentId', appointmentId);
+      formData.append('patientId', patientId);
+      formData.append('tests', JSON.stringify(selectedTests));
+      formData.append('hospitalReferral', JSON.stringify(existingData.hospitalReferral));
+      formData.append('certificate', JSON.stringify(existingData.certificate));
+      if (labTestDocument) {
+        formData.append('labTestDocument', labTestDocument);
+      } else if (labTestDocumentUrl) {
+        formData.append('existingLabTestDocumentUrl', labTestDocumentUrl);
+      }
+
+      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
 
       if (response.data.success) {
         setSaved(true);
+        setLabTestDocument(null);
+        setLabTestDocumentUrl(response.data.test?.labTestDocumentUrl || labTestDocumentUrl);
         // Navigate back and signal DoctorAppointment to open the Lab Tests section
         if (returnUrl) {
           navigate(returnUrl, {
@@ -391,7 +404,7 @@ function TestPage({ apiBaseUrl }) {
         <button
           className="save-tests-btn"
           onClick={handleSaveAll}
-          disabled={getSelectedTestsCount() === 0}
+          disabled={getSelectedTestsCount() === 0 && !labTestDocumentUrl}
         >
           💾 Save Tests ({getSelectedTestsCount()})
         </button>

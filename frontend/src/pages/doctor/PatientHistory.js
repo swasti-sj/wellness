@@ -168,8 +168,12 @@ export default function PatientHistory({ apiBaseUrl }) {
 
   const [printLoading, setPrintLoading] = useState(false);
 
+  // ── NEW: track which single appt is loading ──
+  const [printingApptId, setPrintingApptId] = useState(null);
+
   const handlePrint = async (patient, patientAppts) => {
     setPrintLoading(true);
+    setPrintingApptId(null);
     const visitDataArr = await Promise.all(
       patientAppts.map(async (a) => {
         const [vitalsRes, notesRes, rxRes, testsRes] = await Promise.allSettled([
@@ -193,6 +197,34 @@ export default function PatientHistory({ apiBaseUrl }) {
     );
     setPrintData({ patient, patientAppts, visitDataArr });
     setPrintLoading(false);
+    setReadyToPrint(true);
+  };
+
+  // ── NEW: single visit PDF handler ──
+  const handlePrintSingleAppt = async (e, patient, appt) => {
+    e.stopPropagation();
+    setPrintLoading(true);
+    setPrintingApptId(appt._id);
+    const [vitalsRes, notesRes, rxRes, testsRes] = await Promise.allSettled([
+      axios.get(`${apiBaseUrl}/vitals/${appt._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null),
+      axios.get(`${apiBaseUrl}/notes/${appt._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/prescriptions/${appt._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/tests/${appt._id}`, { params: { token } }).catch(() => null),
+    ]);
+    const visitDataArr = [{
+      appt,
+      vitals: vitalsRes.value?.data?.vital || null,
+      notes: notesRes.value?.data?.notes || [],
+      prescriptions: rxRes.value?.data?.prescriptions || [],
+      tests: testsRes.value?.data?.tests || [],
+      hospitalReferral: testsRes.value?.data?.hospitalReferral || null,
+      certificate: testsRes.value?.data?.certificate || null,
+    }];
+    setPrintData({ patient, patientAppts: [appt], visitDataArr });
+    setPrintLoading(false);
+    setPrintingApptId(null);
     setReadyToPrint(true);
   };
 
@@ -307,13 +339,11 @@ export default function PatientHistory({ apiBaseUrl }) {
             {/* Per-visit detailed sections */}
             {printData.visitDataArr.map((v, idx) => (
               <div key={v.appt._id} style={{ marginBottom:"18px" }}>
-                {/* Visit header */}
                 <div style={{ background:"#4A1060", color:"#fff", padding:"5px 10px", fontSize:"12px", fontWeight:"bold", borderRadius:"4px 4px 0 0", marginBottom:"0" }}>
                   Clinical Details — {formatDate(v.appt.startDateTime)}
                 </div>
                 <div style={{ border:"1px solid #6C1B85", borderTop:"none", padding:"8px 10px", borderRadius:"0 0 4px 4px" }}>
 
-                  {/* Case Sheet / Vitals */}
                   {v.vitals && (
                     <div style={{ marginBottom:"8px" }}>
                       <div style={secHead}>📋 Case Sheet &amp; Vitals</div>
@@ -327,14 +357,13 @@ export default function PatientHistory({ apiBaseUrl }) {
                           {v.vitals.systemicExamination && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Systemic Examination</td><td style={td} colSpan={3}>{v.vitals.systemicExamination}</td></tr>}
                           {v.vitals.investigations && <tr><td style={tdH}>Investigations</td><td style={td} colSpan={3}>{v.vitals.investigations}</td></tr>}
                           {v.vitals.treatmentAdvice && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Treatment Advice</td><td style={td} colSpan={3}>{v.vitals.treatmentAdvice}</td></tr>}
-                          {/* Vitals row */}
-                          {(v.vitals.bloodPressureSystolic || v.vitals.pulse || v.vitals.temperature || v.vitals.spO2) && (
+                          {(v.vitals.bloodPressureSystolic || v.vitals.pulse) && (
                             <tr>
                               {v.vitals.bloodPressureSystolic && <><td style={tdH}>BP</td><td style={td}>{v.vitals.bloodPressureSystolic}/{v.vitals.bloodPressureDiastolic} mmHg</td></>}
                               {v.vitals.pulse && <><td style={tdH}>Pulse</td><td style={td}>{v.vitals.pulse} bpm</td></>}
                             </tr>
                           )}
-                          {(v.vitals.temperature || v.vitals.spO2 || v.vitals.weight || v.vitals.bmi) && (
+                          {(v.vitals.temperature || v.vitals.spO2) && (
                             <tr style={{background:"#FAF4FF"}}>
                               {v.vitals.temperature && <><td style={tdH}>Temp</td><td style={td}>{v.vitals.temperature}°F</td></>}
                               {v.vitals.spO2 && <><td style={tdH}>SpO₂</td><td style={td}>{v.vitals.spO2}%</td></>}
@@ -352,7 +381,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* Notes */}
                   {v.notes.length > 0 && (
                     <div style={{ marginBottom:"8px" }}>
                       <div style={secHead}>📝 Doctor Notes</div>
@@ -364,7 +392,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* Prescription */}
                   {v.prescriptions.length > 0 && (
                     <div style={{ marginBottom:"8px" }}>
                       <div style={secHead}>💊 Prescription</div>
@@ -389,7 +416,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* Tests */}
                   {v.tests.filter(t => t.selected).length > 0 && (
                     <div style={{ marginBottom:"8px" }}>
                       <div style={secHead}>🧪 Tests Ordered</div>
@@ -412,7 +438,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* Hospital Referral */}
                   {v.hospitalReferral?.refer && (
                     <div style={{ marginBottom:"8px" }}>
                       <div style={secHead}>🏥 Hospital Referral</div>
@@ -427,7 +452,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* Certificate */}
                   {v.certificate?.issued && (
                     <div style={{ marginBottom:"4px" }}>
                       <div style={secHead}>📋 Medical Certificate</div>
@@ -440,7 +464,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                     </div>
                   )}
 
-                  {/* If no data at all for this visit */}
                   {!v.vitals && v.notes.length===0 && v.prescriptions.length===0 && v.tests.filter(t=>t.selected).length===0 && !v.hospitalReferral?.refer && !v.certificate?.issued && (
                     <div style={{ fontSize:"11px", color:"#999", fontStyle:"italic", padding:"4px 0" }}>No clinical data recorded for this visit.</div>
                   )}
@@ -518,7 +541,7 @@ export default function PatientHistory({ apiBaseUrl }) {
                     disabled={printLoading}
                     title="Print complete history"
                   >
-                    {printLoading ? "⏳ Loading…" : "⬇ Download PDF"}
+                    {printLoading && printingApptId === null ? "⏳ Loading…" : "⬇ Download PDF"}
                   </button>
                   <span className="ph-expand-icon">{expandedPatient === p._id ? "▲" : "▼"}</span>
                 </div>
@@ -566,6 +589,15 @@ export default function PatientHistory({ apiBaseUrl }) {
                             <span className="ph-appt-meta">{a.mode || "Walk-in"}</span>
                           </div>
                           <div className="ph-appt-right">
+                            {/* ── NEW: per-visit download button ── */}
+                            <button
+                              className="ph-print-btn"
+                              onClick={e => handlePrintSingleAppt(e, p, a)}
+                              disabled={printLoading}
+                              title="Download PDF for this visit"
+                            >
+                              {printLoading && printingApptId === a._id ? "⏳ Loading…" : "⬇ Visit PDF"}
+                            </button>
                             <span className="ph-expand-icon">{expandedAppt === a._id ? "▲" : "▼"}</span>
                           </div>
                         </div>
