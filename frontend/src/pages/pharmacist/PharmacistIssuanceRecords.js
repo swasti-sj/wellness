@@ -18,13 +18,31 @@ const getMedStatus = (med) => {
   return { label: 'Good', cls: 'pharm-badge-green' };
 };
 
-export default function PharmacistDashboard() {
+export default function PharmacistIssuanceRecords() {
   const [stats, setStats] = useState(null);
   const [issuanceSummary, setIssuanceSummary] = useState(null);
   const [criticalMeds, setCriticalMeds] = useState([]);
   const [recentIssuances, setRecentIssuances] = useState([]);
   const [topUsed, setTopUsed] = useState([]);
   const [usagePeriod, setUsagePeriod] = useState('month');
+
+  // Issuance filter states (medicine/module, doctor, patient, dates)
+  const [issuances, setIssuances] = useState([]);
+  const [issuancePage, setIssuancePage] = useState(1);
+  const [issuancePages, setIssuancePages] = useState(1);
+  const [issuanceTotal, setIssuanceTotal] = useState(0);
+  const [issuanceLimit, setIssuanceLimit] = useState(20);
+
+  const [allDoctors, setAllDoctors] = useState([]);
+  const [allMedicines, setAllMedicines] = useState([]);
+
+  const [medicineFilter, setMedicineFilter] = useState('');
+  const [doctorFilter, setDoctorFilter] = useState('');
+  const [patientFilter, setPatientFilter] = useState('');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [quickSearch, setQuickSearch] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -35,18 +53,19 @@ export default function PharmacistDashboard() {
     setLoading(true);
     setError('');
     try {
-      const [statsRes, summaryRes, medsRes, issRes, usageRes] = await Promise.all([
+      const [statsRes, summaryRes, medsRes, doctorsRes, usageRes] = await Promise.all([
         axios.get(`${API}/medicines/stats`, authHeader),
         axios.get(`${API}/issuances/stats/summary`, authHeader),
         axios.get(`${API}/medicines`, authHeader),
-        axios.get(`${API}/issuances?limit=8`, authHeader),
+        axios.get(`${API}/doctors/list`, authHeader),
         axios.get(`${API}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
       ]);
 
       setStats(statsRes.data);
       setIssuanceSummary(summaryRes.data);
-      setRecentIssuances(issRes.data.issuances || []);
       setTopUsed(usageRes.data.usage || []);
+      setAllMedicines(medsRes.data.medicines || []);
+      setAllDoctors(doctorsRes.data || []);
 
       const today = new Date();
       const in30 = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -62,6 +81,8 @@ export default function PharmacistDashboard() {
         .sort((a, b) => getMedStatus(b).label.localeCompare(getMedStatus(a).label))
         .slice(0, 12);
       setCriticalMeds(critical);
+
+      await loadIssuances(1);
     } catch (e) {
       setError('Failed to load dashboard. Please check your connection.');
     } finally {
@@ -69,7 +90,44 @@ export default function PharmacistDashboard() {
     }
   }, [usagePeriod]);
 
-  useEffect(() => { loadAll(); }, [loadAll]);
+  const loadIssuances = useCallback(async (pageToLoad = issuancePage) => {
+    setLoading(true);
+    setError('');
+    try {
+      const params = {
+        limit: issuanceLimit,
+        page: pageToLoad,
+        ...(medicineFilter && { medicine: medicineFilter }),
+        ...(doctorFilter && { doctor: doctorFilter }),
+        ...(fromDate && { from: fromDate }),
+        ...(toDate && { to: toDate })
+      };
+      const res = await axios.get(`${API}/issuances`, { ...authHeader, params });
+      setIssuances(res.data.issuances || []);
+      setRecentIssuances(res.data.issuances || []);
+      setIssuanceTotal(res.data.total || 0);
+      setIssuancePages(res.data.pages || 1);
+      setIssuancePage(res.data.page || pageToLoad);
+
+      // if no summary existing yet, attempt to keep existing one.
+      setIssuanceSummary(prev => prev || { total: res.data.summary?.totalQuantity || 0, transactions: res.data.summary?.totalTransactions || 0 });
+    } catch (err) {
+      setError('Failed to load issuance records.');
+    } finally {
+      setLoading(false);
+    }
+  }, [medicineFilter, doctorFilter, patientFilter, fromDate, toDate, issuanceLimit, issuancePage]);
+
+  useEffect(() => {
+    loadAll();
+  }, [loadAll]);
+
+  useEffect(() => {
+    // refresh list whenever filter parameters change
+    if (medicineFilter || doctorFilter || patientFilter || fromDate || toDate || issuancePage) {
+      loadIssuances(issuancePage);
+    }
+  }, [medicineFilter, doctorFilter, patientFilter, fromDate, toDate, issuancePage, loadIssuances]);
 
   if (loading) return (
     <div className="pharm-loading">
@@ -86,6 +144,22 @@ export default function PharmacistDashboard() {
 
   const maxUsage = topUsed[0]?.totalIssued || 1;
   const totalInventoryValue = 0; // would need pricePerUnit sum from backend
+
+  const lowerSearch = quickSearch.trim().toLowerCase();
+  const filteredIssuances = issuances.filter(iss => {
+    if (!lowerSearch) return true;
+    const combined = [iss.patient?.name, iss.patient?.email, iss.doctor?.name, iss.medicine?.name, iss.medicine?.brandName, iss.notes]
+      .filter(Boolean).join(' ').toLowerCase();
+    return combined.includes(lowerSearch);
+  });
+
+  const isLow = (iss) => {
+    const stockAfter = Number(iss.stockAfter || 0);
+    const reorder = Number(iss.medicine?.reorderLevel || 20);
+    if (stockAfter === 0) return 'row-out-of-stock';
+    if (stockAfter <= reorder) return 'row-low-stock';
+    return '';
+  };
 
   return (
     <div className="pharm-layout">
@@ -308,6 +382,42 @@ export default function PharmacistDashboard() {
           </div>
         </div>
 
+        {/* ── Issuance Filter & Controls ── */}
+        <div className="pharm-section" style={{ marginTop: '1.25rem' }}>
+          <div className="pharm-section-header">
+            <h2 className="pharm-section-title">🔎 Filter Issuance Records</h2>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => { setMedicineFilter(''); setDoctorFilter(''); setPatientFilter(''); setFromDate(''); setToDate(''); setQuickSearch(''); setIssuancePage(1); }}>
+                Reset Filters
+              </button>
+              <button className="pharm-btn pharm-btn-teal pharm-btn-sm" onClick={() => loadIssuances(1)}>
+                Apply Filters
+              </button>
+            </div>
+          </div>
+          <div className="pharm-filter-bar" style={{ gap: '0.6rem', padding: '1rem' }}>
+            <select className="pharm-select" style={{ minWidth: 180, flex: '1 1 180px' }} value={medicineFilter} onChange={e => { setMedicineFilter(e.target.value); setIssuancePage(1); }}>
+              <option value="">All Medicines</option>
+              {allMedicines.map(m => (
+                <option key={m._id} value={m._id}>{m.name}{m.brandName ? ` (${m.brandName})` : ''}</option>
+              ))}
+            </select>
+            <select className="pharm-select" style={{ minWidth: 180, flex: '1 1 180px' }} value={doctorFilter} onChange={e => { setDoctorFilter(e.target.value); setIssuancePage(1); }}>
+              <option value="">All Doctors</option>
+              {allDoctors.map(d => (
+                <option key={d._id} value={d._id}>{d.name}{d.specialization ? ` (${d.specialization})` : ''}</option>
+              ))}
+            </select>
+            <input className="pharm-input" style={{ minWidth: 180, flex: '1 1 180px' }} placeholder="Patient name/ID" value={patientFilter} onChange={e => { setPatientFilter(e.target.value); setIssuancePage(1); }} />
+            <input className="pharm-input" type="date" value={fromDate} onChange={e => { setFromDate(e.target.value); setIssuancePage(1); }} />
+            <input className="pharm-input" type="date" value={toDate} onChange={e => { setToDate(e.target.value); setIssuancePage(1); }} />
+            <input className="pharm-input" style={{ minWidth: 220, flex: '1 1 220px' }} placeholder="Quick search patient/med/doctor" value={quickSearch} onChange={e => setQuickSearch(e.target.value)} />
+          </div>
+          <div style={{ padding: '0.7rem 1rem', fontSize: '0.8rem', color: 'var(--pharm-gray-500)' }}>
+            Showing {filteredIssuances.length} / {issuanceTotal} records (Page {issuancePage} of {issuancePages})
+          </div>
+        </div>
+
         {/* ── Recent Issuances ── */}
         <div className="pharm-section" style={{ marginTop: '1.5rem' }}>
           <div className="pharm-section-header">
@@ -321,55 +431,67 @@ export default function PharmacistDashboard() {
             </button>
           </div>
           <div className="pharm-table-container">
-            {recentIssuances.length === 0 ? (
+            {filteredIssuances.length === 0 ? (
               <div className="pharm-empty">
                 <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No issuances recorded yet</div>
               </div>
             ) : (
-              <table className="pharm-table">
-                <thead>
-                  <tr>
-                    <th>Patient</th>
-                    <th>Medicine</th>
-                    <th>Qty</th>
-                    <th>Stock After</th>
-                    <th>Doctor</th>
-                    <th>Issued By</th>
-                    <th>Date & Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentIssuances.map(iss => (
-                    <tr key={iss._id}>
-                      <td>
-                        <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{iss.patient?.name || 'N/A'}</div>
-                        <div style={{ fontSize: '0.73rem', color: 'var(--pharm-gray-400)' }}>{iss.patient?.email || ''}</div>
-                      </td>
-                      <td>
-                        <div style={{ fontWeight: 500 }}>{iss.medicine?.name || 'N/A'}</div>
-                        {iss.medicine?.brandName && <div style={{ fontSize: '0.73rem', color: 'var(--pharm-gray-400)' }}>{iss.medicine.brandName}</div>}
-                      </td>
-                      <td>
-                        <span className="pharm-badge pharm-badge-navy" style={{ fontFamily: 'var(--pharm-mono)' }}>
-                          {iss.quantityIssued} {iss.medicine?.unit || 'units'}
-                        </span>
-                      </td>
-                      <td className="mono" style={{ fontSize: '0.82rem', color: iss.stockAfter < 20 ? 'var(--pharm-amber)' : 'inherit' }}>
-                        {iss.stockAfter ?? '—'}
-                      </td>
-                      <td style={{ fontSize: '0.85rem' }}>{iss.doctor?.name || 'N/A'}</td>
-                      <td style={{ fontSize: '0.82rem', color: 'var(--pharm-gray-500)' }}>{iss.issuedBy?.name || '—'}</td>
-                      <td className="mono" style={{ fontSize: '0.78rem' }}>
-                        <div>{new Date(iss.issuedDate).toLocaleDateString('en-IN')}</div>
-                        <div style={{ color: 'var(--pharm-gray-400)', fontSize: '0.7rem' }}>
-                          {new Date(iss.issuedDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </td>
+              <>
+                <table className="pharm-table">
+                  <thead>
+                    <tr>
+                      <th>Patient</th>
+                      <th>Medicine</th>
+                      <th>Qty</th>
+                      <th>Stock After</th>
+                      <th>Doctor</th>
+                      <th>Issued By</th>
+                      <th>Date & Time</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {filteredIssuances.map(iss => (
+                      <tr key={iss._id} className={isLow(iss)}>
+                        <td>
+                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{iss.patient?.name || 'N/A'}</div>
+                          <div style={{ fontSize: '0.73rem', color: 'var(--pharm-gray-400)' }}>{iss.patient?.email || ''}</div>
+                        </td>
+                        <td>
+                          <div style={{ fontWeight: 500 }}>{iss.medicine?.name || 'N/A'}</div>
+                          {iss.medicine?.brandName && <div style={{ fontSize: '0.73rem', color: 'var(--pharm-gray-400)' }}>{iss.medicine.brandName}</div>}
+                        </td>
+                        <td>
+                          <span className="pharm-badge pharm-badge-navy" style={{ fontFamily: 'var(--pharm-mono)' }}>
+                            {iss.quantityIssued} {iss.medicine?.unit || 'units'}
+                          </span>
+                        </td>
+                        <td className="mono" style={{ fontSize: '0.82rem', color: iss.stockAfter < 20 ? 'var(--pharm-amber)' : 'inherit' }}>
+                          {iss.stockAfter ?? '—'}
+                        </td>
+                        <td style={{ fontSize: '0.85rem' }}>{iss.doctor?.name || 'N/A'}</td>
+                        <td style={{ fontSize: '0.82rem', color: 'var(--pharm-gray-500)' }}>{iss.issuedBy?.name || '—'}</td>
+                        <td className="mono" style={{ fontSize: '0.78rem' }}>
+                          <div>{new Date(iss.issuedDate).toLocaleDateString('en-IN')}</div>
+                          <div style={{ color: 'var(--pharm-gray-400)', fontSize: '0.7rem' }}>
+                            {new Date(iss.issuedDate).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.8rem', padding: '0 0.6rem' }}>
+                  <div style={{ fontSize: '0.83rem', color: 'var(--pharm-gray-500)' }}>
+                    Showing {filteredIssuances.length} on this page • {issuanceTotal} total
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button className="pharm-btn pharm-btn-sm pharm-btn-ghost" onClick={() => setIssuancePage(p => Math.max(1, p - 1))} disabled={issuancePage <= 1}>← Prev</button>
+                    <button className="pharm-btn pharm-btn-sm pharm-btn-ghost" onClick={() => setIssuancePage(p => Math.min(issuancePages, p + 1))} disabled={issuancePage >= issuancePages}>Next →</button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>

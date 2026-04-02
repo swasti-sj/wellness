@@ -29,6 +29,12 @@ const getMedStatus = (med) => {
   return { label: 'Good', cls: 'pharm-badge-green', severity: 0 };
 };
 
+const getIndentTag = (med) => {
+  if (med.stockCount === 0) return { label: 'INDENT', cls: 'pharm-badge pharm-badge-red' };
+  if (med.stockCount < (med.reorderLevel || 20)) return { label: 'LOW INDENT', cls: 'pharm-badge pharm-badge-amber' };
+  return { label: 'OK', cls: 'pharm-badge pharm-badge-green' };
+};
+
 const txIcon = (type) => ({ ADDITION: '📦', OPENING_BALANCE: '🏁', ADJUSTMENT: '⚙️', EXPIRY_REMOVAL: '🗑️', RETURN: '↩️', ISSUANCE: '💊' }[type] || '📝');
 const txColor = (type) => {
   if (['ADDITION', 'OPENING_BALANCE', 'RETURN'].includes(type)) return 'var(--pharm-green)';
@@ -36,9 +42,85 @@ const txColor = (type) => {
   return 'var(--pharm-amber)';
 };
 
+// ─── FIFO batch helpers ───────────────────────────────────────────────────
+const parseDate = (d) => (d ? new Date(d) : null);
+const formatDate = (date) => date ? new Date(date).toLocaleDateString('en-IN', { month: 'short', day: '2-digit', year: 'numeric' }) : '—';
+
+const cmpExpiry = (a, b) => {
+  if (!a.expiryDate && !b.expiryDate) return 0;
+  if (!a.expiryDate) return 1;
+  if (!b.expiryDate) return -1;
+  return new Date(a.expiryDate) - new Date(b.expiryDate);
+};
+
+const runFIFOConsumption = (batches, qtyToConsume) => {
+  let remaining = qtyToConsume;
+  const sorted = [...batches].sort((a, b) => cmpExpiry(a, b) || new Date(a.receivedDate || a.createdAt) - new Date(b.receivedDate || b.createdAt));
+  const consumedRows = [];
+
+  for (const batch of sorted) {
+    if (!batch.qty || remaining <= 0) continue;
+    const take = Math.min(batch.qty, remaining);
+    batch.qty -= take;
+    remaining -= take;
+    consumedRows.push({ batchId: batch.id, batchNumber: batch.batchNumber, expiryDate: batch.expiryDate, quantity: take });
+  }
+
+  return { remaining, consumedRows };
+};
+
+const computeBatchesFromTransactions = (med, transactions = []) => {
+  const batches = [];
+  const txs = [...transactions].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+  const addBatch = (tx, qty) => {
+    if (qty <= 0) return;
+    const definedExpiry = tx.newExpiryDate || med.expiryDate || null;
+    const id = `${tx._id || tx.id || Math.random().toString(36).slice(2)}-${Date.now()}`;
+    batches.push({
+      id,
+      batchNumber: tx.batchNumber || `Batch-${id.slice(-5)}`,
+      qty,
+      expiryDate: definedExpiry,
+      createdAt: tx.createdAt,
+      receivedDate: tx.receivedDate || tx.createdAt,
+      source: tx.transactionType,
+      notes: tx.notes || '',
+      supplier: tx.supplier || '',
+      invoiceNumber: tx.invoiceNumber || ''
+    });
+  };
+
+  for (const tx of txs) {
+    const change = Number(tx.quantityChanged || 0);
+    if (tx.transactionType === 'ADDITION' || tx.transactionType === 'OPENING_BALANCE' || tx.transactionType === 'RETURN' || (tx.transactionType === 'ADJUSTMENT' && change > 0)) {
+      addBatch(tx, change);
+    } else if (tx.transactionType === 'ISSUANCE' || tx.transactionType === 'EXPIRY_REMOVAL' || (tx.transactionType === 'ADJUSTMENT' && change < 0)) {
+      const removeQty = Math.abs(change);
+      const { remaining } = runFIFOConsumption(batches, removeQty);
+      if (remaining > 0) {
+        // adjust for mismatched data from back-dated entries; keep negative via adjustment batch so totals still reconcile
+        const id = `${tx._id || tx.id || Math.random().toString(36).slice(2)}-adj-${Date.now()}`;
+        batches.push({
+          id,
+          batchNumber: tx.batchNumber || `Unmatched-${id.slice(-6)}`,
+          qty: -remaining,
+          expiryDate: tx.newExpiryDate || med.expiryDate || null,
+          createdAt: tx.createdAt,
+          receivedDate: tx.receivedDate || tx.createdAt,
+          source: tx.transactionType,
+          notes: `Auto-balancing mismatch: ${remaining} units`,
+          supplier: tx.supplier || '',
+          invoiceNumber: tx.invoiceNumber || ''
+        });
+      }
+    }
+  }
+
+  return batches;
+};
+
 // ─── Excel / CSV parser ────────────────────────────────────────────────────
-// Reads the "Medicine master data" style sheet shown in the screenshot.
-// Tries to find columns by header keywords (case-insensitive).
 function parseImportFile(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   if (lines.length < 2) return { rows: [], errors: ['File appears empty'] };
@@ -167,6 +249,12 @@ export default function PharmacistMedicineStock() {
   const [historyModal, setHistoryModal] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [txLoading, setTxLoading] = useState(false);
+
+  // FIFO Batch modal
+  const [batchModal, setBatchModal] = useState(null);
+  const [batchData, setBatchData] = useState([]);
+  const [batchLoading, setBatchLoading] = useState(false);
+  const [batchError, setBatchError] = useState('');
 
   // Excel Import
   const [showImportModal, setShowImportModal] = useState(false);
@@ -324,6 +412,21 @@ export default function PharmacistMedicineStock() {
     }
   };
 
+  const handleToggleIndent = async (med) => {
+    try {
+      const hasIndent = med.notes?.toUpperCase().includes('INDENT');
+      const newNotes = hasIndent
+        ? (med.notes || '').replace(/\s*INDENT[^\n]*\s*/i, '').trim() || 'Auto …'
+        : `${med.notes ? med.notes + '; ' : ''}INDENT requested: ${new Date().toLocaleDateString('en-IN')}`;
+
+      await axios.put(`${API}/medicines/${med._id}`, { notes: newNotes }, authHeader);
+      showSuccess(hasIndent ? `✅ Indent marker cleared for ${med.name}` : `✅ Indent marker added for ${med.name}`);
+      loadMedicines();
+    } catch (e) {
+      setError(e.response?.data?.error || 'Failed to toggle indent marker');
+    }
+  };
+
   // ── Stock history ──
   const openHistoryModal = async (med) => {
     setHistoryModal(med);
@@ -337,6 +440,33 @@ export default function PharmacistMedicineStock() {
     } finally {
       setTxLoading(false);
     }
+  };
+
+  const openBatchModal = async (med) => {
+    setBatchModal(med);
+    setBatchLoading(true);
+    setBatchError('');
+    setBatchData([]);
+
+    try {
+      const res = await axios.get(`${API}/medicines/${med._id}/transactions`, {
+        ...authHeader,
+        params: { limit: 300 }
+      });
+
+      const batches = computeBatchesFromTransactions(med, res.data.transactions || []);
+      setBatchData(batches);
+    } catch (err) {
+      setBatchError('Unable to load batch breakdown.');
+    } finally {
+      setBatchLoading(false);
+    }
+  };
+
+  const closeBatchModal = () => {
+    setBatchModal(null);
+    setBatchData([]);
+    setBatchError('');
   };
 
   // ── Excel / CSV import ──
@@ -518,6 +648,7 @@ export default function PharmacistMedicineStock() {
                     <th>Batch #</th>
                     <th>Manufacturer</th>
                     <th>₹/Unit</th>
+                    <th>Indent</th>
                     <th>Status</th>
                     <th style={{ width: 180 }}>Actions</th>
                   </tr>
@@ -558,11 +689,14 @@ export default function PharmacistMedicineStock() {
                         <td style={{ fontSize: '0.78rem' }}>{med.batchNumber || '—'}</td>
                         <td style={{ fontSize: '0.78rem', color: 'var(--pharm-gray-400)' }}>{med.manufacturer || '—'}</td>
                         <td className="mono" style={{ fontSize: '0.82rem' }}>{med.pricePerUnit > 0 ? `₹${med.pricePerUnit}` : '—'}</td>
+                        <td><span className={getIndentTag(med).cls} style={{ fontSize: '0.7rem' }}>{getIndentTag(med).label}</span></td>
                         <td><span className={`pharm-badge ${status.cls}`}>{status.label}</span></td>
                         <td>
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                             <button className="pharm-btn pharm-btn-teal pharm-btn-sm" onClick={() => openEditModal(med, 'addStock')} title="Add Stock">+Stock</button>
                             <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openEditModal(med, 'adjust')} title="Edit Details">Edit</button>
+                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => handleToggleIndent(med)} title="Toggle Indent">⬛</button>
+                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openBatchModal(med)} title="Batch FIFO">🎯</button>
                             <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openHistoryModal(med)} title="View History">🕐</button>
                             <button className="pharm-btn pharm-btn-sm" style={{ background: 'rgba(220,38,38,0.1)', color: 'var(--pharm-red)', border: 'none' }}
                               onClick={() => handleDelete(med)} title="Remove">🗑️</button>
@@ -889,6 +1023,89 @@ export default function PharmacistMedicineStock() {
             </div>
             <div className="pharm-modal-footer">
               <button className="pharm-btn pharm-btn-ghost" onClick={() => setHistoryModal(null)}>Close</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ FIFO BATCH VIEW MODAL ══ */}
+      {batchModal && (
+        <div className="pharm-modal-overlay" onClick={e => e.target === e.currentTarget && closeBatchModal()}>
+          <div className="pharm-modal" style={{ maxWidth: 840 }}>
+            <div className="pharm-modal-header">
+              <div>
+                <h3 className="pharm-modal-title">🎯 Batch FIFO View — {batchModal.name}</h3>
+                <div style={{ fontSize: '0.78rem', color: 'var(--pharm-gray-400)', marginTop: 2 }}>
+                  Current stock: {batchModal.stockCount} {batchModal.unit || 'units'}
+                </div>
+              </div>
+              <button className="pharm-btn-icon" onClick={closeBatchModal}>✕</button>
+            </div>
+            <div className="pharm-modal-body">
+              {batchError && <div className="pharm-alert pharm-alert-danger">{batchError}</div>}
+              {batchLoading ? (
+                <div className="pharm-loading" style={{ minHeight: 150 }}>⏳ Loading batch items...</div>
+              ) : batchData.length === 0 ? (
+                <div className="pharm-empty" style={{ padding: '3rem' }}>
+                  <div className="pharm-empty-icon">🧾</div>
+                  <div className="pharm-empty-text">No FIFO batch breakdown available yet</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{ marginBottom: '0.6rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                    <span className="pharm-filter-label">Filled by FIFO (earliest expiry first)</span>
+                    <span className="pharm-badge pharm-badge-navy" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
+                      Total Batches: {batchData.length}
+                    </span>
+                    <span className="pharm-badge pharm-badge-amber" style={{ padding: '0.2rem 0.5rem', fontSize: '0.75rem' }}>
+                      Total qty: {batchData.reduce((c, b) => c + (b.qty || 0), 0)}
+                    </span>
+                  </div>
+                  <div className="pharm-table-container" style={{ maxHeight: 360, overflowY: 'auto' }}>
+                    <table className="pharm-table" style={{ fontSize: '0.82rem' }}>
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Batch #</th>
+                          <th>Qty</th>
+                          <th>Expiry</th>
+                          <th>Received</th>
+                          <th>Source Tx</th>
+                          <th>Supplier</th>
+                          <th>Invoice</th>
+                          <th>Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {batchData
+                          .filter(b => b.qty > 0)
+                          .sort((a, b) => cmpExpiry(a, b))
+                          .map((batch, idx) => {
+                            const days = getDaysToExpiry(batch.expiryDate);
+                            return (
+                              <tr key={batch.id} className={batch.qty === 0 ? 'row-out-of-stock' : days <= 30 ? 'row-low-stock' : ''}>
+                                <td>{idx + 1}</td>
+                                <td>{batch.batchNumber}</td>
+                                <td>{batch.qty}</td>
+                                <td style={{ fontFamily: 'var(--pharm-mono)' }}>
+                                  {batch.expiryDate ? formatDate(batch.expiryDate) : '—'}{days === 0 ? ' (EXP)' : days > 0 ? ` (${days}d)` : ''}
+                                </td>
+                                <td>{batch.receivedDate ? formatDate(batch.receivedDate) : '—'}</td>
+                                <td>{batch.source || '—'}</td>
+                                <td>{batch.supplier || '—'}</td>
+                                <td>{batch.invoiceNumber || '—'}</td>
+                                <td>{batch.notes || '—'}</td>
+                              </tr>
+                            );
+                          })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="pharm-modal-footer">
+              <button className="pharm-btn pharm-btn-ghost" onClick={closeBatchModal}>Close</button>
             </div>
           </div>
         </div>
