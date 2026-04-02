@@ -1,126 +1,90 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FaUserMd } from "react-icons/fa";
-import "../../styles/Navbar.css";
+import React, { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import '../../styles/pharmacist/PharmacistDashboard.css';
+
+const API_BASE = 'http://localhost:5000/api';
+
+const NAV_LINKS = [
+  { to: '/pharmacist-dashboard',                    label: 'Dashboard',          icon: '🏥' },
+  { to: '/pharmacist-dashboard/stock',              label: 'Medicine Stock',      icon: '💊' },
+  { to: '/pharmacist-dashboard/records',            label: 'Issuance Records',    icon: '📋' },
+  { to: '/pharmacist-dashboard/analytics',          label: 'Analytics',           icon: '📈' },
+  { to: '/pharmacist-dashboard/medicine-analytics', label: 'Medicine Analytics',  icon: '🎯' },
+  { to: '/pharmacist-dashboard/advanced-analytics', label: 'Advanced Analytics',  icon: '📊' },
+  { to: '/pharmacist-dashboard/stock-history',      label: 'Stock History',       icon: '🗓️' },
+  { to: '/pharmacist-dashboard/profile',            label: 'Profile',             icon: '👤' },
+];
 
 export default function PharmacistNavbar() {
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
-  const navigate = useNavigate();
   const location = useLocation();
-
-  const activeTab = (() => {
-    if (location.pathname === "/pharmacist-dashboard" || location.pathname === "/pharm-dashboard") return "Dashboard";
-    if (location.pathname.includes("/stock") || location.pathname.includes("/medicines")) return "Medicine Stock";
-    if (location.pathname.includes("/records") || location.pathname.includes("/issuances")) return "Records";
-    return "";
-  })();
-
-  const handleLogout = () => {
-    setShowProfileMenu(false);
-    localStorage.removeItem("token");
-    navigate("/");
-  };
+  const navigate = useNavigate();
+  const [pharmacist, setPharmacist] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const token = localStorage.getItem('token');
 
   useEffect(() => {
-    const handleScroll = () => {
-      const navbar = document.querySelector(".navbar");
-      if (window.scrollY > 60) navbar?.classList.add("shrink");
-      else navbar?.classList.remove("shrink");
-    };
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    if (!token) return;
+    axios.get(`${API_BASE}/pharmacist/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => setPharmacist(r.data))
+      .catch(() => {});
+  }, [token]);
 
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  const initials = pharmacist?.name
+    ? pharmacist.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'PH';
 
-  const toggleMenu = () => {
-    const navLinks = document.querySelector(".navbar-links");
-    navLinks?.classList.toggle("show");
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
+  };
+
+  // Active link: exact match for dashboard, startsWith for nested
+  const isActive = (to) => {
+    if (to === '/pharmacist-dashboard') return location.pathname === to;
+    return location.pathname.startsWith(to);
   };
 
   return (
-    <nav className="navbar">
-      <div className="navbar-content">
-        <div className="navbar-logo">
-          <img src="/WebIcon.plain.svg" alt="College Logo" className="login-logo" />
-          <span className="navbar-title">IIT Dharwad (Pharmacy)</span>
-          <button className="hamburger-btn" onClick={toggleMenu}>☰</button>
+    <nav className="pharm-navbar">
+      <Link to="/pharmacist-dashboard" className="pharm-navbar-brand">
+        <div className="logo-icon">⚕</div>
+        <span>PharmaCare</span>
+      </Link>
+
+      {/* Desktop Nav */}
+      <div className="pharm-nav-links">
+        {NAV_LINKS.map(link => (
+          <Link
+            key={link.to}
+            to={link.to}
+            className={`pharm-nav-link ${isActive(link.to) ? 'active' : ''}`}
+          >
+            <span>{link.icon}</span>
+            {link.label}
+          </Link>
+        ))}
+      </div>
+
+      <div className="pharm-nav-right">
+        <div className="pharm-nav-avatar" title={pharmacist?.name || 'Pharmacist'}>
+          {initials}
         </div>
-
-        <div className="navbar-links">
-          {[
-            { label: "Dashboard", path: "/pharmacist-dashboard" },
-            { label: "Medicine Stock", path: "/pharmacist-dashboard/stock" },
-            { label: "Records", path: "/pharmacist-dashboard/records" },
-          ].map((item) => (
-            <button
-              key={item.label}
-              className={`navbar-btn${activeTab === item.label ? " active" : ""}`}
-              onClick={() => {
-                navigate(item.path);
-                if (isMobile) toggleMenu();
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-
-          {/* Mobile Profile & Logout */}
-          {isMobile && (
-            <>
-              <button
-                className="navbar-btn"
-                onClick={() => {
-                  toggleMenu();
-                  navigate("/pharmacist-dashboard/profile");
-                }}
-              >
-                <FaUserMd style={{ marginRight: "8px" }} />
-                Profile
-              </button>
-              <button
-                className="navbar-btn"
-                onClick={() => {
-                  toggleMenu();
-                  handleLogout();
-                }}
-              >
-                🚪 Logout
-              </button>
-            </>
-          )}
-        </div>
-
-        {/* Right: Profile icon with dropdown (desktop only) */}
-        {!isMobile && (
-          <div className="relative">
-            <button
-              onClick={() => setShowProfileMenu(!showProfileMenu)}
-              aria-label="Pharmacist profile"
-              title="Profile"
-              className="profile-btn"
-            >
-              <FaUserMd className="profile-icon" />
-            </button>
-            {showProfileMenu && (
-              <div className="profile-menu">
-                <button className="profile-menu-btn" onClick={() => navigate("/pharmacist-dashboard/profile")}>
-                  Profile
-                </button>
-                <button className="profile-menu-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+        {pharmacist?.name && (
+          <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.7)', maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {pharmacist.name}
+          </span>
         )}
+        <button
+          className="pharm-btn pharm-btn-ghost"
+          style={{ color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.2)', fontSize: '0.75rem' }}
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
       </div>
     </nav>
   );
 }
-

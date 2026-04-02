@@ -12,6 +12,10 @@ import LoginPage from "./pages/LoginPage";
 import OthersLoginPage from "./pages/OthersLoginPage";
 import Dashboard from "./pages/patient/Dashboard";
 import Navbar from "./pages/patient/Navbar";
+import PharmacistAnalytics from './pages/pharmacist/PharmacistAnalytics';
+import PharmacistAdvancedAnalytics from './pages/pharmacist/PharmacistAdvancedAnalytics';
+import PharmacistMedicineWiseAnalytics from './pages/pharmacist/PharmacistMedicineWiseAnalytics';
+
 import "./App.css";
 import AppointmentBooking from "./pages/patient/AppointmentBooking";
 import InitialProfile from "./pages/patient/InitialProfileForm";
@@ -37,6 +41,8 @@ import PharmacistIssuanceRecords from "./pages/pharmacist/PharmacistIssuanceReco
 import InitialPharmacistProfileForm from "./pages/pharmacist/InitialPharmacistProfileForm";
 import PharmacistNavbar from "./pages/pharmacist/PharmacistNavbar";
 import PharmacistProfile from "./pages/pharmacist/PharmacistProfile";
+import PharmacistStockHistory from './pages/pharmacist/PharmacistStockHistory';
+
 
 // Layout wrapper with Navbar
 function LayoutWithNavbar() {
@@ -256,10 +262,16 @@ function App() {
 
         {/* Pharmacist routes */}
         <Route path="/pharmacist-dashboard" element={<LayoutWithPharmNavbar><PharmacistDashboard /></LayoutWithPharmNavbar>} />
-        <Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
-        <Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
-        <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
-        <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
+<Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
+<Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
+<Route path="/pharmacist-dashboard/analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
+<Route path="/pharmacist-dashboard/medicine-analytics" element={<PharmacistMedicineWiseAnalytics />} />
+<Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
+<Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
+
+// In your Routes section:
+<Route path="/pharmacist-dashboard/advanced-analytics" element={<PharmacistAdvancedAnalytics />} />
+<Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>
   );

@@ -22,17 +22,37 @@ const MedicineIssuanceSchema = new Schema({
     ref: 'Doctor', 
     required: true 
   },
+  issuedBy: {
+    type: Schema.Types.ObjectId,
+    ref: 'Pharmacist'
+  },
   issuedDate: { 
     type: Date, 
     default: Date.now 
+  },
+  // Prescription reference
+  prescription: {
+    type: Schema.Types.ObjectId,
+    ref: 'Prescription'
+  },
+  // Notes
+  notes: {
+    type: String,
+    trim: true
+  },
+  // Stock snapshot at time of issuance for audit
+  stockBefore: {
+    type: Number
+  },
+  stockAfter: {
+    type: Number
   }
 }, { 
   timestamps: true 
 });
 
-// Indexes for queries
 MedicineIssuanceSchema.index({ issuedDate: -1 });
 MedicineIssuanceSchema.index({ patient: 1, issuedDate: -1 });
+MedicineIssuanceSchema.index({ medicine: 1, issuedDate: -1 });
 
 module.exports = mongoose.model('MedicineIssuance', MedicineIssuanceSchema);
-
