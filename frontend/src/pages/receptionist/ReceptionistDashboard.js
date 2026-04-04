@@ -7,10 +7,14 @@ import '../../styles/receptionist/ReceptionistDashboard.css';
 export default function ReceptionistDashboard() {
   const [appointments, setAppointments] = useState([]);
   const [manualEntries, setManualEntries] = useState([]);
+  const [doctors, setDoctors] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     rollNo: '',
-    role: 'Student'
+    role: 'Student',
+    doctorId: '',
+    doctorName: '',
+    date: new Date().toISOString().split('T')[0] // Default to today
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -26,13 +30,40 @@ export default function ReceptionistDashboard() {
   // Fetch all appointments on mount
   useEffect(() => {
     fetchAppointments();
+    fetchManualEntries();
+    fetchDoctors();
   }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      const response = await axios.get(`${apiBaseUrl}/doctors/list`);
+      setDoctors(response.data || []);
+    } catch (error) {
+      console.error('Error fetching doctors:', error);
+    }
+  };
 
   const fetchAppointments = async () => {
     try {
       setLoading(true);
       const response = await axios.get(`${apiBaseUrl}/appointments/all-appointments`);
-      setAppointments(response.data.appointments || []);
+
+      // Format appointments properly from backend
+      const formatted = (response.data.appointments || []).map(appt => ({
+        _id: appt._id,
+        patientName: appt.user?.name || "Unknown",
+        roll: appt.user?.roll || "-",
+        doctorName: appt.doctor?.name || "Unknown",
+        doctorId: appt.doctor?._id || "",
+        email: appt.user?.email || "-",
+        phone: appt.user?.phone || "-",
+        date: appt.startDateTime,
+        time: appt.slotTime || "-",
+        status: appt.status || "booked",
+        source: 'system'
+      }));
+
+      setAppointments(formatted);
       setMessage('');
     } catch (error) {
       console.error('Error fetching appointments:', error);
@@ -42,17 +73,65 @@ export default function ReceptionistDashboard() {
     }
   };
 
+  const fetchManualEntries = async () => {
+    try {
+      const response = await axios.get(`${apiBaseUrl}/receptionist/entries`);
+      const entries = (response.data.entries || []).map(entry => ({
+        _id: entry._id,
+        patientName: entry.patientName,
+        roll: entry.roll,
+        role: entry.role,
+        doctorName: entry.doctorName || '-',
+        date: entry.appointmentDate,
+        time: entry.appointmentTime || '-',
+        status: entry.status,
+        source: 'manual'
+      }));
+      setManualEntries(entries);
+    } catch (error) {
+      console.error('Error fetching manual entries:', error);
+    }
+  };
+
   // Handle form input changes
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+
+    if (name === 'doctorId') {
+      // Find the doctor name from doctors list
+      const selectedDoctor = doctors.find(d => d._id === value);
+      setFormData(prev => ({
+        ...prev,
+        doctorId: value,
+        doctorName: selectedDoctor ? selectedDoctor.name : ''
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   // Handle status change
-  const handleStatusChange = (itemId, newStatus) => {
+  const handleStatusChange = async (itemId, newStatus) => {
+    // Check if it's a manual entry
+    const manualEntry = manualEntries.find(e => e._id === itemId);
+
+    if (manualEntry) {
+      // Save to database if it's a manual entry
+      try {
+        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, {
+          status: newStatus
+        });
+      } catch (error) {
+        console.error('Error updating entry status:', error);
+        setMessage('Error updating status');
+        setTimeout(() => setMessage(''), 3000);
+        return;
+      }
+    }
+
     // Update appointments if it exists there
     setAppointments(prev =>
       prev.map(appt =>
@@ -92,7 +171,29 @@ export default function ReceptionistDashboard() {
   };
 
   // Handle save changes
-  const handleSaveChanges = (itemId) => {
+  const handleSaveChanges = async (itemId) => {
+    // Check if it's a manual entry
+    const manualEntry = manualEntries.find(e => e._id === itemId);
+
+    if (manualEntry) {
+      // Save to database if it's a manual entry
+      try {
+        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}`, {
+          patientName: editedValues.patientName,
+          roll: editedValues.roll,
+          doctorName: editedValues.doctorName,
+          appointmentDate: editedValues.date || null
+        });
+      } catch (error) {
+        console.error('Error saving entry changes:', error);
+        setMessage('Error saving changes');
+        setTimeout(() => setMessage(''), 3000);
+        setEditingRowId(null);
+        setEditedValues({});
+        return;
+      }
+    }
+
     // Update appointments if it exists there
     setAppointments(prev =>
       prev.map(appt =>
@@ -130,7 +231,7 @@ export default function ReceptionistDashboard() {
   };
 
   // Handle add entry
-  const handleAddEntry = (e) => {
+  const handleAddEntry = async (e) => {
     e.preventDefault();
 
     if (!formData.name.trim() || !formData.rollNo.trim()) {
@@ -138,22 +239,61 @@ export default function ReceptionistDashboard() {
       return;
     }
 
-    const newEntry = {
-      _id: `manual-${Date.now()}`,
-      patientName: formData.name,
-      roll: formData.rollNo,
-      role: formData.role,
-      doctorName: '-',
-      date: null,
-      time: '-',
-      status: 'Added',
-      source: 'manual'
-    };
+    if (!formData.doctorId) {
+      setMessage('Please select a doctor');
+      return;
+    }
 
-    setManualEntries(prev => [newEntry, ...prev]);
-    setFormData({ name: '', rollNo: '', role: 'Student' });
-    setMessage('Entry added successfully');
-    setTimeout(() => setMessage(''), 3000);
+    try {
+      const appointmentDateTime = formData.date
+        ? new Date(`${formData.date}T00:00:00`).toISOString()
+        : null;
+
+      const response = await axios.post(`${apiBaseUrl}/receptionist/entries`, {
+        patientName: formData.name,
+        roll: formData.rollNo,
+        role: formData.role,
+        doctorId: formData.doctorId,
+        doctorName: formData.doctorName,
+        appointmentDate: appointmentDateTime,
+        appointmentTime: null,
+        email: "-",
+        phone: "-"
+      });
+
+      if (response.data.success) {
+        const newEntry = {
+          _id: response.data.entry._id,
+          patientName: response.data.entry.patientName,
+          roll: response.data.entry.roll,
+          role: response.data.entry.role,
+          doctorName: response.data.entry.doctorName,
+          doctorId: response.data.entry.doctorId,
+          email: response.data.entry.email,
+          phone: response.data.entry.phone,
+          date: response.data.entry.appointmentDate,
+          time: response.data.entry.appointmentTime || '-',
+          status: response.data.entry.status,
+          source: 'manual'
+        };
+
+        setManualEntries(prev => [newEntry, ...prev]);
+        setFormData({
+          name: '',
+          rollNo: '',
+          role: 'Student',
+          doctorId: '',
+          doctorName: '',
+          date: new Date().toISOString().split('T')[0]
+        });
+        setMessage('Entry added successfully and saved to database');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (error) {
+      console.error('Error adding entry:', error);
+      setMessage(error.response?.data?.error || 'Error adding entry');
+      setTimeout(() => setMessage(''), 3000);
+    }
   };
 
   // Combine appointments and manual entries
@@ -267,6 +407,33 @@ export default function ReceptionistDashboard() {
                 <option value="Staff">👥 Staff</option>
                 <option value="Faculty">👨‍🏫 Faculty</option>
               </select>
+            </div>
+
+            <div className="form-group">
+              <label>Doctor <span className="required">*</span></label>
+              <select
+                name="doctorId"
+                value={formData.doctorId}
+                onChange={handleFormChange}
+                required
+              >
+                <option value="">-- Select Doctor --</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor._id} value={doctor._id}>
+                    {doctor.name} {doctor.specialization ? `(${doctor.specialization})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Appointment Date</label>
+              <input
+                type="date"
+                name="date"
+                value={formData.date}
+                onChange={handleFormChange}
+              />
             </div>
 
             <button type="submit" className="btn-add">

@@ -697,25 +697,33 @@ router.patch("/:appointmentId/status", async (req, res) => {
     console.log("[API] PATCH /:appointmentId/status called");
     const { token, status } = req.body;
     const { appointmentId } = req.params;
-    
+
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor token
+    // Verify token and role
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'doctor') {
-      return res.status(403).json({ error: "Access denied. Not a doctor." });
+    if (decoded.role !== 'doctor' && decoded.role !== 'nurse') {
+      return res.status(403).json({ error: "Access denied. Only doctors and nurses can update appointment status." });
     }
 
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+    // For doctors, verify ownership; for nurses, allow all
+    if (decoded.role === 'doctor') {
+      const doctor = await Doctor.findById(decoded.id);
+      if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-    // Find appointment
-    const appointment = await Appointment.findById(appointmentId);
-    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Verify this appointment belongs to this doctor
-    if (appointment.doctor.toString() !== doctor._id.toString()) {
-      return res.status(403).json({ error: "This appointment does not belong to you" });
+      if (appointment.doctor.toString() !== doctor._id.toString()) {
+        return res.status(403).json({ error: "This appointment does not belong to you" });
+      }
+    } else if (decoded.role === 'nurse') {
+      const Nurse = require("../models/Nurse");
+      const nurse = await Nurse.findById(decoded.id);
+      if (!nurse) return res.status(404).json({ error: "Nurse not found" });
+
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) return res.status(404).json({ error: "Appointment not found" });
     }
 
     // Update status
@@ -758,23 +766,11 @@ router.get("/all-appointments", async (req, res) => {
 
     // Fetch all appointments and populate user and doctor details
     const appointments = await Appointment.find()
-      .populate("user", "name roll email phone")
-      .populate("doctor", "name specialization email")
+      .populate("user", "name roll email phone _id")
+      .populate("doctor", "name specialization email _id")
       .sort({ startDateTime: -1 });
 
-    const formattedAppointments = appointments.map(appt => ({
-      _id: appt._id,
-      patientName: appt.user?.name || "Unknown",
-      roll: appt.user?.roll || "-",
-      doctorName: appt.doctor?.name || "Unknown",
-      date: appt.startDateTime,
-      time: appt.slotTime || "-",
-      status: appt.status,
-      email: appt.user?.email || "-",
-      phone: appt.user?.phone || "-",
-    }));
-
-    res.json({ appointments: formattedAppointments });
+    res.json({ appointments });
   } catch (err) {
     console.error("Error fetching all appointments:", err);
     res.status(500).json({ error: err.message });
@@ -906,47 +902,166 @@ router.get("/patient-history", async (req, res) => {
     const { token, query } = req.query;
     if (!token) return res.status(400).json({ error: "Token missing" });
 
-    const doctor = await verifyDoctorToken(token);
-    if (!doctor) return res.status(401).json({ error: "Invalid or expired token" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (!decoded) return res.status(401).json({ error: "Invalid or expired token" });
 
-    const regex = query ? new RegExp(query, "i") : /.*/; // match all if no query provided
+    // Allow both doctors and nurses, but restrict doctors to their own appointments
+    if (decoded.role === "doctor") {
+      const doctor = await Doctor.findById(decoded.id);
+      if (!doctor) return res.status(401).json({ error: "Doctor not found" });
 
-    // Step 1: Find appointments for this doctor where user matches query
-    const appointments = await Appointment.find({ doctor: doctor._id })
-      .populate({
-        path: "user",
-        match: {
-          $or: [
-            { name: regex },
-            { roll: regex },
-            { email: regex } 
-          ],
-        },
-      })
-      .populate("doctor")
-      .sort({ startDateTime: -1 });
+      const regex = query ? new RegExp(query, "i") : /.*/;
 
-    // Filter out appointments where user didn’t match
-    const filtered = appointments.filter(a => a.user);
+      // Doctor sees only their own appointments
+      const appointments = await Appointment.find({ doctor: doctor._id })
+        .populate({
+          path: "user",
+          match: {
+            $or: [
+              { name: regex },
+              { roll: regex },
+              { email: regex }
+            ],
+          },
+        })
+        .populate("doctor")
+        .sort({ startDateTime: -1 });
 
-    // Step 2: Attach notes and prescriptions
-    const result = await Promise.all(
-      filtered.map(async (a) => {
-        const notes = await Note.find({ appointment: a._id });
-        const prescriptions = await Prescription.find({ appointment: a._id });
+      const filtered = appointments.filter(a => a.user);
 
-        return {
-          ...a.toObject(),
-          notes: notes.map(n => n.text),
-          prescriptions: prescriptions.map(p => p.prescriptions || ""),
-        };
-      })
-    );
+      const result = await Promise.all(
+        filtered.map(async (a) => {
+          const notes = await Note.find({ appointment: a._id });
+          const prescriptions = await Prescription.find({ appointment: a._id });
 
-    res.json({ appointments: result });
+          return {
+            ...a.toObject(),
+            notes: notes.map(n => n.text),
+            prescriptions: prescriptions.map(p => p.prescriptions || ""),
+          };
+        })
+      );
+
+      res.json({ appointments: result });
+    } else if (decoded.role === "nurse") {
+      const Nurse = require("../models/Nurse");
+      const nurse = await Nurse.findById(decoded.id);
+      if (!nurse) return res.status(401).json({ error: "Nurse not found" });
+
+      const regex = query ? new RegExp(query, "i") : /.*/;
+
+      // Nurse sees ALL appointments (not filtered by doctor)
+      const appointments = await Appointment.find()
+        .populate({
+          path: "user",
+          match: {
+            $or: [
+              { name: regex },
+              { roll: regex },
+              { email: regex }
+            ],
+          },
+        })
+        .populate("doctor")
+        .sort({ startDateTime: -1 });
+
+      const filtered = appointments.filter(a => a.user);
+
+      const result = await Promise.all(
+        filtered.map(async (a) => {
+          const notes = await Note.find({ appointment: a._id });
+          const prescriptions = await Prescription.find({ appointment: a._id });
+
+          return {
+            ...a.toObject(),
+            notes: notes.map(n => n.text),
+            prescriptions: prescriptions.map(p => p.prescriptions || ""),
+          };
+        })
+      );
+
+      res.json({ appointments: result });
+    } else {
+      return res.status(403).json({ error: "Access denied. Only doctors and nurses can access patient history." });
+    }
   } catch (err) {
     console.error("Error fetching patient history:", err);
     res.status(500).json({ error: "Server error" });
+  }
+});
+
+// ===============================
+// NURSE BOOK APPOINTMENT ENDPOINT
+// ===============================
+router.post("/nurse-book", async (req, res) => {
+  try {
+    console.log("[API] POST /nurse-book called");
+
+    const { token, patientEmail, patientPhone, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    if (!token) return res.status(400).json({ error: "Missing token" });
+
+    // Verify nurse
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "nurse") return res.status(403).json({ error: "Access denied. Not a nurse." });
+
+    const Nurse = require("../models/Nurse");
+    const nurse = await Nurse.findById(decoded.id);
+    if (!nurse) return res.status(404).json({ error: "Nurse not found" });
+
+    // Find patient by email
+    const user = await User.findOne({ email: patientEmail });
+    if (!user) return res.status(404).json({ error: "Patient not found" });
+
+    // Create appointment
+    const appointment = new Appointment({
+      user: user._id,
+      startDateTime,
+      endDateTime,
+      slotDay,
+      slotTime,
+      status: "booked",
+      bookedBy: "nurse"
+    });
+    await appointment.save();
+
+    res.json({ success: true, appointment });
+  } catch (err) {
+    console.error("Error booking appointment:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ===============================
+// NURSE CANCEL APPOINTMENT ENDPOINT
+// ===============================
+router.delete("/:appointmentId/nurse-cancel", async (req, res) => {
+  try {
+    console.log("[API] DELETE /:appointmentId/nurse-cancel called");
+
+    const { appointmentId } = req.params;
+    const { token, slotDay, slotTime } = req.body;
+
+    if (!token) return res.status(400).json({ error: "Missing token" });
+
+    // Verify nurse
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "nurse") return res.status(403).json({ error: "Access denied. Not a nurse." });
+
+    const Nurse = require("../models/Nurse");
+    const nurse = await Nurse.findById(decoded.id);
+    if (!nurse) return res.status(404).json({ error: "Nurse not found" });
+
+    // Find and update appointment
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+
+    appointment.status = "cancelled by nurse";
+    await appointment.save();
+
+    res.json({ success: true, message: "Appointment cancelled" });
+  } catch (err) {
+    console.error("Error cancelling appointment:", err);
+    res.status(500).json({ error: err.message });
   }
 });
 

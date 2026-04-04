@@ -249,15 +249,32 @@ router.post('/save', upload.fields([
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Verify doctor's token
+    // Verify doctor or nurse token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: 'Doctor not found.' });
+    let doctorId = null;
+
+    if (decoded.role === "doctor") {
+      const doctor = await Doctor.findById(decoded.id);
+      if (!doctor) return res.status(404).json({ error: "Doctor not found." });
+      doctorId = doctor._id;
+    } else if (decoded.role === "nurse") {
+      const Nurse = require("../models/Nurse");
+      const nurse = await Nurse.findById(decoded.id);
+      if (!nurse) return res.status(404).json({ error: "Nurse not found." });
+      // For nurse, get the doctor from the appointment
+    } else {
+      return res.status(403).json({ error: "Only doctors and nurses can save tests" });
+    }
 
     // Find the appointment
     const appointment = await Appointment.findById(appointmentId);
-    if (!appointment || !appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: 'Appointment not found or you do not have permission.' });
+    if (!appointment) {
+      return res.status(403).json({ error: "Appointment not found." });
+    }
+
+    // If doctor is saving, verify they own the appointment
+    if (decoded.role === "doctor" && !appointment.doctor.equals(doctorId)) {
+      return res.status(403).json({ error: "You do not have permission to save tests for this appointment." });
     }
 
     // Use findOneAndUpdate with upsert
@@ -266,7 +283,7 @@ router.post('/save', upload.fields([
       {
         appointment: appointmentId,
         patient: appointment.user,
-        doctor: doctor._id,
+        doctor: doctorId || appointment.doctor,
         tests: tests || [],
         labTestDocumentUrl: req.body.labTestDocumentUrl || '',
         hospitalReferral: hospitalReferral || { refer: false },

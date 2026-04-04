@@ -1,0 +1,545 @@
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { Calendar, momentLocalizer } from "react-big-calendar";
+import { useNavigate, useLocation } from "react-router-dom";
+import moment from "moment";
+import { format } from "date-fns";
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import "../../styles/doctor/DoctorAppointment.css";
+import DoctorNote from "../doctor/DoctorNote";
+import DoctorPrescription from "../doctor/DoctorPrescription";
+import DoctorVitals from "../doctor/DoctorVitals";
+import DoctorHospitalReferral from "../doctor/DoctorHospitalReferral";
+import DoctorCertificate from "../doctor/DoctorCertificate";
+import SelectedTestsSummary from "../doctor/SelectedTestsSummary";
+import CustomToolbar from "../doctor/CustomToolbar";
+
+const localizer = momentLocalizer(moment);
+
+export default function NurseAppointment({ apiBaseUrl }) {
+  const [appointments, setAppointments] = useState([]);
+  const [filteredAppointments, setFilteredAppointments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [view, setView] = useState("month");
+  const [date, setDate] = useState(new Date());
+  const [openSubSection, setOpenSubSection] = useState(null);
+
+  // Filters
+  const [patientSearch, setPatientSearch] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
+  const [bookingData, setBookingData] = useState({
+    patientEmail: "",
+    patientPhone: "",
+    date: "",
+    time: "",
+    duration: 30,
+  });
+
+  const token = localStorage.getItem("token");
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Reopen appointment modal when returning from TestPage
+  useEffect(() => {
+    if (location.state?.openAppointmentId && location.state?.openSection) {
+      const targetId = location.state.openAppointmentId;
+      const targetSection = location.state.openSection;
+      if (filteredAppointments.length > 0) {
+        const evt = filteredAppointments.find(a => a.id === targetId);
+        if (evt) {
+          setSelectedEvent(evt);
+          setOpenSubSection(targetSection);
+          navigate(location.pathname, { replace: true, state: {} });
+        }
+      }
+    }
+  }, [filteredAppointments, location.state]);
+
+  useEffect(() => {
+    if (!apiBaseUrl || !token) return;
+    fetchAppointments();
+    const interval = setInterval(fetchAppointments, 60000);
+    return () => clearInterval(interval);
+  }, [apiBaseUrl, token]);
+
+  const fetchAppointments = async () => {
+    try {
+      const res = await axios.get(`${apiBaseUrl}/appointments/all-appointments`, {
+        params: { token },
+      });
+      const formatted = res.data.appointments.map((appt) => ({
+        id: appt._id,
+        title: `${appt.user?.name || "Unknown"} (${appt.status})`,
+        start: new Date(appt.startDateTime),
+        end: new Date(appt.endDateTime),
+        status: appt.status,
+        patient: appt.user,
+        doctor: appt.doctor,
+        slotDay: appt.slotDay,
+        slotTime: appt.slotTime,
+        fullData: appt,
+      }));
+      setAppointments(formatted);
+      filterAppointments(formatted, patientSearch, startDate, endDate, statusFilter);
+    } catch (err) {
+      console.error("Error fetching appointments:", err);
+      setError("Failed to fetch appointments.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const filterAppointments = (appts, patient = "", start = "", end = "", status = "") => {
+    let filtered = appts;
+
+    // Patient search filter
+    if (patient.trim()) {
+      filtered = filtered.filter(
+        (appt) =>
+          appt.patient?.name?.toLowerCase().includes(patient.toLowerCase()) ||
+          appt.patient?.email?.toLowerCase().includes(patient.toLowerCase()) ||
+          appt.patient?.roll?.toLowerCase().includes(patient.toLowerCase())
+      );
+    }
+
+    // Date range filter
+    if (start) {
+      const startDt = new Date(start);
+      filtered = filtered.filter((appt) => appt.start >= startDt);
+    }
+    if (end) {
+      const endDt = new Date(end);
+      filtered = filtered.filter((appt) => appt.start <= endDt);
+    }
+
+    // Status filter
+    if (status) {
+      filtered = filtered.filter((appt) => appt.status === status);
+    }
+
+    setFilteredAppointments(filtered);
+  };
+
+  const handleFilterChange = () => {
+    filterAppointments(appointments, patientSearch, startDate, endDate, statusFilter);
+  };
+
+  useEffect(() => {
+    handleFilterChange();
+  }, [patientSearch, startDate, endDate, statusFilter]);
+
+  const handleSelectEvent = (event) => {
+    setSelectedEvent(event);
+    setOpenSubSection(null);
+  };
+
+  const handleCloseModal = () => setSelectedEvent(null);
+
+  const handleBookAppointment = async (e) => {
+    e.preventDefault();
+    try {
+      const startDateTime = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
+      const endDateTime = new Date(new Date(startDateTime).getTime() + bookingData.duration * 60000).toISOString();
+      const res = await axios.post(`${apiBaseUrl}/appointments/nurse-book`, {
+        token,
+        patientEmail: bookingData.patientEmail,
+        patientPhone: bookingData.patientPhone,
+        startDateTime,
+        endDateTime,
+        slotDay: new Date(bookingData.date).toLocaleDateString("en-US", { weekday: "long" }),
+        slotTime: bookingData.time,
+      });
+      if (res.data.success) {
+        setShowBookingForm(false);
+        setBookingData({ patientEmail: "", patientPhone: "", date: "", time: "", duration: 30 });
+        fetchAppointments();
+        alert("Appointment booked successfully!");
+      }
+    } catch (err) {
+      alert("Failed to book appointment: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId, slotDay, slotTime) => {
+    if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
+    try {
+      const res = await axios.delete(`${apiBaseUrl}/appointments/${appointmentId}/nurse-cancel`, {
+        data: { token, slotDay, slotTime },
+      });
+      if (res.data.success) {
+        fetchAppointments();
+        alert("Appointment cancelled successfully");
+        setSelectedEvent(null);
+      }
+    } catch (err) {
+      alert("Failed to cancel appointment: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const handleViewHistory = (patient) => {
+    if (!patient?.roll && !patient?.email) {
+      alert("No roll number or email available for this patient");
+      return;
+    }
+    navigate("/nurse-dashboard/patient-history", { state: { query: patient.roll || patient.email } });
+  };
+
+  const handleStatusUpdate = async (appointmentId, newStatus) => {
+    try {
+      const res = await axios.patch(`${apiBaseUrl}/appointments/${appointmentId}/status`, {
+        token, status: newStatus,
+      });
+      if (res.data.success) {
+        fetchAppointments();
+        alert(`Appointment marked as ${newStatus}`);
+        setSelectedEvent(null);
+      }
+    } catch (err) {
+      alert("Failed to update status: " + (err.response?.data?.error || err.message));
+    }
+  };
+
+  const toggleSub = (key) => setOpenSubSection((p) => (p === key ? null : key));
+
+  const SubSection = ({ id, icon, title, subtitle, children }) => {
+    const isOpen = openSubSection === id;
+    return (
+      <div className="modal-sub-section">
+        <button
+          type="button"
+          className={`modal-sub-toggle${isOpen ? " open" : ""}`}
+          onClick={() => toggleSub(id)}
+        >
+          <div className="modal-sub-left">
+            <span className="modal-sub-icon">{icon}</span>
+            <div>
+              <div className="modal-sub-title">{title}</div>
+              {subtitle && <div className="modal-sub-subtitle">{subtitle}</div>}
+            </div>
+          </div>
+          <span className="modal-sub-chevron">▼</span>
+        </button>
+        <div className={`modal-sub-body${isOpen ? " open" : ""}`}>
+          {children}
+        </div>
+      </div>
+    );
+  };
+
+  const eventStyleGetter = (event) => {
+    const status = event.status?.toLowerCase() || "booked";
+    let c = { bg: "#FFF7E6", border: "#C8860A", text: "#9A6408" };
+
+    if (status === "attended") {
+      c = { bg: "#E8F6EF", border: "#1E8A55", text: "#166640" };
+    } else if (status.includes("cancel")) {
+      c = { bg: "#FCECEF", border: "#B8243A", text: "#8C1A2A" };
+    } else if (status === "no show") {
+      c = { bg: "#F0F0F4", border: "#5A5A70", text: "#3A3A50" };
+    } else if (status === "walk in") {
+      c = { bg: "#F4E9F9", border: "#6C1B85", text: "#4A1060" };
+    }
+
+    return {
+      style: {
+        backgroundColor: c.bg,
+        borderLeft: `4px solid ${c.border}`,
+        borderTop: `1px solid ${c.border}40`,
+        borderRight: `1px solid ${c.border}40`,
+        borderBottom: `1px solid ${c.border}40`,
+        borderRadius: "6px",
+        color: c.text,
+        fontFamily: "'DM Sans', sans-serif",
+        fontSize: "0.82rem",
+        fontWeight: 600,
+        padding: "3px 6px",
+      },
+    };
+  };
+
+  return (
+    <div className="appointments-container">
+      {/* Page Header */}
+      <div className="calendar-header">
+        <h2>All Appointments</h2>
+        <button onClick={() => setShowBookingForm(true)} className="add-appointment-btn">
+          + New Appointment
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div style={{
+        background: "#f5f5f5",
+        padding: "1rem",
+        borderRadius: "8px",
+        marginBottom: "1.5rem",
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "1rem"
+      }}>
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+            Search Patient
+          </label>
+          <input
+            type="text"
+            placeholder="Name, Email, or Roll"
+            value={patientSearch}
+            onChange={(e) => setPatientSearch(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+            Start Date
+          </label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+            End Date
+          </label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+            }}
+          />
+        </div>
+        <div>
+          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
+            Status
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "0.6rem",
+              border: "1px solid #ddd",
+              borderRadius: "4px",
+            }}
+          >
+            <option value="">All Statuses</option>
+            <option value="booked">Booked</option>
+            <option value="attended">Attended</option>
+            <option value="no show">No Show</option>
+            <option value="cancelled by user">Cancelled by User</option>
+            <option value="cancelled by doctor">Cancelled by Doctor</option>
+            <option value="walk in">Walk In</option>
+          </select>
+        </div>
+      </div>
+
+      {isLoading && <p className="loading-text">Loading appointments…</p>}
+      {error && <p className="error-message">{error}</p>}
+
+      {!isLoading && !error && (
+        <div className="calendar-container">
+          <Calendar
+            localizer={localizer}
+            events={filteredAppointments}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: "auto", minHeight: "80vh" }}
+            views={["month", "week", "day", "agenda"]}
+            view={view}
+            onView={(v) => setView(v)}
+            date={date}
+            onNavigate={(d) => setDate(d)}
+            popup
+            onSelectEvent={handleSelectEvent}
+            components={{ toolbar: CustomToolbar }}
+            eventPropGetter={eventStyleGetter}
+          />
+        </div>
+      )}
+
+      {/* APPOINTMENT DETAILS MODAL */}
+      {selectedEvent && (
+        <div className="appointment-modal" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <div className="modal-content">
+            <div className="modal-header-bar">
+              <button className="close-btn" onClick={handleCloseModal} title="Close">✕</button>
+              <div className="modal-patient-name">
+                {selectedEvent.patient?.name || "Unknown Patient"}
+              </div>
+              <div className="modal-meta">
+                <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
+                <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
+                <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>
+                <span>
+                  <span className={`modal-status-badge ${selectedEvent.status?.toLowerCase().includes("cancel") ? "cancelled" : selectedEvent.status?.replace(" ", "-").toLowerCase()}`}>
+                    {selectedEvent.status}
+                  </span>
+                </span>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              {selectedEvent.status === "booked" && (
+                <div className="status-update">
+                  <label>Update Status</label>
+                  <div style={{ display: 'flex', gap: '0.6rem' }}>
+                    <select
+                      value={selectedEvent.status}
+                      onChange={(e) => handleStatusUpdate(selectedEvent.id, e.target.value)}
+                      style={{ flex: 1 }}
+                    >
+                      <option value="booked" disabled>— Update Status —</option>
+                      <option value="attended">Mark Completed</option>
+                      <option value="no show">Mark No-Show</option>
+                      <option value="walk_in">Mark Walk-in</option>
+                    </select>
+                  </div>
+                </div>
+              )}
+
+              <div className="modal-actions" style={{ display: 'flex', gap: '0.65rem' }}>
+                {(selectedEvent.status === "booked" || selectedEvent.status === "in-progress") && (
+                  <button
+                    className="cancel-btn"
+                    onClick={() => handleCancelAppointment(selectedEvent.id, selectedEvent.slotDay, selectedEvent.slotTime)}
+                  >
+                    Cancel Appointment
+                  </button>
+                )}
+                <button
+                  className="history-btn"
+                  onClick={() => handleViewHistory(selectedEvent.patient)}
+                  style={{ margin: 0 }}
+                >
+                  View History
+                </button>
+              </div>
+
+              <div className="modal-divider" />
+
+              <SubSection id="casesheet" icon="📋" title="Case Sheet" subtitle="Basic details, vitals, medical history, treatment">
+                <DoctorVitals
+                  appointmentId={selectedEvent.id}
+                  patientId={selectedEvent.patient?._id}
+                  apiBaseUrl={apiBaseUrl}
+                />
+              </SubSection>
+
+              <SubSection id="notes" icon="🗒️" title="Clinical Notes" subtitle="Running notes for this visit">
+                <DoctorNote appointmentId={selectedEvent.id} />
+              </SubSection>
+
+              <SubSection id="prescription" icon="💊" title="Prescription" subtitle="Medicines, dosage, frequency">
+                <DoctorPrescription
+                  appointmentId={selectedEvent.id}
+                  patientId={selectedEvent.patient?._id}
+                />
+              </SubSection>
+
+              <SubSection id="tests" icon="🧪" title="Lab Tests" subtitle="Ordered investigations">
+                <SelectedTestsSummary
+                  appointmentId={selectedEvent.id}
+                  onEditClick={() =>
+                    navigate(
+                      `/nurse-dashboard/test-page?appointmentId=${selectedEvent.id}&patientId=${selectedEvent.patient?._id}`,
+                      {
+                        state: {
+                          openAppointmentId: selectedEvent.id,
+                          openSection: "tests",
+                          returnUrl: "/nurse-dashboard/appointments",
+                        }
+                      }
+                    )
+                  }
+                />
+              </SubSection>
+
+              <SubSection id="referral" icon="🏥" title="Hospital Referral" subtitle="Refer to external hospital">
+                <DoctorHospitalReferral appointmentId={selectedEvent.id} />
+              </SubSection>
+
+              <SubSection id="certificate" icon="📜" title="Medical Certificate" subtitle="Issue fitness / medical certificate">
+                <DoctorCertificate appointmentId={selectedEvent.id} />
+              </SubSection>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NEW BOOKING MODAL */}
+      {showBookingForm && (
+        <div className="appointment-modal" onClick={(e) => e.target === e.currentTarget && setShowBookingForm(false)}>
+          <div className="modal-content booking-modal-content">
+            <div className="modal-header-bar">
+              <button className="close-btn" onClick={() => setShowBookingForm(false)}>✕</button>
+              <div className="modal-patient-name">Book New Appointment</div>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleBookAppointment} className="booking-form">
+                <div className="booking-field">
+                  <label>Patient Email</label>
+                  <input type="email" value={bookingData.patientEmail}
+                    onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })} required />
+                </div>
+                <div className="booking-field">
+                  <label>Patient Phone (optional)</label>
+                  <input type="tel" value={bookingData.patientPhone}
+                    onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })} />
+                </div>
+                <div className="booking-field">
+                  <label>Date</label>
+                  <input type="date" value={bookingData.date}
+                    onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
+                    min={new Date().toISOString().split("T")[0]} required />
+                </div>
+                <div className="booking-field">
+                  <label>Time</label>
+                  <input type="time" value={bookingData.time}
+                    onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })} required />
+                </div>
+                <div className="booking-field">
+                  <label>Duration (minutes)</label>
+                  <select value={bookingData.duration}
+                    onChange={(e) => setBookingData({ ...bookingData, duration: parseInt(e.target.value) })}>
+                    <option value={15}>15</option>
+                    <option value={30}>30</option>
+                    <option value={45}>45</option>
+                    <option value={60}>60</option>
+                  </select>
+                </div>
+                <div className="modal-actions" style={{ marginTop: "1.2rem" }}>
+                  <button type="submit" className="booking-submit-btn">Book Appointment</button>
+                  <button type="button" className="booking-cancel-btn" onClick={() => setShowBookingForm(false)}>Cancel</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

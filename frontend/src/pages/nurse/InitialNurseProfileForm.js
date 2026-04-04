@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 
 export default function InitialNurseProfileForm() {
-  const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', age: '', sex: '' });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -30,6 +30,10 @@ export default function InitialNurseProfileForm() {
       <label>
         Name:
         <input name="name" value={form.name} onChange={handleChange} required />
+      </label>
+      <label>
+        Email:
+        <input name="email" type="email" value={form.email} onChange={handleChange} required />
       </label>
       <label>
         Phone:

@@ -43,17 +43,16 @@ router.post("/add", async (req, res) => {
     if (!token) return res.status(400).json({ error: "Missing token" });
     if (!appointmentId || !text) return res.status(400).json({ error: "Missing appointmentId or note text" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse (just check role, not DB lookup)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-    // Verify appointment belongs to this doctor
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can add notes" });
+    }
+
+    // Verify appointment exists
     const appointment = await Appointment.findById(appointmentId);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "Appointment does not belong to this doctor" });
-    }
 
     // Save note
     const note = new Note({
@@ -74,25 +73,24 @@ router.put("/:noteId", async (req, res) => {
   try {
     const { token, text } = req.body;
     const { noteId } = req.params;
-    
+
     if (!token) return res.status(400).json({ error: "Missing token" });
     if (!text) return res.status(400).json({ error: "Note text is required" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can update notes" });
+    }
 
     // Find the note
     const note = await Note.findById(noteId);
     if (!note) return res.status(404).json({ error: "Note not found" });
 
-    // Verify appointment belongs to this doctor
+    // Verify appointment exists (both doctor and nurse can edit)
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "You do not have permission to edit this note" });
-    }
 
     // Update the note
     note.text = text;
@@ -110,24 +108,23 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
   try {
     const { token } = req.body;
     const { noteId } = req.params;
-    
+
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can add images to notes" });
+    }
 
     // Find the note
     const note = await Note.findById(noteId);
     if (!note) return res.status(404).json({ error: "Note not found" });
 
-    // Verify appointment belongs to this doctor
+    // Verify appointment exists (both doctor and nurse can edit)
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "You do not have permission to add images to this note" });
-    }
 
     // Process uploaded images
     if (req.files && req.files.length > 0) {
@@ -136,7 +133,7 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
         caption: req.body.caption || '',
         uploadedAt: new Date()
       }));
-      
+
       note.images = [...(note.images || []), ...newImages];
       await note.save();
     }
@@ -153,24 +150,23 @@ router.delete("/:noteId/images/:imageIndex", async (req, res) => {
   try {
     const { token } = req.query;
     const { noteId, imageIndex } = req.params;
-    
+
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can delete images from notes" });
+    }
 
     // Find the note
     const note = await Note.findById(noteId);
     if (!note) return res.status(404).json({ error: "Note not found" });
 
-    // Verify appointment belongs to this doctor
+    // Verify appointment exists (both doctor and nurse can edit)
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "You do not have permission to delete images from this note" });
-    }
 
     // Remove the image
     const index = parseInt(imageIndex);
@@ -196,24 +192,23 @@ router.delete("/:noteId", async (req, res) => {
   try {
     const { token } = req.query;
     const { noteId } = req.params;
-    
+
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can delete notes" });
+    }
 
     // Find the note
     const note = await Note.findById(noteId);
     if (!note) return res.status(404).json({ error: "Note not found" });
 
-    // Verify appointment belongs to this doctor
+    // Verify appointment exists (both doctor and nurse can edit)
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "You do not have permission to delete this note" });
-    }
 
     // Delete associated images from disk
     if (note.images && note.images.length > 0) {
@@ -241,20 +236,28 @@ router.get("/:appointmentId", async (req, res) => {
     const { appointmentId } = req.params;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
-    // Verify doctor
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-    // Verify appointment belongs to this doctor
-    const appointment = await Appointment.findById(appointmentId);
-    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-    if (!appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "Appointment does not belong to this doctor" });
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can access notes" });
+    }
+
+    // For doctors, verify appointment belongs to them
+    if (decoded.role === "doctor") {
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+      if (!appointment.doctor.equals(decoded.id)) {
+        return res.status(403).json({ error: "Appointment does not belong to this doctor" });
+      }
+    } else if (decoded.role === "nurse") {
+      // For nurses, just verify appointment exists
+      const appointment = await Appointment.findById(appointmentId);
+      if (!appointment) return res.status(404).json({ error: "Appointment not found" });
     }
 
     // Get notes
-    const notes = await Note.find({ appointment: appointment._id }).sort({ createdAt: -1 });
+    const notes = await Note.find({ appointment: appointmentId }).sort({ createdAt: -1 });
     res.json({ notes });
   } catch (err) {
     console.error(err);
@@ -262,7 +265,7 @@ router.get("/:appointmentId", async (req, res) => {
   }
 });
 
-// GET /api/notes/patient/:patientId
+// GET /api/notes/patient/:patientId - MUST COME BEFORE THE GENERIC /:appointmentId ROUTE
 router.get('/patient/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
@@ -270,7 +273,7 @@ router.get('/patient/:patientId', async (req, res) => {
     if (!token) return res.status(400).json({ error: 'Missing token' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'doctor') return res.status(403).json({ error: 'Access denied' });
+    if (decoded.role !== 'doctor' && decoded.role !== 'nurse') return res.status(403).json({ error: 'Access denied. Only doctors and nurses can access notes.' });
 
     const notes = await Note.find({ appointment: { $in: await Appointment.find({ user: patientId }).select('_id') } })
       .populate('appointment', 'startDateTime endDateTime');

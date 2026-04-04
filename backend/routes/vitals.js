@@ -83,9 +83,20 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) {
-      return res.status(401).json({ error: "Unauthorized doctor" });
+    // Allow both doctors and nurses
+    if (decoded.role === 'doctor') {
+      const doctor = await Doctor.findById(decoded.id);
+      if (!doctor) {
+        return res.status(401).json({ error: "Unauthorized doctor" });
+      }
+    } else if (decoded.role === 'nurse') {
+      const Nurse = require("../models/Nurse");
+      const nurse = await Nurse.findById(decoded.id);
+      if (!nurse) {
+        return res.status(401).json({ error: "Unauthorized nurse" });
+      }
+    } else {
+      return res.status(403).json({ error: "Access denied. Only doctors and nurses can save vitals." });
     }
 
     const { appointmentId, patientId, existingCaseSheetDocumentUrl, ...caseData } = req.body;

@@ -18,7 +18,7 @@ const verifyDoctor = (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== "doctor") return res.status(403).json({ error: "Access denied" });
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") return res.status(403).json({ error: "Access denied. Only doctors and nurses can access referrals." });
     req.doctorId = decoded.id;
     next();
   } catch (err) {

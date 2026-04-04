@@ -54,15 +54,22 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
       return res.status(400).json({ error: "Missing required fields or invalid data format." });
     }
 
-    // Verify doctor's token
+    // Verify user is either doctor or nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const doctor = await Doctor.findById(decoded.id);
-    if (!doctor) return res.status(404).json({ error: "Doctor not found." });
 
-    // Find the appointment to link the prescription to
+    if (decoded.role !== "doctor" && decoded.role !== "nurse") {
+      return res.status(403).json({ error: "Only doctors and nurses can save prescriptions" });
+    }
+
+    // Find the appointment
     const appointment = await Appointment.findById(appointmentId);
-    if (!appointment || !appointment.doctor.equals(doctor._id)) {
-      return res.status(403).json({ error: "Appointment not found or you do not have permission." });
+    if (!appointment) {
+      return res.status(403).json({ error: "Appointment not found." });
+    }
+
+    // If doctor is adding prescription, verify they own the appointment
+    if (decoded.role === "doctor" && !appointment.doctor.equals(decoded.id)) {
+      return res.status(403).json({ error: "You do not have permission to add prescription for this appointment." });
     }
 
     // New stock management logic for medicines with medicine ID
@@ -84,7 +91,7 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
           patient: appointment.user,
           medicine: p.medicine,
           quantityIssued: p.quantity,
-          doctor: doctor._id
+          doctor: decoded.role === "doctor" ? decoded.id : appointment.doctor
         }).save();
       }
     }
@@ -92,10 +99,10 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
     // Use findOneAndUpdate with 'upsert' to create a new prescription or update if it exists
     const updatedPrescription = await Prescription.findOneAndUpdate(
       { appointment: appointmentId },
-      { 
+      {
         appointment: appointmentId,
         patient: appointment.user,
-        doctor: doctor._id,
+        doctor: decoded.role === "doctor" ? decoded.id : appointment.doctor,
         prescriptions: prescriptions,
         bookNo,
         prescriptionNo,
@@ -108,8 +115,8 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
 
     res.json({ success: true, prescription: updatedPrescription });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Server error while saving prescription." });
+    console.error("❌ Prescription save error:", err.message, err.stack);
+    res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });
 
@@ -150,7 +157,7 @@ router.get("/latest/:patientId", async (req, res) => {
 
     // Verify token (doctor should be able to access this)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'doctor') return res.status(403).json({ error: "Unauthorized access." });
+    if (decoded.role !== 'doctor' && decoded.role !== 'nurse') return res.status(403).json({ error: "Unauthorized access. Only doctors and nurses can access prescriptions." });
 
     const latestPrescription = await Prescription.findOne({ patient: patientId })
       .sort({ createdAt: -1 }); // Get the most recent one

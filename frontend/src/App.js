@@ -34,6 +34,10 @@ import ReceptionistDashboard from "./pages/receptionist/ReceptionistDashboard";
 import InitialReceptionistProfileForm from "./pages/receptionist/InitialReceptionistProfileForm";
 import ReceptionistProfilePage from "./pages/receptionist/ReceptionistProfilePage";
 import NurseDashboard from "./pages/nurse/NurseDashboard";
+import NurseNavbar from "./pages/nurse/NurseNavbar";
+import NurseProfilePage from "./pages/nurse/NurseProfilePage";
+import NurseAppointment from "./pages/nurse/NurseAppointment";
+import NursePatientHistory from "./pages/nurse/NursePatientHistory";
 import InitialNurseProfileForm from "./pages/nurse/InitialNurseProfileForm";
 import PharmacistDashboard from "./pages/pharmacist/PharmacistDashboard";
 import PharmacistMedicineStock from "./pages/pharmacist/PharmacistMedicineStock";
@@ -79,6 +83,18 @@ function LayoutWithDocNavbar() {
   );
 }
 
+function LayoutWithNurseNavbar() {
+  console.log("🛠️ Rendering LayoutWithNurseNavbar");
+  return (
+    <>
+      <NurseNavbar />
+      <div style={{ paddingTop: "60px" }}>
+        <Outlet />
+      </div>
+    </>
+  );
+}
+
 function PatientDashboardLayout() {
   return (
     <>
@@ -91,6 +107,14 @@ function DoctorDashboardLayout() {
   return (
     <>
       <LayoutWithDocNavbar /> {/* renders child doctor pages */}
+    </>
+  );
+}
+
+function NurseDashboardLayout() {
+  return (
+    <>
+      <LayoutWithNurseNavbar /> {/* renders child nurse pages */}
     </>
   );
 }
@@ -257,7 +281,14 @@ function App() {
         <Route path="/receptionist-dashboard/profile" element={<ReceptionistProfilePage />} />
         <Route path="/receptionist/initial-profile" element={<InitialReceptionistProfileForm />} />
 
-        <Route path="/nurse-dashboard" element={<NurseDashboard />} />
+        {/* Nurse routes */}
+        <Route path="/nurse-dashboard" element={<NurseDashboardLayout />}>
+          <Route index element={<NurseDashboard />} />
+          <Route path="appointments" element={<NurseAppointment apiBaseUrl={apiBaseUrl} />} />
+          <Route path="nurse-profile" element={<NurseProfilePage apiBaseUrl={apiBaseUrl} />} />
+          <Route path="patient-history" element={<NursePatientHistory apiBaseUrl={apiBaseUrl} />} />
+          <Route path="test-page" element={<TestPage apiBaseUrl={apiBaseUrl} />} />
+        </Route>
         <Route path="/nurse/initial-profile" element={<InitialNurseProfileForm />} />
 
         {/* Pharmacist routes */}
@@ -269,7 +300,7 @@ function App() {
 <Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
 
-// In your Routes section:
+{/* // In your Routes section: */}
 <Route path="/pharmacist-dashboard/advanced-analytics" element={<PharmacistAdvancedAnalytics />} />
 <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
