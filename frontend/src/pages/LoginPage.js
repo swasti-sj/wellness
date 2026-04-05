@@ -99,7 +99,7 @@ export default function LoginPage() {
           <img src="/college-logo.png" alt="College Logo" className="login-logo" />
           <h2>WELCOME BACK!</h2>
           <p className="login-subtitle" style={{ color: 'black' }}>
-            Access your dashboard and manage your profile. Login as a Patient, Doctor, or Pharmacist to continue.
+            Access your dashboard and manage your profile. Login as a Patient, Doctor, or Others to continue.
           </p>
         </div>
 

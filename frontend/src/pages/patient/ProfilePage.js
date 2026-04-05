@@ -42,10 +42,16 @@ function PatientProfile() {
           <strong>Sex:</strong> {profile.sex || "Not set"}
         </p>
         <p>
+          <strong>UHID:</strong> {profile.uhid || "Not assigned"}
+        </p>
+        <p>
           <strong>Phone:</strong> {profile.phone || "Not set"}
         </p>
         <p>
-          <strong>Role:</strong> {profile.roll || "Not set"}
+          <strong>Institutional ID:</strong> {profile.roll || "Not set"}
+        </p>
+        <p>
+          <strong>Clinical Consent:</strong> {profile.consentAccepted ? "Accepted" : "Not Accepted"}
         </p>
 
         <button className="patient-signout-btn" onClick={handleSignOut}>

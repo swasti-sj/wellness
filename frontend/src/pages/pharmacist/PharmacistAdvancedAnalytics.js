@@ -86,23 +86,23 @@ export default function PharmacistAdvancedAnalytics() {
     return { day: 'Today', week: 'This Week', month: 'This Month', year: 'This Year' }[period] || '';
   };
 
-  if (loading) return <div className="pharm-loading">⏳ Loading advanced analytics...</div>;
+  if (loading) return <div className="pharm-loading">Loading advanced analytics...</div>;
 
   return (
     <div className="pharm-layout">
       <div className="pharm-root">
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">📊 Advanced Analytics</h1>
+            <h1 className="pharm-title">Advanced Analytics</h1>
             <p className="pharm-subtitle">Comprehensive pharmacy operations insights — {getPeriodLabel()}</p>
           </div>
           <div className="pharm-header-actions">
             {selectedChart === 'movement' && movementData.length > 0 && (
               <button className="pharm-btn pharm-btn-ghost" onClick={() => exportMovementCSV(movementData)}>
-                📤 Export CSV
+                Export CSV
               </button>
             )}
-            <button className="pharm-btn pharm-btn-ghost" onClick={loadAllData}>🔄 Refresh</button>
+            <button className="pharm-btn pharm-btn-ghost" onClick={loadAllData}>Refresh</button>
           </div>
         </div>
 
@@ -110,15 +110,15 @@ export default function PharmacistAdvancedAnalytics() {
 
         {/* ── Dispensing Summary Cards ── */}
         {issuanceSummary && (
-          <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
+          <div className="pharm-stats-grid">
             {[
-              { label: 'Today',     data: issuanceSummary.today },
-              { label: 'This Week', data: issuanceSummary.week },
-              { label: 'This Month',data: issuanceSummary.month },
-              { label: 'This Year', data: issuanceSummary.year },
-              { label: 'All Time',  data: issuanceSummary.allTime },
+              { label: 'Today',     data: issuanceSummary.today,  cls: 'info' },
+              { label: 'This Week', data: issuanceSummary.week,   cls: 'info' },
+              { label: 'This Month',data: issuanceSummary.month,  cls: 'warning' },
+              { label: 'This Year', data: issuanceSummary.year,   cls: 'warning' },
+              { label: 'All Time',  data: issuanceSummary.allTime,cls: 'info' },
             ].map(s => (
-              <div key={s.label} className="pharm-stat-card">
+              <div key={s.label} className={`pharm-stat-card ${s.cls}`}>
                 <div className="pharm-stat-label">{s.label}</div>
                 <div className="pharm-stat-value">{s.data?.qty?.toLocaleString() || 0}</div>
                 <div className="pharm-stat-meta">{s.data?.transactions || 0} transactions</div>
@@ -130,7 +130,7 @@ export default function PharmacistAdvancedAnalytics() {
         {/* ── Period Selector ── */}
         <div className="pharm-section">
           <div className="pharm-section-header">
-            <h2 className="pharm-section-title">📅 Date Range</h2>
+            <h2 className="pharm-section-title">Date Range</h2>
           </div>
           <div className="pharm-filter-bar" style={{ flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
             <div className="pharm-filter-chips">
@@ -177,9 +177,9 @@ export default function PharmacistAdvancedAnalytics() {
         {/* ── Chart Tabs ── */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '2px solid var(--pharm-gray-100)', paddingBottom: '0' }}>
           {[
-            { k: 'usage',    l: '🏆 Top Usage' },
-            { k: 'movement', l: '📊 Daily Movement' },
-            { k: 'expiry',   l: '⏰ Expiry Status' },
+            { k: 'usage',    l: 'Top Usage' },
+            { k: 'movement', l: 'Daily Movement' },
+            { k: 'expiry',   l: 'Expiry Status' },
           ].map(t => (
             <button key={t.k}
               className={`pharm-btn pharm-btn-sm ${selectedChart === t.k ? 'pharm-btn-teal' : 'pharm-btn-ghost'}`}
@@ -194,14 +194,13 @@ export default function PharmacistAdvancedAnalytics() {
         {selectedChart === 'usage' && (
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">🏆 Most Dispensed Medicines — {getPeriodLabel()}</h2>
+              <h2 className="pharm-section-title">Most Dispensed Medicines — {getPeriodLabel()}</h2>
               <span style={{ fontSize: '0.82rem', color: 'var(--pharm-gray-400)' }}>
                 {usageData.length} medicines · {usageData.reduce((s, i) => s + i.totalIssued, 0)} total units
               </span>
             </div>
             {usageData.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No dispensing data for this period</div>
               </div>
             ) : (
@@ -269,20 +268,21 @@ export default function PharmacistAdvancedAnalytics() {
         {selectedChart === 'movement' && (
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">📊 Daily Stock Movement</h2>
-              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', fontSize: '0.82rem', color: 'var(--pharm-gray-500)' }}>
-                <span style={{ color: 'var(--pharm-red)' }}>Total Issued: {totalIssued}</span>
-                <span> · </span>
-                <span style={{ color: 'var(--pharm-teal)' }}>Total Added: {totalAdded}</span>
-                <span> · </span>
-                <span style={{ color: netChange >= 0 ? 'var(--pharm-green)' : 'var(--pharm-red)', fontWeight: 600 }}>
+              <h2 className="pharm-section-title">Daily Stock Movement</h2>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', fontSize: '0.85rem', color: 'var(--pharm-gray-500)' }}>
+                <span className="pharm-badge pharm-badge-red" style={{ background: 'var(--pharm-red-pale)', color: 'var(--pharm-red)', border: '1px solid #fecaca' }}>
+                  Total Issued: {totalIssued}
+                </span>
+                <span className="pharm-badge" style={{ background: 'var(--pharm-gold-soft)', color: 'var(--pharm-gold-dark)', border: '1px solid var(--pharm-gold-mid)' }}>
+                  Total Added: {totalAdded}
+                </span>
+                <span className={`pharm-badge ${netChange >= 0 ? 'pharm-badge-green' : 'pharm-badge-red'}`} style={{ fontWeight: 700 }}>
                   Net: {netChange >= 0 ? '+' : ''}{netChange}
                 </span>
               </div>
             </div>
             {movementData.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No movement data for this period</div>
               </div>
             ) : (
@@ -367,7 +367,7 @@ export default function PharmacistAdvancedAnalytics() {
         {selectedChart === 'expiry' && expirySummary && (
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">⏰ Expiry Date Distribution</h2>
+              <h2 className="pharm-section-title">Expiry Date Distribution</h2>
               <span style={{ fontSize: '0.82rem', color: 'var(--pharm-gray-400)' }}>
                 {expirySummary.totalAnalyzed} medicines analysed
               </span>
@@ -376,10 +376,10 @@ export default function PharmacistAdvancedAnalytics() {
             {/* Visual bar per category */}
             {(() => {
               const cats = [
-                { label: 'Already Expired',  val: expirySummary.expired,    color: '#7f1d1d' },
+                { label: 'Already Expired',  val: expirySummary.expired,    color: 'var(--pharm-red)' },
                 { label: 'Expiring ≤30d',    val: expirySummary.expiring30,  color: '#dc2626' },
-                { label: 'Expiring 31–60d',  val: expirySummary.expiring60,  color: '#ea580c' },
-                { label: 'Expiring 61–90d',  val: expirySummary.expiring90,  color: '#d97706' },
+                { label: 'Expiring 31–60d',  val: expirySummary.expiring60,  color: '#ef4444' },
+                { label: 'Expiring 61–90d',  val: expirySummary.expiring90,  color: '#f87171' },
                 { label: 'Expiring 91–180d', val: expirySummary.expiring180, color: '#ca8a04' },
                 { label: 'Expiring 181–365d',val: expirySummary.expiring365, color: '#16a34a' },
                 { label: 'Beyond 1 year',    val: expirySummary.beyond365,   color: '#15803d' },
@@ -389,22 +389,22 @@ export default function PharmacistAdvancedAnalytics() {
                 <>
                   <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '1.5rem' }}>
                     <div className="pharm-stat-card danger">
-                      <div className="pharm-stat-label">🚨 Expired</div>
+                      <div className="pharm-stat-label">Expired</div>
                       <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>{expirySummary.expired}</div>
                       <div className="pharm-stat-meta">Past expiry date</div>
                     </div>
-                    <div className="pharm-stat-card warning">
-                      <div className="pharm-stat-label">⚠️ Expiring ≤30 days</div>
-                      <div className="pharm-stat-value" style={{ color: 'var(--pharm-amber)' }}>{expirySummary.expiring30}</div>
+                    <div className="pharm-stat-card danger">
+                      <div className="pharm-stat-label">Expiring ≤30 days</div>
+                      <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>{expirySummary.expiring30}</div>
                       <div className="pharm-stat-meta">Immediate action</div>
                     </div>
-                    <div className="pharm-stat-card warning">
-                      <div className="pharm-stat-label">📅 Expiring ≤90 days</div>
-                      <div className="pharm-stat-value">{expirySummary.expiring60 + expirySummary.expiring90}</div>
+                    <div className="pharm-stat-card danger">
+                      <div className="pharm-stat-label">Expiring ≤90 days</div>
+                      <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>{expirySummary.expiring60 + expirySummary.expiring90}</div>
                       <div className="pharm-stat-meta">Plan restocking</div>
                     </div>
                     <div className="pharm-stat-card success">
-                      <div className="pharm-stat-label">✅ Safe (>90 days)</div>
+                      <div className="pharm-stat-label">Safe (Over 90 days)</div>
                       <div className="pharm-stat-value" style={{ color: 'var(--pharm-green)' }}>
                         {expirySummary.expiring180 + expirySummary.expiring365 + expirySummary.beyond365}
                       </div>

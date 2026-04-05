@@ -32,11 +32,11 @@
 }
 
 .pharm-profile-container {
-  padding: 2rem;
-  max-width: 600px;
-  margin: 2rem auto;
+  padding: 3rem 1.5rem;
+  max-width: 850px;
+  margin: 0 auto;
   font-family: 'DM Sans', sans-serif;
-  animation: profileFadeIn 0.6s ease-out;
+  animation: profileFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes profileFadeIn {
@@ -59,59 +59,64 @@
   position: relative;
 }
 
-.pharm-profile-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: var(--gradient-primary);
-}
-
 .pharm-profile-header {
-  background: var(--gradient-primary);
-  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, #4A1060 0%, #6C1B85 100%);
+  padding: 3.5rem 2rem 5rem;
   text-align: center;
   color: white;
   position: relative;
-  overflow: hidden;
 }
 
-.pharm-profile-header::before {
-  content: '';
+.pharm-profile-avatar-wrapper {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  bottom: -3.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.pharm-profile-avatar {
+  width: 7rem;
+  height: 7rem;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Serif Display', serif;
+  font-size: 2.5rem;
+  color: #4A1060;
+  border: 4px solid #C8860A;
+  box-shadow: 0 8px 24px rgba(74, 16, 96, 0.25);
+  transition: all 0.3s ease;
+}
+
+.pharm-profile-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 12px 32px rgba(74, 16, 96, 0.35);
 }
 
 .pharm-profile-header h2 {
   font-family: 'DM Serif Display', serif;
-  font-size: 1.8rem;
+  font-size: 2.4rem;
   margin: 0;
   font-weight: 700;
-  position: relative;
-  z-index: 1;
   letter-spacing: -0.5px;
 }
 
 .pharm-profile-header p {
-  font-size: 0.95rem;
-  opacity: 0.9;
+  font-size: 1rem;
+  opacity: 0.85;
   margin: 0.5rem 0 0;
   font-weight: 500;
-  position: relative;
-  z-index: 1;
 }
 
 .pharm-profile-body {
-  padding: 2.5rem;
+  padding: 5rem 3rem 3rem;
 }
 
 .pharm-profile-error {
+  grid-column: 1 / -1;
   background: linear-gradient(135deg, #FFEBEE 0%, #FFCDD2 100%);
   border: 1px solid #EF5350;
   border-radius: var(--radius-lg);
@@ -125,15 +130,22 @@
   font-size: 0.95rem;
 }
 
-.pharm-profile-error::before {
-  content: '⚠️';
-  font-size: 1.1rem;
+.pharm-profile-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
 }
 
-.pharm-profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+.pharm-profile-section-title {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gold);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 2px solid var(--plum-soft);
+  padding-bottom: 0.5rem;
+  margin-top: 1rem;
 }
 
 .pharm-form-group {
@@ -142,20 +154,19 @@
   gap: 0.5rem;
 }
 
+.pharm-form-group.full-width {
+  grid-column: 1 / -1;
+}
+
 .pharm-form-group label {
   font-weight: 600;
   color: var(--text-head);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
   letter-spacing: 0.3px;
   text-transform: uppercase;
-  font-size: 0.8rem;
-}
-
-.pharm-form-group label::before {
-  font-size: 1.1rem;
 }
 
 .pharm-form-group input {
@@ -178,21 +189,6 @@
   transform: translateY(-1px);
 }
 
-.pharm-form-group input:disabled {
-  background: var(--plum-ghost);
-  color: var(--text-muted);
-  cursor: not-allowed;
-  border-color: var(--border);
-  box-shadow: none;
-  transform: none;
-}
-
-.pharm-form-group input::placeholder {
-  color: var(--text-muted);
-  font-weight: 400;
-}
-
-/* Edit/View Mode Display */
 .pharm-profile-value {
   font-size: 1rem;
   color: var(--text-body);
@@ -206,21 +202,13 @@
   align-items: center;
 }
 
-.pharm-profile-value.muted {
-  color: var(--text-muted);
-  font-weight: 400;
-  font-style: italic;
-  background: #F8F6FA;
-}
-
-/* Profile Actions */
 .pharm-profile-actions {
+  grid-column: 1 / -1;
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
   padding-top: 2rem;
   border-top: 1px solid var(--border);
-  flex-wrap: wrap;
 }
 
 .pharm-profile-btn {
@@ -233,180 +221,64 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  letter-spacing: 0.3px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  position: relative;
-  overflow: hidden;
-  min-height: 44px;
-}
-
-.pharm-profile-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.pharm-profile-btn:hover::before {
-  left: 100%;
+  min-height: 48px;
 }
 
 .pharm-profile-btn-primary {
-  background: var(--gradient-primary);
+  background: linear-gradient(135deg, #6C1B85 0%, #4A1060 100%);
   color: white;
-  box-shadow: 0 4px 16px rgba(108, 27, 133, 0.25);
+  box-shadow: 0 4px 12px rgba(74, 16, 96, 0.2);
 }
 
-.pharm-profile-btn-primary:hover:not(:disabled) {
-  background: var(--gradient-secondary);
-  box-shadow: 0 6px 20px rgba(108, 27, 133, 0.35);
+.pharm-profile-btn-primary:hover {
   transform: translateY(-2px);
-}
-
-.pharm-profile-btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: 0 2px 8px rgba(108, 27, 133, 0.15);
+  box-shadow: 0 6px 16px rgba(74, 16, 96, 0.3);
 }
 
 .pharm-profile-btn-secondary {
-  background: var(--surface);
-  color: var(--plum-mid);
+  background: white;
+  color: var(--plum);
   border: 2px solid var(--border);
-  box-shadow: 0 2px 8px rgba(74, 16, 96, 0.08);
 }
 
 .pharm-profile-btn-secondary:hover {
   background: var(--plum-ghost);
-  border-color: var(--plum-mid);
-  box-shadow: 0 4px 16px rgba(74, 16, 96, 0.15);
+  border-color: var(--plum);
+}
+
+.pharm-profile-btn-danger {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+}
+
+.pharm-profile-btn-danger:hover {
   transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3);
 }
 
 .pharm-profile-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4rem 2rem;
-  color: var(--text-muted);
+  min-height: 50vh;
+  color: var(--plum);
   font-size: 1.1rem;
   font-weight: 500;
 }
 
-.pharm-profile-loading::before {
-  content: '⟳';
-  animation: spin 1s linear infinite;
-  margin-right: 0.75rem;
-  font-size: 1.3rem;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Responsive Design */
 @media (max-width: 768px) {
-  .pharm-profile-container {
-    padding: 1rem;
-    margin: 1rem auto;
-  }
-
-  .pharm-profile-header {
-    padding: 1.5rem 2rem;
-  }
-
-  .pharm-profile-header h2 {
-    font-size: 1.6rem;
-  }
-
-  .pharm-profile-body {
-    padding: 2rem 1.5rem;
-  }
-
-  .pharm-profile-actions {
-    flex-direction: column;
-  }
-
-  .pharm-profile-btn {
-    width: 100%;
-  }
-}
-
-.pharm-profile-btn-danger {
-  background: linear-gradient(135deg, #D32F2F 0%, #E53935 100%);
-  color: white;
-  box-shadow: 0 3px 10px rgba(211, 47, 47, 0.2);
-}
-
-.pharm-profile-btn-danger:hover {
-  background: linear-gradient(135deg, #B8243A 0%, #D32F2F 100%);
-  box-shadow: 0 4px 14px rgba(211, 47, 47, 0.3);
-  transform: translateY(-1px);
-}
-
-/* Loading & Empty States */
-.pharm-profile-loading {
-  padding: 2rem 1rem;
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.95rem;
-  font-weight: 500;
-}
-
-.pharm-profile-error {
-  background: #FFEBEE;
-  color: #D32F2F;
-  padding: 0.9rem;
-  border-radius: 8px;
-  margin: 1rem 0;
-  border-left: 4px solid #D32F2F;
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-  .pharm-profile-container {
-    padding: 0.8rem;
-    margin: 0.8rem auto;
-  }
-
-  .pharm-profile-header {
-    padding: 1.2rem 1rem;
-  }
-
-  .pharm-profile-header h2 {
-    font-size: 1.4rem;
-  }
-
-  .pharm-profile-body {
-    padding: 1.2rem;
-  }
-
   .pharm-profile-form {
-    gap: 0.8rem;
+    grid-template-columns: 1fr;
   }
-
-  .pharm-profile-actions {
-    flex-direction: column;
-    gap: 0.6rem;
+  .pharm-profile-body {
+    padding: 4rem 1.5rem 2rem;
   }
-
-  .pharm-profile-btn {
-    width: 100%;
-    padding: 0.6rem 0.8rem;
-    font-size: 0.8rem;
+  .pharm-profile-header h2 {
+    font-size: 1.8rem;
   }
 }

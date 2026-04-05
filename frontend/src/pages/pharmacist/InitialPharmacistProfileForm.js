@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import '../../styles/InitialProfileForm.css';
+import '../../styles/pharmacist/PharmacistProfile.css'; // Reusing the same premium styles
 
 export default function InitialPharmacistProfileForm() {
   const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -13,42 +15,116 @@ export default function InitialPharmacistProfileForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     try {
       await axios.post('http://localhost:5000/api/pharmacist/profile', form, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
-      alert('Pharmacist profile saved');
       navigate('/pharmacist-dashboard');
     } catch (err) {
       console.error(err);
-      alert('Failed to save profile');
+      setError('Failed to save profile. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <label>
-        Name:
-        <input name="name" value={form.name} onChange={handleChange} required />
-      </label>
-      <label>
-        Phone:
-        <input name="phone" value={form.phone} onChange={handleChange} required />
-      </label>
-      <label>
-        Age:
-        <input name="age" type="number" value={form.age} onChange={handleChange} required />
-      </label>
-      <label>
-        Sex:
-        <select name="sex" value={form.sex} onChange={handleChange} required>
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </label>
-      <button type="submit">Save</button>
-    </form>
+    <div className="pharm-profile-container">
+      <div className="pharm-profile-card">
+        <div className="pharm-profile-header">
+          <h2>Welcome to Pharmacy</h2>
+          <p>Please complete your initial profile setup</p>
+          
+          <div className="pharm-profile-avatar-wrapper">
+             <div className="pharm-profile-avatar">PH</div>
+          </div>
+        </div>
+
+        <div className="pharm-profile-body">
+          {error && <div className="pharm-profile-error">{error}</div>}
+
+          <form onSubmit={handleSubmit} className="pharm-profile-form">
+            <div className="pharm-profile-section-title">Professional Identity</div>
+            
+            <div className="pharm-form-group">
+              <label htmlFor="name">Full Name</label>
+              <input 
+                id="name"
+                name="name" 
+                value={form.name} 
+                onChange={handleChange} 
+                placeholder="Enter your full name"
+                required 
+              />
+            </div>
+
+            <div className="pharm-form-group">
+              <label htmlFor="phone">Phone Number</label>
+              <input 
+                id="phone"
+                name="phone" 
+                value={form.phone} 
+                onChange={handleChange} 
+                placeholder="e.g. +91 98765 43210"
+                required 
+              />
+            </div>
+
+            <div className="pharm-profile-section-title">Additional Details</div>
+
+            <div className="pharm-form-group">
+              <label htmlFor="age">Age</label>
+              <input 
+                id="age"
+                name="age" 
+                type="number" 
+                value={form.age} 
+                onChange={handleChange} 
+                placeholder="Years"
+                required 
+              />
+            </div>
+
+            <div className="pharm-form-group">
+              <label htmlFor="sex">Gender</label>
+              <select 
+                id="sex"
+                name="sex" 
+                value={form.sex} 
+                onChange={handleChange} 
+                required
+                style={{
+                  padding: '1rem 1.25rem',
+                  border: '2px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  fontFamily: 'DM Sans, sans-serif',
+                  fontSize: '0.95rem',
+                  color: 'var(--text-body)',
+                  background: 'var(--surface)',
+                  fontWeight: 500
+                }}
+              >
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div className="pharm-profile-actions">
+              <button 
+                type="submit" 
+                className="pharm-profile-btn pharm-profile-btn-primary"
+                disabled={loading}
+              >
+                {loading ? 'Saving Profile...' : 'Complete Setup & Enter Dashboard'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   );
 }

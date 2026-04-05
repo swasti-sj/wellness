@@ -25,7 +25,7 @@ const getMedStatus = (med) => {
   const days = getDaysToExpiry(med.expiryDate);
   if (days === 0) return { label: 'Expired', cls: 'pharm-badge-red', severity: 3 };
   if (days <= 30) return { label: `Exp in ${days}d`, cls: 'pharm-badge-red', severity: 3 };
-  if (days <= 90) return { label: `Exp in ${days}d`, cls: 'pharm-badge-amber', severity: 2 };
+  if (days <= 90) return { label: `Exp in ${days}d`, cls: 'pharm-badge-red', severity: 2 };
   return { label: 'Good', cls: 'pharm-badge-green', severity: 0 };
 };
 
@@ -35,7 +35,7 @@ const getIndentTag = (med) => {
   return { label: 'OK', cls: 'pharm-badge pharm-badge-green' };
 };
 
-const txIcon = (type) => ({ ADDITION: '📦', OPENING_BALANCE: '🏁', ADJUSTMENT: '⚙️', EXPIRY_REMOVAL: '🗑️', RETURN: '↩️', ISSUANCE: '💊' }[type] || '📝');
+const txIcon = (type) => ({ ADDITION: 'Add', OPENING_BALANCE: 'Start', ADJUSTMENT: 'Adj', EXPIRY_REMOVAL: 'Rem', RETURN: 'Ret', ISSUANCE: 'Iss' }[type] || 'Note');
 const txColor = (type) => {
   if (['ADDITION', 'OPENING_BALANCE', 'RETURN'].includes(type)) return 'var(--pharm-green)';
   if (['EXPIRY_REMOVAL', 'ISSUANCE'].includes(type)) return 'var(--pharm-red)';
@@ -340,7 +340,7 @@ export default function PharmacistMedicineStock() {
       await axios.post(`${API}/medicines`, addForm, authHeader);
       setShowAddModal(false);
       setAddForm(EMPTY_ADD_FORM);
-      showSuccess(`✅ "${addForm.name}" added to inventory!`);
+      showSuccess(`"${addForm.name}" added to inventory!`);
       loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to add medicine');
@@ -392,7 +392,7 @@ export default function PharmacistMedicineStock() {
       }
       await axios.put(`${API}/medicines/${med._id}`, payload, authHeader);
       setEditModal(null);
-      showSuccess(`✅ "${med.name}" updated!`);
+      showSuccess(`"${med.name}" updated!`);
       loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to update medicine');
@@ -420,7 +420,7 @@ export default function PharmacistMedicineStock() {
         : `${med.notes ? med.notes + '; ' : ''}INDENT requested: ${new Date().toLocaleDateString('en-IN')}`;
 
       await axios.put(`${API}/medicines/${med._id}`, { notes: newNotes }, authHeader);
-      showSuccess(hasIndent ? `✅ Indent marker cleared for ${med.name}` : `✅ Indent marker added for ${med.name}`);
+      showSuccess(hasIndent ? `Indent marker cleared for ${med.name}` : `Indent marker added for ${med.name}`);
       loadMedicines();
     } catch (e) {
       setError(e.response?.data?.error || 'Failed to toggle indent marker');
@@ -530,13 +530,13 @@ export default function PharmacistMedicineStock() {
 
     setImportLoading(false);
     setImportDone(true);
-    if (failed === 0) showSuccess(`✅ Imported ${done} medicines successfully!`);
-    else showSuccess(`✅ Import done: ${done - failed} added, ${failed} failed.`);
+    if (failed === 0) showSuccess(`Imported ${done} medicines successfully!`);
+    else showSuccess(`Import done: ${done - failed} added, ${failed} failed.`);
     loadMedicines();
   };
 
   // ─────────────────────────────────────────────────────────────────────
-  if (loading) return <div className="pharm-loading">⏳ Loading medicine inventory...</div>;
+  if (loading) return <div className="pharm-loading">Loading medicine inventory...</div>;
 
   const criticalCount = counts.out + counts.expired + counts.expiring30;
 
@@ -547,16 +547,16 @@ export default function PharmacistMedicineStock() {
         {/* ── Header ── */}
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">💊 Medicine Stock</h1>
+            <h1 className="pharm-title">Medicine Stock</h1>
             <p className="pharm-subtitle">
               {medicines.length} medicines &nbsp;·&nbsp; {medicines.reduce((s, m) => s + m.stockCount, 0).toLocaleString()} total units
-              {criticalCount > 0 && <span style={{ color: 'var(--pharm-red)', fontWeight: 600 }}> &nbsp;·&nbsp; ⚠️ {criticalCount} need attention</span>}
+              {criticalCount > 0 && <span style={{ color: 'var(--pharm-red)', fontWeight: 600 }}> &nbsp;·&nbsp; {criticalCount} need attention</span>}
             </p>
           </div>
           <div className="pharm-header-actions">
-            <button className="pharm-btn pharm-btn-ghost" onClick={loadMedicines}>🔄 Refresh</button>
+            <button className="pharm-btn pharm-btn-ghost" onClick={loadMedicines}>Refresh</button>
             <button className="pharm-btn pharm-btn-ghost" onClick={() => fileInputRef.current?.click()}>
-              📥 Import Excel/CSV
+              Import Excel/CSV
             </button>
             <input ref={fileInputRef} type="file" accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={handleFileSelect} />
             <button className="pharm-btn pharm-btn-teal" onClick={() => { setShowAddModal(true); setError(''); }}>
@@ -568,27 +568,32 @@ export default function PharmacistMedicineStock() {
         {/* ── Alerts ── */}
         {error && (
           <div className="pharm-alert pharm-alert-danger" onClick={() => setError('')} style={{ cursor: 'pointer' }}>
-            ⚠️ {error} <span style={{ marginLeft: 'auto', opacity: 0.6 }}>✕ (click to dismiss)</span>
+            {error} <span style={{ marginLeft: 'auto', opacity: 0.6 }}>✕ (click to dismiss)</span>
           </div>
         )}
         {successMsg && <div className="pharm-alert pharm-alert-success">{successMsg}</div>}
 
         {/* ── Quick Stats Row ── */}
-        <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(6,1fr)', marginBottom: '1rem' }}>
+        <div className="pharm-stats-grid" style={{ marginBottom: '1rem' }}>
           {[
-            { key: 'all',        label: 'Total',          color: 'inherit',             icon: '💊' },
-            { key: 'out',        label: 'Out of Stock',    color: 'var(--pharm-red)',    icon: '🚫' },
-            { key: 'low',        label: 'Low Stock',       color: 'var(--pharm-amber)',  icon: '⚠️' },
-            { key: 'expiring30', label: 'Exp ≤30d',        color: 'var(--pharm-red)',    icon: '⏰' },
-            { key: 'expiring90', label: 'Exp 31–90d',      color: 'var(--pharm-amber)',  icon: '📅' },
-            { key: 'expired',    label: 'Expired (in stock)',color:'var(--pharm-red)',   icon: '☠️' },
+            { key: 'all',        label: 'Total',          color: 'var(--pharm-plum)', cls: 'info' },
+            { key: 'out',        label: 'Out of Stock',    color: 'var(--pharm-red)',  cls: 'danger' },
+            { key: 'low',        label: 'Low Stock',       color: 'var(--pharm-gold)', cls: 'warning' },
+            { key: 'expiring30', label: 'Exp ≤30d',        color: 'var(--pharm-red)',  cls: 'danger' },
+            { key: 'expiring90', label: 'Exp 31–90d',      color: 'var(--pharm-red)',  cls: 'danger' },
+            { key: 'expired',    label: 'Expired (in stock)',color:'var(--pharm-red)',  cls: 'danger' },
           ].map(s => (
             <div key={s.key}
-              className={`pharm-stat-card ${filter === s.key ? 'active-filter' : ''}`}
-              style={{ cursor: 'pointer', borderBottom: filter === s.key ? '3px solid var(--pharm-teal)' : '3px solid transparent' }}
+              className={`pharm-stat-card ${s.cls} ${filter === s.key ? 'active-filter' : ''}`}
+              style={{ 
+                cursor: 'pointer', 
+                borderBottom: filter === s.key ? '4px solid var(--pharm-gold)' : '4px solid transparent',
+                transform: filter === s.key ? 'scale(1.02)' : 'none',
+                opacity: filter === s.key ? 1 : 0.85
+              }}
               onClick={() => setFilter(s.key)}>
-              <div className="pharm-stat-label">{s.icon} {s.label}</div>
-              <div className="pharm-stat-value" style={{ color: s.color }}>{counts[s.key]}</div>
+              <div className="pharm-stat-label" style={{ fontWeight: 600 }}>{s.label}</div>
+              <div className="pharm-stat-value" style={{ color: s.color, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))' }}>{counts[s.key]}</div>
             </div>
           ))}
         </div>
@@ -599,7 +604,7 @@ export default function PharmacistMedicineStock() {
             <input
               className="pharm-input"
               style={{ flex: '1 1 240px', maxWidth: 320 }}
-              placeholder="🔍 Search name, brand, batch, manufacturer..."
+              placeholder="Search name, brand, batch, manufacturer..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
@@ -629,7 +634,6 @@ export default function PharmacistMedicineStock() {
           <div className="pharm-table-container" style={{ marginTop: '0.5rem' }}>
             {filtered.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">🔍</div>
                 <div className="pharm-empty-text">No medicines match the current filters</div>
               </div>
             ) : (
@@ -677,10 +681,10 @@ export default function PharmacistMedicineStock() {
                         <td className="mono" style={{ fontSize: '0.82rem' }}>{med.reorderLevel || 20}</td>
                         <td style={{ fontSize: '0.78rem', color: 'var(--pharm-gray-400)' }}>{med.unit}</td>
                         <td>
-                          <div className="mono" style={{ fontSize: '0.82rem', color: days <= 30 ? 'var(--pharm-red)' : days <= 90 ? 'var(--pharm-amber)' : 'inherit' }}>
+                          <div className="mono" style={{ fontSize: '0.82rem', color: days <= 90 ? 'var(--pharm-red)' : 'inherit' }}>
                             {new Date(med.expiryDate).toLocaleDateString('en-IN', { month: 'short', year: '2-digit' })}
                           </div>
-                          {days <= 90 && days > 0 && <div style={{ fontSize: '0.68rem', color: days <= 30 ? 'var(--pharm-red)' : 'var(--pharm-amber)' }}>{days}d left</div>}
+                          {days <= 90 && days > 0 && <div style={{ fontSize: '0.68rem', color: 'var(--pharm-red)' }}>{days}d left</div>}
                           {days === 0 && <div style={{ fontSize: '0.68rem', color: 'var(--pharm-red)', fontWeight: 700 }}>EXPIRED</div>}
                         </td>
                         <td className="mono" style={{ fontSize: '0.78rem', color: 'var(--pharm-gray-400)' }}>
@@ -695,11 +699,11 @@ export default function PharmacistMedicineStock() {
                           <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
                             <button className="pharm-btn pharm-btn-teal pharm-btn-sm" onClick={() => openEditModal(med, 'addStock')} title="Add Stock">+Stock</button>
                             <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openEditModal(med, 'adjust')} title="Edit Details">Edit</button>
-                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => handleToggleIndent(med)} title="Toggle Indent">⬛</button>
-                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openBatchModal(med)} title="Batch FIFO">🎯</button>
-                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openHistoryModal(med)} title="View History">🕐</button>
+                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => handleToggleIndent(med)} title="Toggle Indent">Indent</button>
+                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openBatchModal(med)} title="Batch FIFO">Batches</button>
+                            <button className="pharm-btn pharm-btn-ghost pharm-btn-sm" onClick={() => openHistoryModal(med)} title="View History">History</button>
                             <button className="pharm-btn pharm-btn-sm" style={{ background: 'rgba(220,38,38,0.1)', color: 'var(--pharm-red)', border: 'none' }}
-                              onClick={() => handleDelete(med)} title="Remove">🗑️</button>
+                              onClick={() => handleDelete(med)} title="Remove">Remove</button>
                           </div>
                         </td>
                       </tr>
@@ -717,13 +721,13 @@ export default function PharmacistMedicineStock() {
         <div className="pharm-modal-overlay" onClick={e => e.target === e.currentTarget && setShowAddModal(false)}>
           <div className="pharm-modal" style={{ maxWidth: 720 }}>
             <div className="pharm-modal-header">
-              <h3 className="pharm-modal-title">💊 Add New Medicine</h3>
+              <h3 className="pharm-modal-title">Add New Medicine</h3>
               <button className="pharm-btn-icon" onClick={() => setShowAddModal(false)}>✕</button>
             </div>
             <div className="pharm-modal-body">
               {error && <div className="pharm-alert pharm-alert-danger">{error}</div>}
               <div className="pharm-form-grid">
-                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1' }}>📋 Basic Information</div>
+                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1' }}>Basic Information</div>
 
                 <div className="pharm-form-group span-2">
                   <label className="pharm-label">Medicine Name <span className="required">*</span></label>
@@ -753,7 +757,7 @@ export default function PharmacistMedicineStock() {
                   </select>
                 </div>
 
-                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1', marginTop: '0.5rem' }}>📦 Stock & Expiry</div>
+                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1', marginTop: '0.5rem' }}>Stock & Expiry</div>
 
                 <div className="pharm-form-group">
                   <label className="pharm-label">Opening Stock <span className="required">*</span></label>
@@ -786,7 +790,7 @@ export default function PharmacistMedicineStock() {
                     value={addForm.pricePerUnit} onChange={e => setAddForm({ ...addForm, pricePerUnit: e.target.value })} />
                 </div>
 
-                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1', marginTop: '0.5rem' }}>🚚 Procurement Details</div>
+                <div className="pharm-form-section-title" style={{ gridColumn: '1/-1', marginTop: '0.5rem' }}>Procurement Details</div>
 
                 <div className="pharm-form-group">
                   <label className="pharm-label">Batch Number</label>

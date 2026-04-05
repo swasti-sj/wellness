@@ -6,18 +6,15 @@ const API = 'http://localhost:5000/api';
 
 const TX_TYPES = [
   { value: '',                label: 'All Types' },
-  { value: 'ADDITION',       label: '📦 Stock Addition' },
-  { value: 'OPENING_BALANCE',label: '🏁 Opening Balance' },
-  { value: 'ISSUANCE',       label: '💊 Issuance (Dispensed)' },
-  { value: 'ADJUSTMENT',     label: '⚙️ Adjustment' },
-  { value: 'EXPIRY_REMOVAL', label: '🗑️ Expiry / Removal' },
-  { value: 'RETURN',         label: '↩️ Return' },
+  { value: 'ADDITION',       label: 'Stock Addition' },
+  { value: 'OPENING_BALANCE',label: 'Opening Balance' },
+  { value: 'ISSUANCE',       label: 'Issuance (Dispensed)' },
+  { value: 'ADJUSTMENT',     label: 'Adjustment' },
+  { value: 'EXPIRY_REMOVAL', label: 'Expiry / Removal' },
+  { value: 'RETURN',         label: 'Return' },
 ];
 
-const txIcon = (type) => ({
-  ADDITION: '📦', OPENING_BALANCE: '🏁', ADJUSTMENT: '⚙️',
-  EXPIRY_REMOVAL: '🗑️', RETURN: '↩️', ISSUANCE: '💊'
-}[type] || '📝');
+const txIcon = (type) => null; // Icons removed for clinical theme
 
 const txColor = (type) => {
   if (['ADDITION', 'OPENING_BALANCE', 'RETURN'].includes(type)) return 'var(--pharm-green)';
@@ -123,16 +120,16 @@ export default function PharmacistStockHistory() {
       <div className="pharm-root">
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">🗓️ Stock History</h1>
+            <h1 className="pharm-title">Stock History</h1>
             <p className="pharm-subtitle">Complete audit trail — every stock change recorded with full traceability</p>
           </div>
           <div className="pharm-header-actions">
             {transactions.length > 0 && selectedMedObj && (
               <button className="pharm-btn pharm-btn-ghost" onClick={() => exportCSV(transactions, selectedMedObj.name)}>
-                📤 Export CSV
+                Export CSV
               </button>
             )}
-            <button className="pharm-btn pharm-btn-ghost" onClick={loadTransactions}>🔄 Refresh</button>
+            <button className="pharm-btn pharm-btn-ghost" onClick={loadTransactions}>Refresh</button>
           </div>
         </div>
 
@@ -141,16 +138,16 @@ export default function PharmacistStockHistory() {
         {/* ── Medicine Selector ── */}
         <div className="pharm-section">
           <div className="pharm-section-header">
-            <h2 className="pharm-section-title">🔍 Select Medicine</h2>
+            <h2 className="pharm-section-title">Select Medicine</h2>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0 1.5rem 1rem' }}>
 
             {/* Medicine search + select */}
             <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
-              <input className="pharm-input" placeholder="🔍 Type to search medicines..."
+              <input className="pharm-input" placeholder="Type to search medicines..."
                 style={{ minWidth: 220, maxWidth: 320 }}
                 value={medSearch} onChange={e => setMedSearch(e.target.value)} />
-              <select className="pharm-select" style={{ minWidth: 320, flex: 1 }}
+              <select className="pharm-select" style={{ flex: '1 1 320px' }}
                 value={selectedMed} onChange={e => setSelectedMed(e.target.value)}>
                 <option value="">— Select a medicine —</option>
                 {filteredMeds.map(m => (
@@ -159,7 +156,7 @@ export default function PharmacistStockHistory() {
                   </option>
                 ))}
               </select>
-              <select className="pharm-select" value={txType} onChange={e => setTxType(e.target.value)} style={{ minWidth: 200 }}>
+              <select className="pharm-select" value={txType} onChange={e => setTxType(e.target.value)} style={{ flex: '0 1 200px' }}>
                 {TX_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
               </select>
             </div>
@@ -198,14 +195,13 @@ export default function PharmacistStockHistory() {
 
         {!selectedMed ? (
           <div className="pharm-empty" style={{ padding: '4rem' }}>
-            <div className="pharm-empty-icon">💊</div>
             <div className="pharm-empty-text">Select a medicine above to view its complete stock history</div>
           </div>
         ) : (
           <>
             {/* ── Medicine Overview ── */}
             {selectedMedObj && (
-              <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', marginBottom: '1rem' }}>
+              <div className="pharm-stats-grid" style={{ marginBottom: '1rem' }}>
                 <div className="pharm-stat-card">
                   <div className="pharm-stat-label">Current Stock</div>
                   <div className="pharm-stat-value">{selectedMedObj.stockCount}</div>
@@ -245,10 +241,9 @@ export default function PharmacistStockHistory() {
               </div>
               <div className="pharm-table-container">
                 {loading ? (
-                  <div className="pharm-loading" style={{ minHeight: '150px' }}>⏳ Loading history...</div>
+                  <div className="pharm-loading" style={{ minHeight: '150px' }}>Loading history...</div>
                 ) : transactions.length === 0 ? (
                   <div className="pharm-empty">
-                    <div className="pharm-empty-icon">📭</div>
                     <div className="pharm-empty-text">No transactions in this period</div>
                   </div>
                 ) : (

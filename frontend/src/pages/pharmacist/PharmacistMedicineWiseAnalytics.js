@@ -106,43 +106,43 @@ export default function PharmacistMedicineWiseAnalytics() {
     </th>
   );
 
-  if (loading) return <div className="pharm-loading">⏳ Loading medicine-wise analytics...</div>;
+  if (loading) return <div className="pharm-loading">Loading medicine-wise analytics...</div>;
 
   return (
     <div className="pharm-layout">
       <div className="pharm-root">
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">🎯 Medicine-Wise Analytics</h1>
+            <h1 className="pharm-title">Medicine-Wise Analytics</h1>
             <p className="pharm-subtitle">Track additions & issuances per medicine — full visibility into stock movement</p>
           </div>
-          <button className="pharm-btn pharm-btn-ghost" onClick={loadCompleteMovement}>🔄 Refresh</button>
+          <button className="pharm-btn pharm-btn-ghost" onClick={loadCompleteMovement}>Refresh</button>
         </div>
 
         {/* ── Summary stats ── */}
-        <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)' }}>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">💊 Today's Issuance</div>
+        <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(5, 1fr)', marginBottom: '1.5rem' }}>
+          <div className="pharm-stat-card info">
+            <div className="pharm-stat-label">Today's Issuance</div>
             <div className="pharm-stat-value">{issuanceSummary?.today?.qty || 0}</div>
             <div className="pharm-stat-meta">{issuanceSummary?.today?.transactions || 0} txns</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">📅 This Week</div>
+          <div className="pharm-stat-card info">
+            <div className="pharm-stat-label">This Week</div>
             <div className="pharm-stat-value">{issuanceSummary?.week?.qty || 0}</div>
             <div className="pharm-stat-meta">{issuanceSummary?.week?.transactions || 0} txns</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">📅 This Month</div>
+          <div className="pharm-stat-card info">
+            <div className="pharm-stat-label">This Month</div>
             <div className="pharm-stat-value">{issuanceSummary?.month?.qty || 0}</div>
             <div className="pharm-stat-meta">{issuanceSummary?.month?.transactions || 0} txns</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">💊 Total Issued (period)</div>
+          <div className="pharm-stat-card danger">
+            <div className="pharm-stat-label">Total Issued (period)</div>
             <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>{totalStats.totalIssuedOverall.toLocaleString()}</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">📦 Total Added (period)</div>
-            <div className="pharm-stat-value" style={{ color: 'var(--pharm-teal)' }}>+{totalStats.totalAddedOverall.toLocaleString()}</div>
+          <div className="pharm-stat-card warning">
+            <div className="pharm-stat-label">Total Added (period)</div>
+            <div className="pharm-stat-value" style={{ color: 'var(--pharm-gold)' }}>+{totalStats.totalAddedOverall.toLocaleString()}</div>
           </div>
         </div>
 
@@ -175,7 +175,7 @@ export default function PharmacistMedicineWiseAnalytics() {
                 <button className="pharm-btn pharm-btn-teal pharm-btn-sm" onClick={loadCompleteMovement}>Apply</button>
               </>
             )}
-            <input className="pharm-input" placeholder="🔍 Search medicine..."
+            <input className="pharm-input" placeholder="Search medicine..."
               style={{ marginLeft: 'auto', minWidth: 200 }}
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
@@ -184,7 +184,6 @@ export default function PharmacistMedicineWiseAnalytics() {
           <div className="pharm-table-container" style={{ marginTop: '0.5rem' }}>
             {filtered.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No movement data for this period</div>
               </div>
             ) : (
@@ -262,7 +261,7 @@ export default function PharmacistMedicineWiseAnalytics() {
           <div className="pharm-section">
             <div className="pharm-section-header">
               <h2 className="pharm-section-title">
-                🔬 Daily Breakdown: {selectedMedicineDetails.name}
+                Daily Breakdown: {selectedMedicineDetails.name}
                 {selectedMedicineDetails.brandName && ` (${selectedMedicineDetails.brandName})`}
               </h2>
               <button className="pharm-btn pharm-btn-ghost pharm-btn-sm"
@@ -310,12 +309,12 @@ export default function PharmacistMedicineWiseAnalytics() {
             {/* Low stock alert */}
             {selectedMedicineDetails.currentStock < (selectedMedicineDetails.reorderLevel || 20) && (
               <div className="pharm-alert pharm-alert-warning" style={{ marginBottom: '1rem' }}>
-                ⚠️ <strong>Low Stock:</strong> Current ({selectedMedicineDetails.currentStock}) is below reorder level ({selectedMedicineDetails.reorderLevel || 20}). Please restock.
+                <strong>Low Stock:</strong> Current ({selectedMedicineDetails.currentStock}) is below reorder level ({selectedMedicineDetails.reorderLevel || 20}). Please restock.
               </div>
             )}
 
             {detailLoading ? (
-              <div className="pharm-loading" style={{ minHeight: 100 }}>⏳ Loading daily data...</div>
+              <div className="pharm-loading" style={{ minHeight: 100 }}>Loading daily data...</div>
             ) : (
               <div className="pharm-table-container">
                 <table className="pharm-table" style={{ fontSize: '0.82rem' }}>

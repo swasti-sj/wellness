@@ -58,17 +58,17 @@ export default function PharmacistAnalytics() {
   const totalAdded  = movementDates.reduce((s, d) => s + (movementMap[d].added  || 0), 0);
   const netChange   = totalAdded - totalIssued;
 
-  if (loading) return <div className="pharm-loading">⏳ Loading analytics...</div>;
+  if (loading) return <div className="pharm-loading">Loading analytics...</div>;
 
   return (
     <div className="pharm-layout">
       <div className="pharm-root">
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">📈 Analytics & Reports</h1>
+            <h1 className="pharm-title">Analytics & Reports</h1>
             <p className="pharm-subtitle">Usage statistics, stock movement, and consumption trends</p>
           </div>
-          <button className="pharm-btn pharm-btn-ghost" onClick={loadAnalytics}>🔄 Refresh</button>
+          <button className="pharm-btn pharm-btn-ghost" onClick={loadAnalytics}>Refresh</button>
         </div>
 
         {/* ── Issuance Summary ── */}
@@ -78,11 +78,11 @@ export default function PharmacistAnalytics() {
               { label: 'TODAY',      data: issuanceSummary.today },
               { label: 'THIS WEEK',  data: issuanceSummary.week,  cls: 'week' },
               { label: 'THIS MONTH', data: issuanceSummary.month, cls: 'month' },
-              { label: 'THIS YEAR',  data: issuanceSummary.year   },
+              { label: 'THIS YEAR',  data: issuanceSummary.year, cls: 'year' },
               { label: 'ALL TIME',   data: issuanceSummary.allTime },
             ].map(s => (
               <div key={s.label} className={`pharm-issuance-card ${s.cls || ''}`}>
-                <div className="label">📅 {s.label}</div>
+                <div className="label">{s.label}</div>
                 <div className="value">{s.data?.qty || 0}</div>
                 <div className="sub">{s.data?.transactions || 0} transactions</div>
               </div>
@@ -91,28 +91,28 @@ export default function PharmacistAnalytics() {
         )}
 
         {/* ── Movement Period Totals ── */}
-        <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(3,1fr)', marginBottom: '1rem' }}>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">📦 Stock Added ({movementDays}d)</div>
-            <div className="pharm-stat-value" style={{ color: 'var(--pharm-teal)' }}>+{totalAdded}</div>
+        <div className="pharm-stats-grid" style={{ marginBottom: '1.5rem' }}>
+          <div className="pharm-stat-card warning">
+            <div className="pharm-stat-label">Stock Added ({movementDays}d)</div>
+            <div className="pharm-stat-value" style={{ color: 'var(--pharm-gold)' }}>+{totalAdded}</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">💊 Stock Issued ({movementDays}d)</div>
+          <div className="pharm-stat-card danger">
+            <div className="pharm-stat-label">Stock Issued ({movementDays}d)</div>
             <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>−{totalIssued}</div>
           </div>
-          <div className="pharm-stat-card">
-            <div className="pharm-stat-label">📊 Net Change ({movementDays}d)</div>
-            <div className="pharm-stat-value" style={{ color: netChange >= 0 ? 'var(--pharm-green)' : 'var(--pharm-red)' }}>
+          <div className="pharm-stat-card info">
+            <div className="pharm-stat-label">Net Change ({movementDays}d)</div>
+            <div className="pharm-stat-value" style={{ color: netChange >= 0 ? 'var(--pharm-plum)' : 'var(--pharm-red)' }}>
               {netChange >= 0 ? '+' : ''}{netChange}
             </div>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div className="pharm-analytics-grid">
           {/* ── Most Used Medicines ── */}
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">🏆 Most Dispensed Medicines</h2>
+              <h2 className="pharm-section-title">Most Dispensed Medicines</h2>
               <div className="pharm-period-selector">
                 {[
                   { k: 'day', l: 'Today' },
@@ -129,7 +129,6 @@ export default function PharmacistAnalytics() {
             </div>
             {topUsed.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No issuance data for this period</div>
               </div>
             ) : (
@@ -160,7 +159,7 @@ export default function PharmacistAnalytics() {
           {/* ── Daily Stock Movement ── */}
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">📊 Daily Stock Movement</h2>
+              <h2 className="pharm-section-title">Daily Stock Movement</h2>
               <div className="pharm-period-selector">
                 {[7, 14, 30, 60].map(d => (
                   <button key={d} className={`pharm-period-btn ${movementDays === d ? 'active' : ''}`}
@@ -172,7 +171,6 @@ export default function PharmacistAnalytics() {
             </div>
             {movementDates.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No movement data in this period</div>
               </div>
             ) : (
@@ -263,14 +261,14 @@ export default function PharmacistAnalytics() {
         {expirySummary && (
           <div className="pharm-section" style={{ marginTop: '1.5rem' }}>
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">⏰ Medicine Expiry Distribution</h2>
+              <h2 className="pharm-section-title">Medicine Expiry Distribution</h2>
             </div>
-            <div className="pharm-stats-grid" style={{ gridTemplateColumns: 'repeat(7, 1fr)' }}>
+            <div className="pharm-stats-grid">
               {[
                 { label: 'Expired',      val: expirySummary.expired,    color: 'var(--pharm-red)' },
                 { label: '≤30 days',     val: expirySummary.expiring30,  color: 'var(--pharm-red)' },
-                { label: '31–60 days',   val: expirySummary.expiring60,  color: 'var(--pharm-amber)' },
-                { label: '61–90 days',   val: expirySummary.expiring90,  color: 'var(--pharm-amber)' },
+                { label: '31–60 days',   val: expirySummary.expiring60,  color: 'var(--pharm-red)' },
+                { label: '61–90 days',   val: expirySummary.expiring90,  color: 'var(--pharm-red)' },
                 { label: '91–180 days',  val: expirySummary.expiring180, color: 'inherit' },
                 { label: '181–365 days', val: expirySummary.expiring365, color: 'var(--pharm-green)' },
                 { label: '>1 year',      val: expirySummary.beyond365,   color: 'var(--pharm-green)' },

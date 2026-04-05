@@ -5,11 +5,12 @@ import '../../styles/InitialProfileForm.css';
 
 function InitialProfileForm() {
   console.log("hi");
-  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '' });
+  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '', uhid: '', consentAccepted: false });
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value, type, checked } = e.target;
+    setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
   };
 
   const handleSubmit = async (e) => {
@@ -30,34 +31,70 @@ function InitialProfileForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <label>
-        Name:
-        <input name="name" value={form.name} onChange={handleChange} required />
-      </label>
-      <label>
-        Roll Number:
-        <input name="roll" value={form.roll} onChange={handleChange} required />
-      </label>
-      <label>
-        Sex:
-        <select name="sex" value={form.sex} onChange={handleChange} required>
-          <option value="">Select</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-          <option value="Other">Other</option>
-        </select>
-      </label>
-      <label>
-        Age:
-        <input name="age" type="number" value={form.age} onChange={handleChange} required />
-      </label>
-      <label>
-        Phone:
-        <input name="phone" value={form.phone} onChange={handleChange} required />
-      </label>
-      <button type="submit">Save</button>
-    </form>
+    <div className="patient-profile-page">
+      <div className="patient-profile-shell">
+        <div className="profile-hero">
+          <div>
+            <div className="profile-kicker">Welcome to Wellness</div>
+            <h1>Complete Your Profile</h1>
+            <p className="profile-subtitle">
+              Please provide your basic information to help us provide you with the best clinical care.
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="profile-form profile-form-modern">
+          <div className="profile-grid">
+            <label className="profile-span-2">
+              Full Name:
+              <input name="name" value={form.name} onChange={handleChange} placeholder="As per official records" required />
+            </label>
+            
+            <label>
+              Roll Number / ID:
+              <input name="roll" value={form.roll} onChange={handleChange} placeholder="e.g. 210010001" required />
+            </label>
+
+            <label>
+              Sex:
+              <select name="sex" value={form.sex} onChange={handleChange} required>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              Age:
+              <input name="age" type="number" value={form.age} onChange={handleChange} placeholder="Years" required />
+            </label>
+
+            <label>
+              Phone Number:
+              <input name="phone" value={form.phone} onChange={handleChange} placeholder="e.g. +91 XXXXX XXXXX" required />
+            </label>
+            <label>
+              UHID Number:
+              <input name="uhid" value={form.uhid} onChange={handleChange} placeholder="Unique Health ID" required />
+            </label>
+          </div>
+
+          <div className="consent-card">
+            <div className="consent-copy">
+              <h3>Patient Consent</h3>
+              <p>I agree to the processing of my medical data for clinical purposes.</p>
+            </div>
+            <label className="consent-check">
+              <input name="consentAccepted" type="checkbox" checked={form.consentAccepted} onChange={handleChange} required />
+              I Agree
+            </label>
+          </div>
+
+          <button type="submit">Save & Enter Dashboard</button>
+        </form>
+      </div>
+    </div>
   );
 }
 

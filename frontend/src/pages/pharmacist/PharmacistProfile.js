@@ -12,13 +12,9 @@ export default function PharmacistProfile() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedRole = localStorage.getItem('role');
-    console.log('PharmacistProfile: Component mounted - token exists:', !!token, 'stored role:', storedRole);
-
     if (token) {
       loadProfile();
     } else {
-      console.log('PharmacistProfile: No token found in localStorage');
       setError('No authentication token found. Please log in.');
       setLoading(false);
     }
@@ -33,14 +29,7 @@ export default function PharmacistProfile() {
       });
       setProfile(res.data);
     } catch (err) {
-      console.error('Profile load error:', err);
-      if (err.response?.status === 401) {
-        setError('Authentication failed. Please log in again.');
-      } else if (err.response?.status === 403) {
-        setError('Access denied. You do not have permission to view this profile.');
-      } else {
-        setError('Failed to load profile. ' + (err.response?.data?.error || err.message));
-      }
+      setError('Failed to load profile details.');
     } finally {
       setLoading(false);
     }
@@ -64,16 +53,13 @@ export default function PharmacistProfile() {
         phone: profile.phone,
         email: profile.email
       };
-      const res = await axios.post('http://localhost:5000/api/pharmacist/profile', payload, {
+      await axios.post('http://localhost:5000/api/pharmacist/profile', payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.data.success || res.data.message) {
-        setEditMode(false);
-        await loadProfile();
-        alert('Profile updated successfully!');
-      }
+      setEditMode(false);
+      await loadProfile();
+      alert('Profile updated successfully!');
     } catch (err) {
-      console.error('Save error:', err.response || err);
       setError('Failed to save profile. ' + (err.response?.data?.error || err.message));
     }
   };
@@ -83,29 +69,53 @@ export default function PharmacistProfile() {
     navigate('/');
   };
 
-  if (loading) return <div className="pharm-profile-loading">⏳ Loading profile...</div>;
+  if (loading) return <div className="pharm-profile-loading">Loading profile...</div>;
+
+  const initials = profile?.name
+    ? profile.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    : 'PH';
 
   return (
     <div className="pharm-profile-container">
       <div className="pharm-profile-card">
         <div className="pharm-profile-header">
-          <h2>👤 Pharmacist Profile</h2>
-          <p>{profile?.email || 'IIT Dharwad Pharmacy'}</p>
+          <h2>Pharmacist Profile</h2>
+          <p>IIT Dharwad Medical Department</p>
+          
+          <div className="pharm-profile-avatar-wrapper">
+            <div className="pharm-profile-avatar">{initials}</div>
+          </div>
         </div>
 
         <div className="pharm-profile-body">
-          {error && <div className="pharm-profile-error">⚠️ {error}</div>}
+          {error && <div className="pharm-profile-error">{error}</div>}
 
           <form className="pharm-profile-form" onSubmit={handleSave}>
+            <div className="pharm-profile-section-title">Official Account</div>
+            
             <div className="pharm-form-group">
-              <label htmlFor="name">📛 Name</label>
+              <label>Role</label>
+              <div className="pharm-profile-value" style={{ textTransform: 'capitalize', fontWeight: 700, color: 'var(--plum)' }}>
+                {profile?.role || 'Pharmacist'}
+              </div>
+            </div>
+
+            <div className="pharm-form-group">
+              <label>Email Address</label>
+              <div className="pharm-profile-value">{profile?.email || 'N/A'}</div>
+            </div>
+
+            <div className="pharm-profile-section-title">Personal Information</div>
+
+            <div className="pharm-form-group">
+              <label htmlFor="name">Full Name</label>
               {editMode ? (
                 <input
                   id="name"
                   name="name"
                   value={profile?.name || ''}
                   onChange={handleChange}
-                  placeholder="Enter your name"
+                  placeholder="Enter your full name"
                   required
                 />
               ) : (
@@ -114,7 +124,7 @@ export default function PharmacistProfile() {
             </div>
 
             <div className="pharm-form-group">
-              <label htmlFor="phone">📞 Phone</label>
+              <label htmlFor="phone">Phone Number</label>
               {editMode ? (
                 <input
                   id="phone"
@@ -122,41 +132,29 @@ export default function PharmacistProfile() {
                   type="tel"
                   value={profile?.phone || ''}
                   onChange={handleChange}
-                  placeholder="Enter your phone number"
+                  placeholder="e.g. +91 98765 43210"
+                  required
                 />
               ) : (
                 <div className="pharm-profile-value">{profile?.phone || 'Not provided'}</div>
               )}
             </div>
 
-            <div className="pharm-form-group">
-              <label htmlFor="email">📧 Email</label>
-              <div className="pharm-profile-value">{profile?.email || 'N/A'}</div>
-              <small style={{ color: '#7A6890', marginTop: '-8px' }}>Email cannot be changed</small>
-            </div>
-
-            <div className="pharm-form-group">
-              <label htmlFor="role">💼 Role</label>
-              <div className="pharm-profile-value" style={{ textTransform: 'capitalize' }}>
-                {profile?.role || 'pharmacist'}
-              </div>
-            </div>
-
             <div className="pharm-profile-actions">
               {editMode ? (
                 <>
                   <button type="submit" className="pharm-profile-btn pharm-profile-btn-primary">
-                    ✅ Save Changes
+                    Save Changes
                   </button>
                   <button
                     type="button"
                     className="pharm-profile-btn pharm-profile-btn-secondary"
                     onClick={() => {
                       setEditMode(false);
-                      loadProfile(); // Reload to discard changes
+                      loadProfile();
                     }}
                   >
-                    ❌ Cancel
+                    Cancel
                   </button>
                 </>
               ) : (
@@ -166,14 +164,14 @@ export default function PharmacistProfile() {
                     className="pharm-profile-btn pharm-profile-btn-primary"
                     onClick={() => setEditMode(true)}
                   >
-                    ✏️ Edit Profile
+                    Edit Profile Details
                   </button>
                   <button
                     type="button"
                     className="pharm-profile-btn pharm-profile-btn-danger"
                     onClick={handleLogout}
                   >
-                    🚪 Logout
+                    Logout
                   </button>
                 </>
               )}
@@ -184,4 +182,3 @@ export default function PharmacistProfile() {
     </div>
   );
 }
-

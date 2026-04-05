@@ -64,7 +64,7 @@ function LayoutWithPharmNavbar({ children }) {
   return (
     <>
       <PharmacistNavbar />
-      <div style={{ paddingTop: "60px" }}>
+      <div style={{ paddingTop: "80px" }}>
         {children}
       </div>
     </>
@@ -296,12 +296,12 @@ function App() {
 <Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/medicine-analytics" element={<PharmacistMedicineWiseAnalytics />} />
+<Route path="/pharmacist-dashboard/medicine-analytics" element={<LayoutWithPharmNavbar><PharmacistMedicineWiseAnalytics /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
 
 {/* // In your Routes section: */}
-<Route path="/pharmacist-dashboard/advanced-analytics" element={<PharmacistAdvancedAnalytics />} />
+<Route path="/pharmacist-dashboard/advanced-analytics" element={<LayoutWithPharmNavbar><PharmacistAdvancedAnalytics /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>

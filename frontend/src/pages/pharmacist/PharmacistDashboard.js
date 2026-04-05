@@ -14,7 +14,7 @@ const getMedStatus = (med) => {
   const days = getDaysToExpiry(med.expiryDate);
   if (days === 0) return { label: 'Expired', cls: 'pharm-badge-red' };
   if (days <= 30) return { label: `Exp ${days}d`, cls: 'pharm-badge-red' };
-  if (days <= 90) return { label: `Exp ${days}d`, cls: 'pharm-badge-amber' };
+  if (days <= 90) return { label: `Exp ${days}d`, cls: 'pharm-badge-red' };
   return { label: 'Good', cls: 'pharm-badge-green' };
 };
 
@@ -73,13 +73,13 @@ export default function PharmacistDashboard() {
 
   if (loading) return (
     <div className="pharm-loading">
-      <span>⏳</span> Loading pharmacy dashboard...
+      Loading pharmacy dashboard...
     </div>
   );
 
   if (error) return (
     <div className="pharm-error">
-      <span>⚠️ {error}</span>
+      <span>{error}</span>
       <button className="pharm-btn pharm-btn-primary" onClick={loadAll}>Retry</button>
     </div>
   );
@@ -94,18 +94,18 @@ export default function PharmacistDashboard() {
         {/* ── Header ── */}
         <div className="pharm-header">
           <div>
-            <h1 className="pharm-title">🏥 Pharmacy Dashboard</h1>
+            <h1 className="pharm-title">Pharmacy Dashboard</h1>
             <p className="pharm-subtitle">
               {new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
           <div className="pharm-header-actions">
-            <button className="pharm-btn pharm-btn-ghost" onClick={loadAll}>🔄 Refresh</button>
+            <button className="pharm-btn pharm-btn-ghost" onClick={loadAll}>Refresh</button>
             <button className="pharm-btn pharm-btn-ghost" onClick={() => navigate('/pharmacist-dashboard/records')}>
-              + Issue Medicine
+              Issue Medicine
             </button>
             <button className="pharm-btn pharm-btn-teal" onClick={() => navigate('/pharmacist-dashboard/stock')}>
-              + Add Stock
+              Add Stock
             </button>
           </div>
         </div>
@@ -114,22 +114,22 @@ export default function PharmacistDashboard() {
         {stats && (
           <div className="pharm-stats-grid">
             <div className="pharm-stat-card">
-              <div className="pharm-stat-label">💊 Total Medicines</div>
+              <div className="pharm-stat-label">Total Medicines</div>
               <div className="pharm-stat-value">{stats.totalMedicines}</div>
               <div className="pharm-stat-meta">{stats.totalUnitsInStock.toLocaleString()} units in stock</div>
             </div>
             <div className="pharm-stat-card danger">
-              <div className="pharm-stat-label">🚫 Out of Stock</div>
+              <div className="pharm-stat-label">Out of Stock</div>
               <div className="pharm-stat-value" style={{ color: 'var(--pharm-red)' }}>{stats.outOfStock}</div>
               <div className="pharm-stat-meta">Needs immediate restocking</div>
             </div>
             <div className="pharm-stat-card warning">
-              <div className="pharm-stat-label">⚠️ Low Stock</div>
+              <div className="pharm-stat-label">Low Stock</div>
               <div className="pharm-stat-value" style={{ color: 'var(--pharm-amber)' }}>{stats.lowStock}</div>
               <div className="pharm-stat-meta">Below reorder level</div>
             </div>
-            <div className="pharm-stat-card warning">
-              <div className="pharm-stat-label">⏰ Expiring ≤30d</div>
+            <div className="pharm-stat-card danger">
+              <div className="pharm-stat-label">Expiring ≤30d</div>
               <div className="pharm-stat-value" style={{ color: stats.expiring30Days > 0 ? 'var(--pharm-red)' : 'inherit' }}>
                 {stats.expiring30Days}
               </div>
@@ -141,11 +141,11 @@ export default function PharmacistDashboard() {
         {/* ── Stock Movement Summary ── */}
         {stats?.stockMovement && (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-            <div className="pharm-section" style={{ margin: 0 }}>
-              <div className="pharm-section-header">
-                <h2 className="pharm-section-title">📦 Stock Added</h2>
+            <div className="pharm-section" style={{ margin: 0, borderTop: '5px solid var(--pharm-gold)', boxShadow: '0 8px 24px rgba(200, 134, 10, 0.12)' }}>
+              <div className="pharm-section-header" style={{ background: 'linear-gradient(to right, var(--pharm-gold-soft), #fff)', borderBottom: '1px solid var(--pharm-gold-mid)' }}>
+                <h2 className="pharm-section-title" style={{ color: 'var(--pharm-gold-dark)' }}>Stock Added</h2>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', padding: '1rem 1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', padding: '1.5rem', background: 'linear-gradient(135deg, #fffbeb 0%, var(--pharm-gold-soft) 100%)' }}>
                 {[
                   { label: 'Today', val: stats.stockMovement.added.today },
                   { label: 'This Week', val: stats.stockMovement.added.week },
@@ -158,11 +158,11 @@ export default function PharmacistDashboard() {
                 ))}
               </div>
             </div>
-            <div className="pharm-section" style={{ margin: 0 }}>
-              <div className="pharm-section-header">
-                <h2 className="pharm-section-title">💊 Units Dispensed</h2>
+            <div className="pharm-section" style={{ margin: 0, borderTop: '5px solid var(--pharm-red)', boxShadow: '0 8px 24px rgba(220, 38, 38, 0.12)' }}>
+              <div className="pharm-section-header" style={{ background: 'linear-gradient(to right, var(--pharm-red-pale), #fff)', borderBottom: '1px solid #fecaca' }}>
+                <h2 className="pharm-section-title" style={{ color: '#991b1b' }}>Units Dispensed</h2>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', padding: '1rem 1.5rem' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '0.75rem', padding: '1.5rem', background: 'linear-gradient(135deg, #fff5f5 0%, var(--pharm-red-pale) 100%)' }}>
                 {[
                   { label: 'Today', val: stats.stockMovement.issued.today },
                   { label: 'This Week', val: stats.stockMovement.issued.week },
@@ -179,25 +179,25 @@ export default function PharmacistDashboard() {
         )}
 
         {/* ── Issuance Summary ── */}
-        {issuanceSummary && (
+        {issuanceSummary && issuanceSummary.today && (
           <div className="pharm-issuance-summary">
             <div className="pharm-issuance-card">
-              <div className="label">📅 TODAY</div>
-              <div className="value">{issuanceSummary.today.qty}</div>
-              <div className="sub">{issuanceSummary.today.transactions} dispensing transactions</div>
+              <div className="label">TODAY</div>
+              <div className="value">{issuanceSummary.today?.qty || 0}</div>
+              <div className="sub">{issuanceSummary.today?.transactions || 0} dispensing transactions</div>
             </div>
             <div className="pharm-issuance-card week">
-              <div className="label">📅 THIS WEEK</div>
-              <div className="value">{issuanceSummary.week.qty}</div>
-              <div className="sub">{issuanceSummary.week.transactions} transactions</div>
+              <div className="label">THIS WEEK</div>
+              <div className="value">{issuanceSummary.week?.qty || 0}</div>
+              <div className="sub">{issuanceSummary.week?.transactions || 0} transactions</div>
             </div>
             <div className="pharm-issuance-card month">
-              <div className="label">📅 THIS MONTH</div>
-              <div className="value">{issuanceSummary.month.qty}</div>
-              <div className="sub">{issuanceSummary.month.transactions} transactions</div>
+              <div className="label">THIS MONTH</div>
+              <div className="value">{issuanceSummary.month?.qty || 0}</div>
+              <div className="sub">{issuanceSummary.month?.transactions || 0} transactions</div>
             </div>
-            <div className="pharm-issuance-card" style={{ borderColor: 'var(--pharm-navy)' }}>
-              <div className="label">📅 THIS YEAR</div>
+            <div className="pharm-issuance-card year">
+              <div className="label">THIS YEAR</div>
               <div className="value">{issuanceSummary.year?.qty || 0}</div>
               <div className="sub">{issuanceSummary.year?.transactions || 0} transactions</div>
             </div>
@@ -209,7 +209,7 @@ export default function PharmacistDashboard() {
           <div className="pharm-section">
             <div className="pharm-section-header">
               <h2 className="pharm-section-title">
-                🚨 Critical Alerts
+                Critical Alerts
                 {criticalMeds.length > 0 && <span className="count-badge" style={{ background: 'var(--pharm-red)', color: '#fff' }}>{criticalMeds.length}</span>}
               </h2>
               <button className="pharm-btn pharm-btn-ghost pharm-btn-sm"
@@ -219,7 +219,6 @@ export default function PharmacistDashboard() {
             </div>
             {criticalMeds.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">✅</div>
                 <div className="pharm-empty-text">All medicines are well-stocked and within expiry!</div>
               </div>
             ) : (
@@ -266,7 +265,7 @@ export default function PharmacistDashboard() {
           {/* ── Top Used Medicines ── */}
           <div className="pharm-section">
             <div className="pharm-section-header">
-              <h2 className="pharm-section-title">📊 Most Dispensed</h2>
+              <h2 className="pharm-section-title">Most Dispensed</h2>
               <div className="pharm-period-selector">
                 {['day', 'week', 'month'].map(p => (
                   <button key={p}
@@ -279,7 +278,6 @@ export default function PharmacistDashboard() {
             </div>
             {topUsed.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No issuance data for this period</div>
               </div>
             ) : (
@@ -312,7 +310,7 @@ export default function PharmacistDashboard() {
         <div className="pharm-section" style={{ marginTop: '1.5rem' }}>
           <div className="pharm-section-header">
             <h2 className="pharm-section-title">
-              📋 Recent Issuances
+              Recent Issuances
               <span className="count-badge">{recentIssuances.length}</span>
             </h2>
             <button className="pharm-btn pharm-btn-ghost pharm-btn-sm"
@@ -323,7 +321,6 @@ export default function PharmacistDashboard() {
           <div className="pharm-table-container">
             {recentIssuances.length === 0 ? (
               <div className="pharm-empty">
-                <div className="pharm-empty-icon">📭</div>
                 <div className="pharm-empty-text">No issuances recorded yet</div>
               </div>
             ) : (
