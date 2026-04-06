@@ -14,20 +14,18 @@ export default function ReceptionistDashboard() {
     role: 'Student',
     doctorId: '',
     doctorName: '',
-    date: new Date().toISOString().split('T')[0] // Default to today
+    date: new Date().toISOString().split('T')[0]
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  const [editingStatusId, setEditingStatusId] = useState(null);
+  const [messageType, setMessageType] = useState('success'); // 'success' | 'error'
   const [editingRowId, setEditingRowId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
 
-  // Get token from localStorage
   const token = localStorage.getItem('token');
   const apiBaseUrl = 'http://localhost:5000/api';
 
-  // Fetch all appointments on mount
   useEffect(() => {
     fetchAppointments();
     fetchManualEntries();
@@ -47,27 +45,24 @@ export default function ReceptionistDashboard() {
     try {
       setLoading(true);
       const response = await axios.get(`${apiBaseUrl}/appointments/all-appointments`);
-
-      // Format appointments properly from backend
       const formatted = (response.data.appointments || []).map(appt => ({
         _id: appt._id,
-        patientName: appt.user?.name || "Unknown",
-        roll: appt.user?.roll || "-",
-        doctorName: appt.doctor?.name || "Unknown",
-        doctorId: appt.doctor?._id || "",
-        email: appt.user?.email || "-",
-        phone: appt.user?.phone || "-",
+        patientName: appt.user?.name || 'Unknown',
+        roll: appt.user?.roll || '-',
+        doctorName: appt.doctor?.name || 'Unknown',
+        doctorId: appt.doctor?._id || '',
+        email: appt.user?.email || '-',
+        phone: appt.user?.phone || '-',
         date: appt.startDateTime,
-        time: appt.slotTime || "-",
-        status: appt.status || "booked",
+        time: appt.slotTime || '-',
+        status: appt.status || 'booked',
         source: 'system'
       }));
-
       setAppointments(formatted);
       setMessage('');
     } catch (error) {
       console.error('Error fetching appointments:', error);
-      setMessage('Error loading appointments');
+      showMessage('Error loading appointments', 'error');
     } finally {
       setLoading(false);
     }
@@ -93,12 +88,15 @@ export default function ReceptionistDashboard() {
     }
   };
 
-  // Handle form input changes
+  const showMessage = (text, type = 'success') => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => setMessage(''), 3500);
+  };
+
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-
     if (name === 'doctorId') {
-      // Find the doctor name from doctors list
       const selectedDoctor = doctors.find(d => d._id === value);
       setFormData(prev => ({
         ...prev,
@@ -106,52 +104,25 @@ export default function ReceptionistDashboard() {
         doctorName: selectedDoctor ? selectedDoctor.name : ''
       }));
     } else {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Handle status change
   const handleStatusChange = async (itemId, newStatus) => {
-    // Check if it's a manual entry
     const manualEntry = manualEntries.find(e => e._id === itemId);
-
     if (manualEntry) {
-      // Save to database if it's a manual entry
       try {
-        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, {
-          status: newStatus
-        });
+        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, { status: newStatus });
       } catch (error) {
-        console.error('Error updating entry status:', error);
-        setMessage('Error updating status');
-        setTimeout(() => setMessage(''), 3000);
+        showMessage('Error updating status', 'error');
         return;
       }
     }
-
-    // Update appointments if it exists there
-    setAppointments(prev =>
-      prev.map(appt =>
-        appt._id === itemId ? { ...appt, status: newStatus } : appt
-      )
-    );
-
-    // Update manual entries if it exists there
-    setManualEntries(prev =>
-      prev.map(entry =>
-        entry._id === itemId ? { ...entry, status: newStatus } : entry
-      )
-    );
-
-    setEditingStatusId(null);
-    setMessage('Status updated');
-    setTimeout(() => setMessage(''), 3000);
+    setAppointments(prev => prev.map(a => a._id === itemId ? { ...a, status: newStatus } : a));
+    setManualEntries(prev => prev.map(e => e._id === itemId ? { ...e, status: newStatus } : e));
+    showMessage('Status updated successfully');
   };
 
-  // Handle edit row
   const handleEditRow = (item) => {
     setEditingRowId(item._id);
     setEditedValues({
@@ -162,21 +133,13 @@ export default function ReceptionistDashboard() {
     });
   };
 
-  // Handle field change while editing
   const handleEditFieldChange = (fieldName, value) => {
-    setEditedValues(prev => ({
-      ...prev,
-      [fieldName]: value
-    }));
+    setEditedValues(prev => ({ ...prev, [fieldName]: value }));
   };
 
-  // Handle save changes
   const handleSaveChanges = async (itemId) => {
-    // Check if it's a manual entry
     const manualEntry = manualEntries.find(e => e._id === itemId);
-
     if (manualEntry) {
-      // Save to database if it's a manual entry
       try {
         await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}`, {
           patientName: editedValues.patientName,
@@ -185,70 +148,37 @@ export default function ReceptionistDashboard() {
           appointmentDate: editedValues.date || null
         });
       } catch (error) {
-        console.error('Error saving entry changes:', error);
-        setMessage('Error saving changes');
-        setTimeout(() => setMessage(''), 3000);
+        showMessage('Error saving changes', 'error');
         setEditingRowId(null);
         setEditedValues({});
         return;
       }
     }
-
-    // Update appointments if it exists there
-    setAppointments(prev =>
-      prev.map(appt =>
-        appt._id === itemId
-          ? {
-              ...appt,
-              patientName: editedValues.patientName,
-              roll: editedValues.roll,
-              doctorName: editedValues.doctorName,
-              date: editedValues.date ? new Date(editedValues.date).toISOString() : appt.date
-            }
-          : appt
-      )
-    );
-
-    // Update manual entries if it exists there
-    setManualEntries(prev =>
-      prev.map(entry =>
-        entry._id === itemId
-          ? {
-              ...entry,
-              patientName: editedValues.patientName,
-              roll: editedValues.roll,
-              doctorName: editedValues.doctorName,
-              date: editedValues.date ? new Date(editedValues.date).toISOString() : entry.date
-            }
-          : entry
-      )
-    );
-
+    setAppointments(prev => prev.map(a =>
+      a._id === itemId ? { ...a, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : a.date } : a
+    ));
+    setManualEntries(prev => prev.map(e =>
+      e._id === itemId ? { ...e, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : e.date } : e
+    ));
     setEditingRowId(null);
     setEditedValues({});
-    setMessage('Changes saved successfully');
-    setTimeout(() => setMessage(''), 3000);
+    showMessage('Changes saved successfully');
   };
 
-  // Handle add entry
   const handleAddEntry = async (e) => {
     e.preventDefault();
-
     if (!formData.name.trim() || !formData.rollNo.trim()) {
-      setMessage('Please fill all fields');
+      showMessage('Please fill in all required fields', 'error');
       return;
     }
-
     if (!formData.doctorId) {
-      setMessage('Please select a doctor');
+      showMessage('Please select a doctor', 'error');
       return;
     }
-
     try {
       const appointmentDateTime = formData.date
         ? new Date(`${formData.date}T00:00:00`).toISOString()
         : null;
-
       const response = await axios.post(`${apiBaseUrl}/receptionist/entries`, {
         patientName: formData.name,
         roll: formData.rollNo,
@@ -257,10 +187,9 @@ export default function ReceptionistDashboard() {
         doctorName: formData.doctorName,
         appointmentDate: appointmentDateTime,
         appointmentTime: null,
-        email: "-",
-        phone: "-"
+        email: '-',
+        phone: '-'
       });
-
       if (response.data.success) {
         const newEntry = {
           _id: response.data.entry._id,
@@ -268,75 +197,50 @@ export default function ReceptionistDashboard() {
           roll: response.data.entry.roll,
           role: response.data.entry.role,
           doctorName: response.data.entry.doctorName,
-          doctorId: response.data.entry.doctorId,
-          email: response.data.entry.email,
-          phone: response.data.entry.phone,
           date: response.data.entry.appointmentDate,
           time: response.data.entry.appointmentTime || '-',
           status: response.data.entry.status,
           source: 'manual'
         };
-
         setManualEntries(prev => [newEntry, ...prev]);
         setFormData({
-          name: '',
-          rollNo: '',
-          role: 'Student',
-          doctorId: '',
-          doctorName: '',
+          name: '', rollNo: '', role: 'Student', doctorId: '', doctorName: '',
           date: new Date().toISOString().split('T')[0]
         });
-        setMessage('Entry added successfully and saved to database');
-        setTimeout(() => setMessage(''), 3000);
+        showMessage('Entry added successfully');
       }
     } catch (error) {
-      console.error('Error adding entry:', error);
-      setMessage(error.response?.data?.error || 'Error adding entry');
-      setTimeout(() => setMessage(''), 3000);
+      showMessage(error.response?.data?.error || 'Error adding entry', 'error');
     }
   };
 
-  // Combine appointments and manual entries
   const allData = [...appointments, ...manualEntries];
 
-  // Fuzzy search logic
   const filteredData = useMemo(() => {
     if (!searchQuery.trim()) return allData;
-
     const fuse = new Fuse(allData, {
       keys: ['patientName', 'roll', 'doctorName', 'date', 'status', 'email'],
       threshold: 0.3,
       includeScore: true
     });
-
-    return fuse.search(searchQuery).map(result => result.item);
+    return fuse.search(searchQuery).map(r => r.item);
   }, [allData, searchQuery]);
 
-  // Format date
   const formatDate = (dateString) => {
     if (!dateString) return '-';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   };
 
-  // Get status badge color
-  const getStatusColor = (status) => {
+  const getStatusMeta = (status) => {
     switch (status) {
-      case 'booked':
-        return '#FFF7E6';
-      case 'attended':
-        return '#E8F6EF';
-      case 'no show':
-        return '#F0F0F4';
-      case 'cancelled by user':
-      case 'cancelled by doctor':
-        return '#FCECEF';
-      case 'walk in':
-        return '#F4E9F9';
-      case 'Added':
-        return '#E8F4F8';
-      default:
-        return '#F5F5F5';
+      case 'attended': return { bg: '#E8F6EF', color: '#1E8A55', label: 'Attended' };
+      case 'booked': return { bg: '#FFF3E0', color: '#C8860A', label: 'Booked' };
+      case 'no show': return { bg: '#F5F5F5', color: '#666', label: 'No Show' };
+      case 'cancelled by user': return { bg: '#FDECEA', color: '#B8243A', label: 'Cancelled (User)' };
+      case 'cancelled by doctor': return { bg: '#FDECEA', color: '#B8243A', label: 'Cancelled (Doctor)' };
+      case 'walk in': return { bg: '#EDE7F6', color: '#4A1060', label: 'Walk-in' };
+      case 'Added': return { bg: '#E3F2FD', color: '#1565C0', label: 'Added' };
+      default: return { bg: '#F5F5F5', color: '#555', label: status };
     }
   };
 
@@ -344,37 +248,44 @@ export default function ReceptionistDashboard() {
     <div>
       <ReceptionistNavbar />
       <div className="receptionist-dashboard">
-      <h1>Receptionist Dashboard</h1>
 
-      {/* Search Bar */}
-      <div className="search-bar-container">
-        <input
-          type="text"
-          className="search-input"
-          placeholder="Search by name, roll no, doctor, date, status, email..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-        <span className="search-icon">🔍</span>
-        {searchQuery && (
-          <button className="search-clear" onClick={() => setSearchQuery('')}>
-            ✕
-          </button>
-        )}
-        {searchQuery && (
-          <span className="search-results-count">
-            {filteredData.length} result{filteredData.length !== 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
+        <h1 className="rd-page-title">Receptionist Dashboard</h1>
 
-      <div className="dashboard-container">
-        {/* Left Panel - Form */}
-        <div className="form-panel">
-          <h2>Add Entry</h2>
-          <form onSubmit={handleAddEntry}>
-            <div className="form-group">
-              <label>Patient Name <span className="required">*</span></label>
+        {/* Search Bar */}
+        <div className="rd-search-bar">
+          <svg className="rd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            type="text"
+            className="rd-search-input"
+            placeholder="Search by name, roll no, doctor, date, status..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="rd-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+                <path d="M18 6 6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+          {searchQuery && (
+            <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
+          )}
+        </div>
+
+        {/* Add Entry Form — Horizontal */}
+        <div className="rd-form-card">
+          <div className="rd-form-header">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <h2>Add Entry</h2>
+          </div>
+          <form onSubmit={handleAddEntry} className="rd-form-grid">
+            <div className="rd-form-group">
+              <label>Patient Name <span className="rd-required">*</span></label>
               <input
                 type="text"
                 name="name"
@@ -384,9 +295,8 @@ export default function ReceptionistDashboard() {
                 required
               />
             </div>
-
-            <div className="form-group">
-              <label>Roll No / Emp Id</label>
+            <div className="rd-form-group">
+              <label>Roll No / Emp ID</label>
               <input
                 type="text"
                 name="rollNo"
@@ -395,38 +305,26 @@ export default function ReceptionistDashboard() {
                 placeholder="e.g., 23001 or EMP-001"
               />
             </div>
-
-            <div className="form-group">
+            <div className="rd-form-group">
               <label>Category</label>
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleFormChange}
-              >
-                <option value="Student">👨‍🎓 Student</option>
-                <option value="Staff">👥 Staff</option>
-                <option value="Faculty">👨‍🏫 Faculty</option>
+              <select name="role" value={formData.role} onChange={handleFormChange}>
+                <option value="Student">Student</option>
+                <option value="Staff">Staff</option>
+                <option value="Faculty">Faculty</option>
               </select>
             </div>
-
-            <div className="form-group">
-              <label>Doctor <span className="required">*</span></label>
-              <select
-                name="doctorId"
-                value={formData.doctorId}
-                onChange={handleFormChange}
-                required
-              >
-                <option value="">-- Select Doctor --</option>
-                {doctors.map((doctor) => (
-                  <option key={doctor._id} value={doctor._id}>
-                    {doctor.name} {doctor.specialization ? `(${doctor.specialization})` : ''}
+            <div className="rd-form-group">
+              <label>Doctor <span className="rd-required">*</span></label>
+              <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
+                <option value="">— Select Doctor —</option>
+                {doctors.map(d => (
+                  <option key={d._id} value={d._id}>
+                    {d.name}{d.specialization ? ` (${d.specialization})` : ''}
                   </option>
                 ))}
               </select>
             </div>
-
-            <div className="form-group">
+            <div className="rd-form-group">
               <label>Appointment Date</label>
               <input
                 type="date"
@@ -435,155 +333,151 @@ export default function ReceptionistDashboard() {
                 onChange={handleFormChange}
               />
             </div>
-
-            <button type="submit" className="btn-add">
-              + Add Entry
-            </button>
-
-            {message && <div className="message">{message}</div>}
+            <div className="rd-form-group rd-form-submit-col">
+              <label>&nbsp;</label>
+              <button type="submit" className="rd-btn-add">Add Entry</button>
+            </div>
           </form>
+          {message && (
+            <div className={`rd-message rd-message--${messageType}`}>
+              {messageType === 'success'
+                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5" /></svg>
+                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+              }
+              {message}
+            </div>
+          )}
         </div>
 
-        {/* Right Panel - Table */}
-        <div className="table-panel">
-          <h2>Appointments</h2>
+        {/* Appointments Table */}
+        <div className="rd-table-card">
+          <div className="rd-table-header">
+            <div className="rd-table-title-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="20" height="20">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+              <h2>Appointments</h2>
+              <span className="rd-total-count">{filteredData.length} record{filteredData.length !== 1 ? 's' : ''}</span>
+            </div>
+          </div>
 
           {loading ? (
-            <div className="loading">Loading appointments...</div>
+            <div className="rd-loading">
+              <div className="rd-spinner"></div>
+              <p>Loading appointments...</p>
+            </div>
           ) : filteredData.length === 0 ? (
-            <div className="empty-state">
-              {searchQuery
-                ? `No results found for "${searchQuery}". Try searching differently!`
-                : 'No appointments yet. Add a new entry to get started!'}
+            <div className="rd-empty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="48" height="48">
+                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
+              </svg>
+              <p>{searchQuery ? `No results found for "${searchQuery}"` : 'No appointments yet. Add a new entry to get started.'}</p>
             </div>
           ) : (
-            <div className="table-wrapper">
-              <table className="appointments-table">
+            <div className="rd-table-wrapper">
+              <table className="rd-table">
                 <thead>
                   <tr>
                     <th>S.No</th>
                     <th>Date</th>
                     <th>Patient Name</th>
-                    <th>Roll No/Emp Id</th>
+                    <th>Roll No / Emp ID</th>
                     <th>Doctor</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((item, index) => (
-                    <tr key={item._id} className={editingRowId === item._id ? 'editing' : ''}>
-                      <td data-label="S.No">{index + 1}</td>
-                      <td data-label="Date">
-                        {editingRowId === item._id ? (
-                          <input
-                            type="date"
-                            className="edit-input"
-                            value={editedValues.date}
-                            onChange={(e) => handleEditFieldChange('date', e.target.value)}
-                          />
-                        ) : (
-                          formatDate(item.date)
-                        )}
-                      </td>
-                      <td data-label="Patient Name">
-                        {editingRowId === item._id ? (
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={editedValues.patientName}
-                            onChange={(e) => handleEditFieldChange('patientName', e.target.value)}
-                          />
-                        ) : (
-                          item.patientName
-                        )}
-                      </td>
-                      <td data-label="Roll No/Emp Id">
-                        {editingRowId === item._id ? (
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={editedValues.roll}
-                            onChange={(e) => handleEditFieldChange('roll', e.target.value)}
-                          />
-                        ) : (
-                          item.roll
-                        )}
-                      </td>
-                      <td data-label="Doctor">
-                        {editingRowId === item._id ? (
-                          <input
-                            type="text"
-                            className="edit-input"
-                            value={editedValues.doctorName}
-                            onChange={(e) => handleEditFieldChange('doctorName', e.target.value)}
-                          />
-                        ) : (
-                          item.doctorName
-                        )}
-                      </td>
-                      <td data-label="Status">
-                        {editingRowId === item._id ? (
-                          <select
-                            className="status-dropdown"
-                            value={item.status}
-                            onChange={(e) => handleStatusChange(item._id, e.target.value)}
-                          >
-                            <option value="booked">Booked</option>
-                            <option value="attended">Attended</option>
-                            <option value="no show">No Show</option>
-                            <option value="cancelled by user">Cancelled by User</option>
-                            <option value="cancelled by doctor">Cancelled by Doctor</option>
-                            <option value="walk in">Walk In</option>
-                            <option value="Available">Available</option>
-                            <option value="Added">Added</option>
-                          </select>
-                        ) : (
-                          <span
-                            className="status-badge"
-                            style={{ backgroundColor: getStatusColor(item.status) }}
-                          >
-                            {item.status}
-                          </span>
-                        )}
-                      </td>
-                      <td data-label="Actions" className="actions-cell">
-                        {editingRowId === item._id ? (
-                          <>
-                            <button
-                              className="btn-save"
-                              onClick={() => handleSaveChanges(item._id)}
+                  {filteredData.map((item, index) => {
+                    const statusMeta = getStatusMeta(item.status);
+                    const isEditing = editingRowId === item._id;
+                    return (
+                      <tr key={item._id} className={isEditing ? 'rd-row-editing' : ''}>
+                        <td data-label="S.No">{index + 1}</td>
+                        <td data-label="Date">
+                          {isEditing ? (
+                            <input
+                              type="date"
+                              className="rd-edit-input"
+                              value={editedValues.date}
+                              onChange={(e) => handleEditFieldChange('date', e.target.value)}
+                            />
+                          ) : formatDate(item.date)}
+                        </td>
+                        <td data-label="Patient Name">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              className="rd-edit-input"
+                              value={editedValues.patientName}
+                              onChange={(e) => handleEditFieldChange('patientName', e.target.value)}
+                            />
+                          ) : item.patientName}
+                        </td>
+                        <td data-label="Roll No/Emp ID">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              className="rd-edit-input"
+                              value={editedValues.roll}
+                              onChange={(e) => handleEditFieldChange('roll', e.target.value)}
+                            />
+                          ) : item.roll}
+                        </td>
+                        <td data-label="Doctor">
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              className="rd-edit-input"
+                              value={editedValues.doctorName}
+                              onChange={(e) => handleEditFieldChange('doctorName', e.target.value)}
+                            />
+                          ) : item.doctorName}
+                        </td>
+                        <td data-label="Status">
+                          {isEditing ? (
+                            <select
+                              className="rd-status-select"
+                              value={item.status}
+                              onChange={(e) => handleStatusChange(item._id, e.target.value)}
                             >
-                              Save
-                            </button>
-                            <button
-                              className="btn-cancel-row"
-                              onClick={() => {
-                                setEditingRowId(null);
-                                setEditedValues({});
-                              }}
+                              <option value="booked">Booked</option>
+                              <option value="attended">Attended</option>
+                              <option value="no show">No Show</option>
+                              <option value="cancelled by user">Cancelled by User</option>
+                              <option value="cancelled by doctor">Cancelled by Doctor</option>
+                              <option value="walk in">Walk In</option>
+                              <option value="Added">Added</option>
+                            </select>
+                          ) : (
+                            <span
+                              className="rd-status-badge"
+                              style={{ background: statusMeta.bg, color: statusMeta.color }}
                             >
-                              Cancel
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            className="btn-edit"
-                            onClick={() => handleEditRow(item)}
-                          >
-                            Edit
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                              {statusMeta.label}
+                            </span>
+                          )}
+                        </td>
+                        <td data-label="Actions" className="rd-actions-cell">
+                          {isEditing ? (
+                            <>
+                              <button className="rd-btn-save" onClick={() => handleSaveChanges(item._id)}>Save</button>
+                              <button className="rd-btn-cancel" onClick={() => { setEditingRowId(null); setEditedValues({}); }}>Cancel</button>
+                            </>
+                          ) : (
+                            <button className="rd-btn-edit" onClick={() => handleEditRow(item)}>Edit</button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
           )}
         </div>
+
       </div>
-    </div>
     </div>
   );
 }

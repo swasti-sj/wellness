@@ -98,7 +98,6 @@ export default function NurseAppointment({ apiBaseUrl }) {
   const filterAppointments = (appts, patient = "", start = "", end = "", status = "") => {
     let filtered = appts;
 
-    // Patient search filter
     if (patient.trim()) {
       filtered = filtered.filter(
         (appt) =>
@@ -108,7 +107,6 @@ export default function NurseAppointment({ apiBaseUrl }) {
       );
     }
 
-    // Date range filter
     if (start) {
       const startDt = new Date(start);
       filtered = filtered.filter((appt) => appt.start >= startDt);
@@ -118,7 +116,6 @@ export default function NurseAppointment({ apiBaseUrl }) {
       filtered = filtered.filter((appt) => appt.start <= endDt);
     }
 
-    // Status filter
     if (status) {
       filtered = filtered.filter((appt) => appt.status === status);
     }
@@ -134,11 +131,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
     handleFilterChange();
   }, [patientSearch, startDate, endDate, statusFilter]);
 
-  const handleSelectEvent = (event) => {
-    setSelectedEvent(event);
-    setOpenSubSection(null);
-  };
-
+  const handleSelectEvent = (event) => { setSelectedEvent(event); setOpenSubSection(null); };
   const handleCloseModal = () => setSelectedEvent(null);
 
   const handleBookAppointment = async (e) => {
@@ -205,9 +198,10 @@ export default function NurseAppointment({ apiBaseUrl }) {
     }
   };
 
+  // ── Sub-section accordion ──
   const toggleSub = (key) => setOpenSubSection((p) => (p === key ? null : key));
 
-  const SubSection = ({ id, icon, title, subtitle, children }) => {
+  const SubSection = ({ id, title, subtitle, children }) => {
     const isOpen = openSubSection === id;
     return (
       <div className="modal-sub-section">
@@ -217,13 +211,12 @@ export default function NurseAppointment({ apiBaseUrl }) {
           onClick={() => toggleSub(id)}
         >
           <div className="modal-sub-left">
-            <span className="modal-sub-icon">{icon}</span>
             <div>
               <div className="modal-sub-title">{title}</div>
               {subtitle && <div className="modal-sub-subtitle">{subtitle}</div>}
             </div>
           </div>
-          <span className="modal-sub-chevron">▼</span>
+          <span className="modal-sub-chevron">&#8250;</span>
         </button>
         <div className={`modal-sub-body${isOpen ? " open" : ""}`}>
           {children}
@@ -236,15 +229,10 @@ export default function NurseAppointment({ apiBaseUrl }) {
     const status = event.status?.toLowerCase() || "booked";
     let c = { bg: "#FFF7E6", border: "#C8860A", text: "#9A6408" };
 
-    if (status === "attended") {
-      c = { bg: "#E8F6EF", border: "#1E8A55", text: "#166640" };
-    } else if (status.includes("cancel")) {
-      c = { bg: "#FCECEF", border: "#B8243A", text: "#8C1A2A" };
-    } else if (status === "no show") {
-      c = { bg: "#F0F0F4", border: "#5A5A70", text: "#3A3A50" };
-    } else if (status === "walk in") {
-      c = { bg: "#F4E9F9", border: "#6C1B85", text: "#4A1060" };
-    }
+    if (status === "attended") c = { bg: "#E8F6EF", border: "#1E8A55", text: "#166640" };
+    else if (status.includes("cancel")) c = { bg: "#FCECEF", border: "#B8243A", text: "#8C1A2A" };
+    else if (status === "no show") c = { bg: "#F0F0F4", border: "#5A5A70", text: "#3A3A50" };
+    else if (status === "walk in") c = { bg: "#F4E9F9", border: "#6C1B85", text: "#4A1060" };
 
     return {
       style: {
@@ -265,7 +253,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
 
   return (
     <div className="appointments-container">
-      {/* Page Header */}
+      {/* ── Page Header ── */}
       <div className="calendar-header">
         <h2>All Appointments</h2>
         <button onClick={() => setShowBookingForm(true)} className="add-appointment-btn">
@@ -273,78 +261,42 @@ export default function NurseAppointment({ apiBaseUrl }) {
         </button>
       </div>
 
-      {/* Filters */}
-      <div style={{
-        background: "#f5f5f5",
-        padding: "1rem",
-        borderRadius: "8px",
-        marginBottom: "1.5rem",
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-        gap: "1rem"
-      }}>
-        <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
-            Search Patient
-          </label>
+      {/* ── Filter Bar ── */}
+      <div className="appt-filter-bar">
+        <div className="appt-filter-group">
+          <label className="appt-filter-label">Search Patient</label>
           <input
             type="text"
+            className="appt-filter-input"
             placeholder="Name, Email, or Roll"
             value={patientSearch}
             onChange={(e) => setPatientSearch(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
-            Start Date
-          </label>
+        <div className="appt-filter-group">
+          <label className="appt-filter-label">Start Date</label>
           <input
             type="date"
+            className="appt-filter-input"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
-            End Date
-          </label>
+        <div className="appt-filter-group">
+          <label className="appt-filter-label">End Date</label>
           <input
             type="date"
+            className="appt-filter-input"
             value={endDate}
             onChange={(e) => setEndDate(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
           />
         </div>
-        <div>
-          <label style={{ display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
-            Status
-          </label>
+        <div className="appt-filter-group">
+          <label className="appt-filter-label">Status</label>
           <select
+            className="appt-filter-input"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "0.6rem",
-              border: "1px solid #ddd",
-              borderRadius: "4px",
-            }}
           >
             <option value="">All Statuses</option>
             <option value="booked">Booked</option>
@@ -381,12 +333,14 @@ export default function NurseAppointment({ apiBaseUrl }) {
         </div>
       )}
 
-      {/* APPOINTMENT DETAILS MODAL */}
+      {/* ════════════════════════════════════════════════════════════
+          APPOINTMENT DETAILS MODAL
+      ════════════════════════════════════════════════════════════ */}
       {selectedEvent && (
         <div className="appointment-modal" onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
           <div className="modal-content">
             <div className="modal-header-bar">
-              <button className="close-btn" onClick={handleCloseModal} title="Close">✕</button>
+              <button className="close-btn" onClick={handleCloseModal} title="Close">&#10005;</button>
               <div className="modal-patient-name">
                 {selectedEvent.patient?.name || "Unknown Patient"}
               </div>
@@ -394,6 +348,9 @@ export default function NurseAppointment({ apiBaseUrl }) {
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
                 <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>
+                {selectedEvent.doctor && (
+                  <span><strong>Doctor:</strong> Dr. {selectedEvent.doctor.name || "—"}</span>
+                )}
                 <span>
                   <span className={`modal-status-badge ${selectedEvent.status?.toLowerCase().includes("cancel") ? "cancelled" : selectedEvent.status?.replace(" ", "-").toLowerCase()}`}>
                     {selectedEvent.status}
@@ -403,10 +360,11 @@ export default function NurseAppointment({ apiBaseUrl }) {
             </div>
 
             <div className="modal-body">
+              {/* Status update */}
               {selectedEvent.status === "booked" && (
                 <div className="status-update">
                   <label>Update Status</label>
-                  <div style={{ display: 'flex', gap: '0.6rem' }}>
+                  <div style={{ display: "flex", gap: "0.6rem" }}>
                     <select
                       value={selectedEvent.status}
                       onChange={(e) => handleStatusUpdate(selectedEvent.id, e.target.value)}
@@ -421,7 +379,8 @@ export default function NurseAppointment({ apiBaseUrl }) {
                 </div>
               )}
 
-              <div className="modal-actions" style={{ display: 'flex', gap: '0.65rem' }}>
+              {/* Action buttons */}
+              <div className="modal-actions" style={{ display: "flex", gap: "0.65rem" }}>
                 {(selectedEvent.status === "booked" || selectedEvent.status === "in-progress") && (
                   <button
                     className="cancel-btn"
@@ -441,7 +400,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
 
               <div className="modal-divider" />
 
-              <SubSection id="casesheet" icon="📋" title="Case Sheet" subtitle="Basic details, vitals, medical history, treatment">
+              <SubSection id="casesheet" title="Case Sheet" subtitle="Basic details, vitals, medical history, treatment">
                 <DoctorVitals
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
@@ -449,18 +408,18 @@ export default function NurseAppointment({ apiBaseUrl }) {
                 />
               </SubSection>
 
-              <SubSection id="notes" icon="🗒️" title="Clinical Notes" subtitle="Running notes for this visit">
+              <SubSection id="notes" title="Clinical Notes" subtitle="Running notes for this visit">
                 <DoctorNote appointmentId={selectedEvent.id} />
               </SubSection>
 
-              <SubSection id="prescription" icon="💊" title="Prescription" subtitle="Medicines, dosage, frequency">
+              <SubSection id="prescription" title="Prescription" subtitle="Medicines, dosage, frequency">
                 <DoctorPrescription
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
                 />
               </SubSection>
 
-              <SubSection id="tests" icon="🧪" title="Lab Tests" subtitle="Ordered investigations">
+              <SubSection id="tests" title="Lab Tests" subtitle="Ordered investigations">
                 <SelectedTestsSummary
                   appointmentId={selectedEvent.id}
                   onEditClick={() =>
@@ -471,18 +430,18 @@ export default function NurseAppointment({ apiBaseUrl }) {
                           openAppointmentId: selectedEvent.id,
                           openSection: "tests",
                           returnUrl: "/nurse-dashboard/appointments",
-                        }
+                        },
                       }
                     )
                   }
                 />
               </SubSection>
 
-              <SubSection id="referral" icon="🏥" title="Hospital Referral" subtitle="Refer to external hospital">
+              <SubSection id="referral" title="Hospital Referral" subtitle="Refer to external hospital">
                 <DoctorHospitalReferral appointmentId={selectedEvent.id} />
               </SubSection>
 
-              <SubSection id="certificate" icon="📜" title="Medical Certificate" subtitle="Issue fitness / medical certificate">
+              <SubSection id="certificate" title="Medical Certificate" subtitle="Issue fitness / medical certificate">
                 <DoctorCertificate appointmentId={selectedEvent.id} />
               </SubSection>
             </div>
@@ -490,41 +449,60 @@ export default function NurseAppointment({ apiBaseUrl }) {
         </div>
       )}
 
-      {/* NEW BOOKING MODAL */}
+      {/* ════════════════════════════════════════════════════════════
+          NEW BOOKING MODAL
+      ════════════════════════════════════════════════════════════ */}
       {showBookingForm && (
         <div className="appointment-modal" onClick={(e) => e.target === e.currentTarget && setShowBookingForm(false)}>
           <div className="modal-content booking-modal-content">
             <div className="modal-header-bar">
-              <button className="close-btn" onClick={() => setShowBookingForm(false)}>✕</button>
+              <button className="close-btn" onClick={() => setShowBookingForm(false)}>&#10005;</button>
               <div className="modal-patient-name">Book New Appointment</div>
             </div>
             <div className="modal-body">
               <form onSubmit={handleBookAppointment} className="booking-form">
                 <div className="booking-field">
                   <label>Patient Email</label>
-                  <input type="email" value={bookingData.patientEmail}
-                    onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })} required />
+                  <input
+                    type="email"
+                    value={bookingData.patientEmail}
+                    onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="booking-field">
                   <label>Patient Phone (optional)</label>
-                  <input type="tel" value={bookingData.patientPhone}
-                    onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })} />
+                  <input
+                    type="tel"
+                    value={bookingData.patientPhone}
+                    onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })}
+                  />
                 </div>
                 <div className="booking-field">
                   <label>Date</label>
-                  <input type="date" value={bookingData.date}
+                  <input
+                    type="date"
+                    value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                    min={new Date().toISOString().split("T")[0]} required />
+                    min={new Date().toISOString().split("T")[0]}
+                    required
+                  />
                 </div>
                 <div className="booking-field">
                   <label>Time</label>
-                  <input type="time" value={bookingData.time}
-                    onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })} required />
+                  <input
+                    type="time"
+                    value={bookingData.time}
+                    onChange={(e) => setBookingData({ ...bookingData, time: e.target.value })}
+                    required
+                  />
                 </div>
                 <div className="booking-field">
                   <label>Duration (minutes)</label>
-                  <select value={bookingData.duration}
-                    onChange={(e) => setBookingData({ ...bookingData, duration: parseInt(e.target.value) })}>
+                  <select
+                    value={bookingData.duration}
+                    onChange={(e) => setBookingData({ ...bookingData, duration: parseInt(e.target.value) })}
+                  >
                     <option value={15}>15</option>
                     <option value={30}>30</option>
                     <option value={45}>45</option>

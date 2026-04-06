@@ -3,15 +3,16 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 
-// Helper to create empty weekly slots
 const daysOfWeek = [
   'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
 ];
 
+const dayAbbrev = { Monday: 'Mon', Tuesday: 'Tue', Wednesday: 'Wed', Thursday: 'Thu', Friday: 'Fri', Saturday: 'Sat', Sunday: 'Sun' };
+
 function emptyWeeklySlots() {
   return daysOfWeek.map(day => ({
     day,
-    times: [{ time: '', status: 'available' }] // Default status is 'available'
+    times: [{ time: '', status: 'available' }]
   }));
 }
 
@@ -22,13 +23,13 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
     phone: '',
     weeklySlots: emptyWeeklySlots(),
   });
+  const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // Handle slot time change
   const handleSlotChange = (dayIndex, timeIndex, field, value) => {
     const updatedSlots = form.weeklySlots.map((slot, idx) => {
       if (idx !== dayIndex) return slot;
@@ -42,13 +43,24 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
     setForm({ ...form, weeklySlots: updatedSlots });
   };
 
-  // Add new time to a day
   const addTimeSlot = (dayIndex) => {
     const updatedSlots = form.weeklySlots.map((slot, idx) => {
       if (idx !== dayIndex) return slot;
       return {
         ...slot,
-        times: [...slot.times, { time: '', status: 'available' }], // New slots are also 'available'
+        times: [...slot.times, { time: '', status: 'available' }],
+      };
+    });
+    setForm({ ...form, weeklySlots: updatedSlots });
+  };
+
+  const removeTimeSlot = (dayIndex, timeIndex) => {
+    const updatedSlots = form.weeklySlots.map((slot, idx) => {
+      if (idx !== dayIndex) return slot;
+      if (slot.times.length <= 1) return slot; // keep at least one
+      return {
+        ...slot,
+        times: slot.times.filter((_, tIdx) => tIdx !== timeIndex),
       };
     });
     setForm({ ...form, weeklySlots: updatedSlots });
@@ -56,18 +68,16 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
 
-    // Create a deep copy of the form data to process before submitting
     const processedForm = JSON.parse(JSON.stringify(form));
-
-    // Filter out any time slots that are empty
     processedForm.weeklySlots = processedForm.weeklySlots.map(daySlot => ({
       ...daySlot,
       times: daySlot.times.filter(timeSlot => timeSlot.time.trim() !== '')
     }));
 
     try {
-      await axios.post(`${apiBaseUrl}/doctors/profile`, processedForm, { // Send the processed form
+      await axios.post(`${apiBaseUrl}/doctors/profile`, processedForm, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
@@ -77,46 +87,119 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <label>
-        Name:
-        <input name="name" value={form.name} onChange={handleChange} required />
-      </label>
-      <label>
-        Specialization:
-        <input name="specialization" value={form.specialization} onChange={handleChange} required />
-      </label>
-      <label>
-        Phone:
-        <input name="phone" value={form.phone} onChange={handleChange} required />
-      </label>
-      <div>
-        <h3>Weekly Slots</h3>
-        {form.weeklySlots.map((slot, dayIdx) => (
-          <div key={slot.day} style={{ marginBottom: '10px' }}>
-            <strong>{slot.day}:</strong>
-            {slot.times.map((t, timeIdx) => (
-              <span key={timeIdx} style={{ marginLeft: 10 }}>
-                <input
-                  type="time"
-                  value={t.time}
-                  onChange={e => handleSlotChange(dayIdx, timeIdx, 'time', e.target.value)}
-                  style={{ marginRight: 5 }}
-                // The 'required' attribute has been removed
-                />
-                {/* The status select dropdown has been removed */}
-              </span>
-            ))}
-            <button type="button" onClick={() => addTimeSlot(dayIdx)}>+ Add Time</button>
+    <div className="ipf-wrapper">
+      <div className="ipf-card ipf-card--doctor">
+        <div className="ipf-header ipf-header--compact">
+          <img src="/WebIcon.plain.svg" alt="IIT Dharwad" className="ipf-logo" />
+          <div>
+            <h1 className="ipf-title">Complete Your Doctor Profile</h1>
+            <p className="ipf-subtitle">IIT Dharwad Medical Portal</p>
           </div>
-        ))}
+        </div>
+
+        <form onSubmit={handleSubmit} className="ipf-form">
+          {/* Basic Info — all 3 fields in one row */}
+          <div className="ipf-row ipf-row--three">
+            <div className="ipf-field">
+              <label htmlFor="doc-name">Full Name <span className="ipf-required">*</span></label>
+              <input
+                id="doc-name"
+                name="name"
+                type="text"
+                value={form.name}
+                onChange={handleChange}
+                placeholder="e.g., Dr. Ramesh Kumar"
+                required
+              />
+            </div>
+
+            <div className="ipf-field">
+              <label htmlFor="doc-spec">Specialization <span className="ipf-required">*</span></label>
+              <input
+                id="doc-spec"
+                name="specialization"
+                type="text"
+                value={form.specialization}
+                onChange={handleChange}
+                placeholder="e.g., General Medicine"
+                required
+              />
+            </div>
+
+            <div className="ipf-field">
+              <label htmlFor="doc-phone">Phone Number <span className="ipf-required">*</span></label>
+              <input
+                id="doc-phone"
+                name="phone"
+                type="tel"
+                value={form.phone}
+                onChange={handleChange}
+                placeholder="e.g., +91 98765 43210"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Weekly Slots */}
+          <div className="ipf-slots-section">
+            <div className="ipf-slots-header">
+              <h2 className="ipf-slots-title">Weekly Availability</h2>
+              <p className="ipf-slots-desc">Set your consultation time slots for each day</p>
+            </div>
+
+            <div className="ipf-slots-grid">
+              {form.weeklySlots.map((slot, dayIdx) => (
+                <div key={slot.day} className="ipf-day-card">
+                  <div className="ipf-day-label">
+                    <span className="ipf-day-abbrev">{dayAbbrev[slot.day]}</span>
+                    <span className="ipf-day-full">{slot.day}</span>
+                  </div>
+                  <div className="ipf-day-times">
+                    {slot.times.map((t, timeIdx) => (
+                      <div key={timeIdx} className="ipf-time-chip">
+                        <input
+                          type="time"
+                          className="ipf-time-input"
+                          value={t.time}
+                          onChange={e => handleSlotChange(dayIdx, timeIdx, 'time', e.target.value)}
+                        />
+                        {slot.times.length > 1 && (
+                          <button
+                            type="button"
+                            className="ipf-time-remove"
+                            onClick={() => removeTimeSlot(dayIdx, timeIdx)}
+                            title="Remove slot"
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="ipf-add-time"
+                      onClick={() => addTimeSlot(dayIdx)}
+                    >
+                      + Add
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <button type="submit" className="ipf-submit" disabled={submitting}>
+            {submitting ? 'Saving…' : 'Save & Enter Dashboard'}
+          </button>
+        </form>
       </div>
-      <button type="submit">Save</button>
-    </form>
+    </div>
   );
 }
 

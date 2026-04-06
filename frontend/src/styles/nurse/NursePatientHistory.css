@@ -1,0 +1,731 @@
+/* ══════════════════════════════════════════════════════════════════
+   NURSE PATIENT HISTORY — IIT Dharwad
+   Full feature parity with doctor PatientHistory
+   Plum #4A1060 · Gold #C8860A · DM Serif Display + DM Sans
+══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+    --nph-plum: #4A1060;
+    --nph-plum-mid: #6C1B85;
+    --nph-plum-light: #9B4DC8;
+    --nph-plum-soft: #F0E4FA;
+    --nph-plum-ghost: #FAF4FF;
+    --nph-gold: #C8860A;
+    --nph-gold-mid: #E5A020;
+    --nph-gold-bright: #F0B830;
+    --nph-gold-soft: #FFF4DC;
+    --nph-border: #E0D0EF;
+    --nph-border-gold: #F0D898;
+    --nph-surface: #FFFFFF;
+    --nph-text-head: #1E0733;
+    --nph-text-body: #3A2250;
+    --nph-text-muted: #7A6890;
+    --nph-success: #1E8A55;
+    --nph-danger: #B8243A;
+    --nph-shadow-sm: 0 2px 8px rgba(74, 16, 96, 0.10);
+    --nph-shadow-md: 0 4px 18px rgba(74, 16, 96, 0.14);
+}
+
+/* ── Page wrapper ── */
+.nph-page {
+    font-family: 'DM Sans', sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 6rem 1.5rem 4rem;
+    min-height: 100vh;
+}
+
+/* ── Page heading ── */
+.nph-header {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.nph-heading {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--nph-plum);
+    margin: 0 0 0.35rem;
+    display: inline-block;
+}
+
+.nph-heading::after {
+    content: '';
+    display: block;
+    width: 52px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--nph-gold-mid), var(--nph-gold-bright));
+    border-radius: 2px;
+    margin: 6px auto 0;
+}
+
+.nph-subheading {
+    font-size: 0.92rem;
+    color: var(--nph-text-muted);
+    margin: 0.4rem 0 0;
+}
+
+/* ── Search panel ── */
+.nph-search-panel {
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-top: 4px solid var(--nph-plum-mid);
+    border-radius: 14px;
+    padding: 1.4rem 1.5rem;
+    box-shadow: var(--nph-shadow-md);
+    margin-bottom: 1.75rem;
+    animation: nphFade 0.4s ease;
+}
+
+.nph-search-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: stretch;
+}
+
+.nph-search-field {
+    flex: 1;
+}
+
+.nph-search-input {
+    width: 100%;
+    height: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--nph-border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--nph-text-body);
+    background: var(--nph-surface);
+    transition: border-color 0.18s, box-shadow 0.18s;
+    box-sizing: border-box;
+}
+
+.nph-search-input::placeholder {
+    color: #C0B0D0;
+}
+
+.nph-search-input:focus {
+    outline: none;
+    border-color: var(--nph-plum-mid);
+    box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.10);
+}
+
+.nph-search-btn {
+    padding: 0.75rem 1.75rem;
+    background: linear-gradient(135deg, var(--nph-plum) 0%, var(--nph-plum-mid) 55%, var(--nph-gold) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(74, 16, 96, 0.22);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.nph-search-btn:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(74, 16, 96, 0.32);
+    transform: translateY(-1px);
+}
+
+.nph-search-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.nph-clear-btn {
+    padding: 0.75rem 1.1rem;
+    background: var(--nph-plum-soft);
+    color: var(--nph-plum-mid);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.nph-clear-btn:hover {
+    background: var(--nph-plum-mid);
+    color: #fff;
+    border-color: var(--nph-plum-mid);
+}
+
+/* ── Recent chips ── */
+.nph-recents {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--nph-border);
+}
+
+.nph-recents-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--nph-plum-mid);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.nph-recent-chip {
+    padding: 0.3rem 0.85rem;
+    background: var(--nph-plum-ghost);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--nph-plum-mid);
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+.nph-recent-chip:hover {
+    background: var(--nph-plum-mid);
+    color: #fff;
+    border-color: var(--nph-plum-mid);
+}
+
+/* ── Error / Empty ── */
+.nph-error {
+    background: #FCECEF;
+    border: 1.5px solid #F5C6CB;
+    border-radius: 10px;
+    padding: 0.9rem 1.1rem;
+    color: var(--nph-danger);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.nph-empty {
+    background: var(--nph-plum-ghost);
+    border: 1.5px dashed var(--nph-border);
+    border-radius: 12px;
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.nph-empty-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: var(--nph-plum);
+    margin: 0 0 0.4rem;
+}
+
+.nph-empty-sub {
+    font-size: 0.88rem;
+    color: var(--nph-text-muted);
+    margin: 0;
+}
+
+/* ── Results ── */
+.nph-results {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── Patient card ── */
+.nph-patient-card {
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--nph-shadow-sm);
+    transition: box-shadow 0.2s;
+    animation: nphFade 0.35s ease;
+}
+
+.nph-patient-card.open {
+    border-color: var(--nph-plum-mid);
+    box-shadow: var(--nph-shadow-md);
+}
+
+.nph-patient-card.frequent {
+    border-top: 3px solid var(--nph-gold);
+}
+
+/* ── Patient top row ── */
+.nph-patient-top {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.nph-patient-top:hover {
+    background: var(--nph-plum-ghost);
+}
+
+.nph-patient-avatar {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--nph-plum) 0%, var(--nph-plum-mid) 60%, var(--nph-gold) 100%);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.nph-patient-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.nph-patient-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--nph-text-head);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.nph-patient-meta {
+    font-size: 0.8rem;
+    color: var(--nph-text-muted);
+}
+
+.nph-patient-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.nph-frequent-badge {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--nph-gold);
+    background: var(--nph-gold-soft);
+    border: 1px solid var(--nph-border-gold);
+    padding: 0.2rem 0.65rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+.nph-visit-count {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--nph-plum-mid);
+    background: var(--nph-plum-soft);
+    padding: 0.2rem 0.7rem;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+
+/* ── PDF download button ── */
+.nph-print-btn {
+    padding: 0.35rem 0.85rem;
+    background: linear-gradient(135deg, var(--nph-plum) 0%, var(--nph-plum-mid) 55%, var(--nph-gold) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(74, 16, 96, 0.18);
+    transition: all 0.18s;
+    white-space: nowrap;
+}
+
+.nph-print-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74, 16, 96, 0.26);
+}
+
+.nph-print-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.nph-print-btn--sm {
+    padding: 0.25rem 0.65rem;
+    font-size: 0.74rem;
+    background: var(--nph-gold-soft);
+    color: var(--nph-gold);
+    border: 1.5px solid var(--nph-border-gold);
+    box-shadow: none;
+}
+
+.nph-print-btn--sm:hover:not(:disabled) {
+    background: var(--nph-gold);
+    color: #fff;
+    border-color: var(--nph-gold);
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Chevron ── */
+.nph-chevron {
+    display: inline-block;
+    font-size: 1.3rem;
+    color: var(--nph-plum-light);
+    transform: rotate(0deg);
+    transition: transform 0.25s ease;
+    line-height: 1;
+}
+
+.nph-chevron.open {
+    transform: rotate(90deg);
+}
+
+/* ── Patient body (expanded) ── */
+.nph-patient-body {
+    padding: 1.25rem;
+    border-top: 1.5px solid var(--nph-border);
+    background: var(--nph-plum-ghost);
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+/* Quick info strip */
+.nph-quick-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    padding: 0.8rem 1rem;
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 8px;
+    font-size: 0.84rem;
+    color: var(--nph-text-body);
+}
+
+.nph-quick-info strong {
+    color: var(--nph-plum-mid);
+}
+
+/* Section sub-title */
+.nph-section-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem;
+    color: var(--nph-plum);
+    margin: 0 0 0.5rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 2px solid var(--nph-border-gold);
+}
+
+/* ── Referral form ── */
+.nph-refer-form {
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-left: 4px solid var(--nph-gold);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+}
+
+.nph-refer-row {
+    display: flex;
+    gap: 0.65rem;
+    align-items: stretch;
+    margin-bottom: 0.65rem;
+}
+
+.nph-refer-row select {
+    flex: 1;
+    padding: 0.6rem 0.85rem;
+    border: 1.5px solid var(--nph-border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--nph-text-body);
+    background: var(--nph-surface);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%236C1B85' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+    cursor: pointer;
+    transition: border-color 0.18s;
+}
+
+.nph-refer-row select:focus {
+    outline: none;
+    border-color: var(--nph-plum-mid);
+    box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.09);
+}
+
+.nph-refer-btn {
+    padding: 0.6rem 1.3rem;
+    background: linear-gradient(135deg, var(--nph-gold) 0%, var(--nph-gold-bright) 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(200, 134, 10, 0.22);
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.nph-refer-btn:hover {
+    background: linear-gradient(135deg, var(--nph-plum) 0%, var(--nph-plum-mid) 100%);
+    box-shadow: 0 4px 14px rgba(74, 16, 96, 0.26);
+}
+
+.nph-refer-form textarea {
+    width: 100%;
+    padding: 0.6rem 0.85rem;
+    border: 1.5px solid var(--nph-border);
+    border-radius: 8px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    color: var(--nph-text-body);
+    resize: vertical;
+    box-sizing: border-box;
+    transition: border-color 0.18s;
+}
+
+.nph-refer-form textarea:focus {
+    outline: none;
+    border-color: var(--nph-plum-mid);
+    box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.09);
+}
+
+.nph-refer-form textarea::placeholder {
+    color: #C0B0D0;
+}
+
+/* ── Appointment list ── */
+.nph-appt-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.nph-appt-card {
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 10px;
+    overflow: hidden;
+    transition: border-color 0.18s;
+}
+
+.nph-appt-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1rem;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.nph-appt-top:hover {
+    background: var(--nph-gold-soft);
+}
+
+.nph-appt-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.nph-appt-date {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--nph-text-head);
+}
+
+.nph-appt-doctor {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--nph-plum-mid);
+    background: var(--nph-plum-soft);
+    padding: 0.18rem 0.6rem;
+    border-radius: 12px;
+}
+
+.nph-appt-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+/* ── Status badges ── */
+.nph-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.22rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.74rem;
+    font-weight: 700;
+    text-transform: capitalize;
+    white-space: nowrap;
+    border: 1px solid transparent;
+}
+
+.nph-badge--attended {
+    background: #E8F6EF;
+    color: var(--nph-success);
+    border-color: #B8E4C8;
+}
+
+.nph-badge--booked {
+    background: var(--nph-gold-soft);
+    color: #9A6408;
+    border-color: var(--nph-border-gold);
+}
+
+.nph-badge--cancelled {
+    background: #FCECEF;
+    color: var(--nph-danger);
+    border-color: #F5C6CB;
+}
+
+.nph-badge--no-show {
+    background: #F0F0F4;
+    color: #5A5A70;
+    border-color: #D0D0DA;
+}
+
+.nph-badge--walk-in {
+    background: var(--nph-plum-soft);
+    color: var(--nph-plum-mid);
+    border-color: var(--nph-border);
+}
+
+/* ── Appointment body (tab area) ── */
+.nph-appt-body {
+    border-top: 1.5px solid var(--nph-border);
+    background: #FAFBFF;
+}
+
+/* Section tab buttons */
+.nph-section-btns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1.5px solid var(--nph-border);
+    background: var(--nph-plum-ghost);
+}
+
+.nph-sec-btn {
+    padding: 0.38rem 0.9rem;
+    background: var(--nph-surface);
+    border: 1.5px solid var(--nph-border);
+    border-radius: 6px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--nph-text-body);
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+}
+
+.nph-sec-btn:hover {
+    background: var(--nph-plum-soft);
+    color: var(--nph-plum-mid);
+    border-color: var(--nph-plum-mid);
+}
+
+.nph-sec-btn.active {
+    background: linear-gradient(135deg, var(--nph-plum) 0%, var(--nph-plum-mid) 55%, var(--nph-gold) 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 2px 8px rgba(74, 16, 96, 0.2);
+}
+
+/* Section panel content */
+.nph-section-panel {
+    padding: 1rem;
+    animation: nphFade 0.2s ease;
+}
+
+/* ── Animations ── */
+@keyframes nphFade {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .nph-page {
+        padding: 5.5rem 1rem 3rem;
+    }
+
+    .nph-search-row {
+        flex-wrap: wrap;
+    }
+
+    .nph-search-field {
+        flex: 0 0 100%;
+    }
+
+    .nph-search-btn,
+    .nph-clear-btn {
+        flex: 1;
+    }
+
+    .nph-patient-right {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.4rem;
+    }
+
+    .nph-refer-row {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .nph-heading {
+        font-size: 1.6rem;
+    }
+
+    .nph-patient-avatar {
+        width: 38px;
+        height: 38px;
+        font-size: 1rem;
+    }
+
+    .nph-patient-top {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .nph-section-btns {
+        gap: 0.3rem;
+    }
+
+    .nph-sec-btn {
+        font-size: 0.76rem;
+        padding: 0.32rem 0.7rem;
+    }
+}

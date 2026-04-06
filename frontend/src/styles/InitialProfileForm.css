@@ -1,3 +1,43 @@
+/* =====================================================================
+   INITIAL PROFILE FORM — IIT Dharwad Medical Portal
+   Palette: Deep Plum #4A1060 · Gold #C8860A
+   Font: DM Serif Display (title) · DM Sans (body)
+
+   THREE class sets coexist here — each targets a different role:
+
+   1. .patient-profile-page / .profile-hero / .profile-form.profile-form-modern
+      → used by  patient/InitialProfileForm.js
+
+   2. .profile-form  (standalone, WITHOUT .profile-form-modern)
+      → used by  doctor/InitialDoctorProfileForm.js   (DO NOT REMOVE)
+
+   3. .ipf-*
+      → used by  nurse/InitialNurseProfileForm.js
+                  receptionist/InitialReceptionistProfileForm.js
+===================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600;700&display=swap');
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'DM Sans', 'Segoe UI', sans-serif;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 1 — Patient Initial Profile
+   Component : patient/InitialProfileForm.js
+   Classes   : .patient-profile-page  .patient-profile-shell
+               .profile-hero  .profile-kicker  .profile-subtitle
+               .profile-badge
+               .profile-form.profile-form-modern  .profile-grid
+               .profile-span-2  .consent-card  .consent-copy
+               .consent-check
+══════════════════════════════════════════════════════════════════════ */
+
 .patient-profile-page {
   min-height: 100vh;
   padding: 40px 20px;
@@ -5,7 +45,7 @@
     radial-gradient(circle at top right, rgba(200, 134, 10, 0.14), transparent 28%),
     radial-gradient(circle at left center, rgba(106, 27, 111, 0.12), transparent 24%),
     linear-gradient(135deg, #f7f2fb 0%, #fffaf1 100%);
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'DM Sans', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .patient-profile-shell {
@@ -36,6 +76,7 @@
 
 .profile-hero h1 {
   margin: 0 0 10px;
+  font-family: 'DM Serif Display', serif;
   font-size: clamp(2rem, 4vw, 2.8rem);
   line-height: 1.05;
 }
@@ -56,6 +97,7 @@
   white-space: nowrap;
 }
 
+/* — Patient form card (must use BOTH classes to avoid hitting Doctor) — */
 .profile-form.profile-form-modern {
   margin: 0;
   max-width: none;
@@ -181,6 +223,358 @@
   cursor: not-allowed;
 }
 
+
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 2 — Doctor Initial Profile (REDESIGNED)
+   Component : doctor/InitialDoctorProfileForm.js
+   Now uses ipf-* classes + doctor-specific overrides
+══════════════════════════════════════════════════════════════════════ */
+
+/* Doctor card is wider to accommodate the weekly slots grid */
+.ipf-card.ipf-card--doctor {
+  max-width: 960px;
+  padding: 1.75rem 2.5rem 2rem;
+}
+
+/* Compact header — logo + title sit side-by-side */
+.ipf-header--compact {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  margin-bottom: 1.25rem;
+}
+
+.ipf-header--compact .ipf-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 0;
+}
+
+.ipf-header--compact .ipf-title {
+  font-size: 1.4rem;
+  margin: 0 0 2px;
+}
+
+.ipf-header--compact .ipf-subtitle {
+  margin: 0;
+}
+
+/* Tighter form gap for doctor */
+.ipf-card--doctor .ipf-form {
+  gap: 1rem;
+}
+
+/* 3-column row for doctor basic info */
+.ipf-row--three {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1rem;
+}
+
+/* ── Weekly Slots Section ── */
+.ipf-slots-section {
+  margin-top: 0.25rem;
+  padding: 1.1rem 1.25rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(74, 16, 96, 0.03) 0%, rgba(200, 134, 10, 0.04) 100%);
+  border: 1.5px solid #E0D0EF;
+}
+
+.ipf-slots-header {
+  margin-bottom: 0.75rem;
+}
+
+.ipf-slots-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.05rem;
+  color: #4A1060;
+  margin: 0 0 0.2rem;
+}
+
+.ipf-slots-desc {
+  font-size: 12.5px;
+  color: #7A6890;
+  margin: 0;
+}
+
+.ipf-slots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.ipf-day-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: #ffffff;
+  border: 1.5px solid #EDE4F5;
+  border-radius: 10px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.ipf-day-card:hover {
+  border-color: #C8860A;
+  box-shadow: 0 2px 10px rgba(200, 134, 10, 0.08);
+}
+
+/* Sunday spans full width in the 2-col grid */
+.ipf-day-card:last-child {
+  grid-column: 1 / -1;
+}
+
+.ipf-day-label {
+  min-width: 78px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ipf-day-abbrev {
+  display: none;
+}
+
+.ipf-day-full {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4A1060;
+  letter-spacing: 0.2px;
+}
+
+.ipf-day-times {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.ipf-time-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F5EEFA;
+  border: 1.5px solid #DCC8E8;
+  border-radius: 8px;
+  padding: 2px 4px 2px 2px;
+  transition: border-color 0.2s;
+}
+
+.ipf-time-chip:focus-within {
+  border-color: #C8860A;
+  box-shadow: 0 0 0 2px rgba(200, 134, 10, 0.1);
+}
+
+.ipf-time-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 6px 7px !important;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  color: #3A2250;
+  width: 105px;
+  cursor: text;
+}
+
+.ipf-time-input:focus {
+  outline: none;
+  box-shadow: none !important;
+}
+
+.ipf-time-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: #9A7FAD;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  padding: 0;
+}
+
+.ipf-time-remove:hover {
+  background: rgba(184, 36, 58, 0.1);
+  color: #B8243A;
+}
+
+.ipf-add-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px dashed #C8860A;
+  background: rgba(200, 134, 10, 0.06);
+  color: #C8860A;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.ipf-add-time:hover {
+  background: rgba(200, 134, 10, 0.13);
+  border-color: #a06d08;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   SECTION 3 — Nurse & Receptionist Initial Profile (NEW UI)
+   Components: nurse/InitialNurseProfileForm.js
+               receptionist/InitialReceptionistProfileForm.js
+   Prefix    : .ipf-*
+══════════════════════════════════════════════════════════════════════ */
+
+.ipf-wrapper {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 0%, rgba(108, 27, 133, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 100%, rgba(200, 134, 10, 0.08) 0%, transparent 60%),
+    #FAF7FF;
+}
+
+.ipf-card {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 16px 48px rgba(74, 16, 96, 0.18);
+  padding: 2.5rem 2.75rem;
+  width: 100%;
+  max-width: 520px;
+  border-top: 6px solid #C8860A;
+}
+
+.ipf-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.ipf-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  margin-bottom: 0.75rem;
+}
+
+.ipf-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.6rem;
+  color: #4A1060;
+  margin: 0 0 0.4rem;
+  letter-spacing: -0.3px;
+}
+
+.ipf-subtitle {
+  font-size: 14px;
+  color: #7A6890;
+  margin: 0;
+}
+
+.ipf-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ipf-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.ipf-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ipf-field label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4A1060;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.ipf-required {
+  color: #B8243A;
+  margin-left: 2px;
+}
+
+.ipf-field input,
+.ipf-field select {
+  padding: 12px 14px;
+  border: 2px solid #E0D0EF;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14.5px;
+  color: #3A2250;
+  background: #ffffff;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.ipf-field input::placeholder {
+  color: #c0b0d0;
+}
+
+.ipf-field input:focus,
+.ipf-field select:focus {
+  outline: none;
+  border-color: #C8860A;
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.13);
+}
+
+.ipf-submit {
+  margin-top: 0.5rem;
+  padding: 13px;
+  background: linear-gradient(135deg, #4A1060 0%, #6C1B85 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 14px rgba(74, 16, 96, 0.25);
+  transition: box-shadow 0.2s, transform 0.15s, opacity 0.2s;
+}
+
+.ipf-submit:hover:not(:disabled) {
+  box-shadow: 0 6px 20px rgba(74, 16, 96, 0.38);
+  transform: translateY(-2px);
+}
+
+.ipf-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.ipf-submit:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   RESPONSIVE — All sections
+══════════════════════════════════════════════════════════════════════ */
+
+/* Patient responsive */
 @media (max-width: 760px) {
   .patient-profile-page {
     padding: 20px 12px;
@@ -208,5 +602,77 @@
   .consent-card {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Doctor — tablet: collapse grids */
+@media (max-width: 960px) {
+  .ipf-card.ipf-card--doctor {
+    max-width: 100%;
+  }
+
+  .ipf-row--three {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ipf-slots-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ipf-day-card:last-child {
+    grid-column: auto;
+  }
+}
+
+/* Doctor — narrow tablets */
+@media (max-width: 680px) {
+  .ipf-row--three {
+    grid-template-columns: 1fr;
+  }
+
+  .ipf-header--compact {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .ipf-day-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .ipf-day-label {
+    min-width: auto;
+    flex-direction: row;
+    gap: 6px;
+    align-items: baseline;
+  }
+
+  .ipf-day-full { display: none; }
+  .ipf-day-abbrev {
+    display: inline;
+    font-size: 13px;
+    font-weight: 700;
+    color: #4A1060;
+  }
+}
+
+/* All ipf cards — mobile */
+@media (max-width: 480px) {
+  .ipf-card {
+    padding: 1.75rem 1.25rem;
+    border-radius: 14px;
+  }
+
+  .ipf-title { font-size: 1.35rem; }
+
+  .ipf-row { grid-template-columns: 1fr; }
+
+  .ipf-slots-section {
+    padding: 0.75rem;
+  }
+
+  .ipf-time-input {
+    width: 95px;
   }
 }

@@ -1121,3 +1121,132 @@
 }
 
 /* SelectedTestsSummary styles moved to SelectedTestsSummary.css */
+
+/* ══════════════════════════════════════════════════════════════════
+   NURSE APPOINTMENT — Filter Bar
+   Append this block to the END of DoctorAppointment.css
+   (These classes are used by NurseAppointment.js only; doctor side
+    uses inline styles for the filter, so no conflict.)
+══════════════════════════════════════════════════════════════════ */
+
+.appt-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.9rem;
+  background: var(--surface, #fff);
+  border: 1.5px solid var(--border, #E0D0EF);
+  border-top: 4px solid var(--gold, #C8860A);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(74, 16, 96, 0.08);
+}
+
+.appt-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.appt-filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--plum-mid, #6C1B85);
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+}
+
+.appt-filter-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--border, #E0D0EF);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-body, #3A2250);
+  background: #fff;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.appt-filter-input:focus {
+  outline: none;
+  border-color: var(--plum-mid, #6C1B85);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.09);
+}
+
+.appt-filter-input::placeholder {
+  color: #C0B0D0;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 600px) {
+  .appt-filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════════════════
+   NURSE APPOINTMENT — Filter Bar
+   Append this block to the END of DoctorAppointment.css
+   (These classes are used by NurseAppointment.js only; doctor side
+    uses inline styles for the filter, so no conflict.)
+══════════════════════════════════════════════════════════════════ */
+
+.appt-filter-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.9rem;
+  background: var(--surface, #fff);
+  border: 1.5px solid var(--border, #E0D0EF);
+  border-top: 4px solid var(--gold, #C8860A);
+  border-radius: 12px;
+  padding: 1.1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 2px 8px rgba(74, 16, 96, 0.08);
+}
+
+.appt-filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.appt-filter-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--plum-mid, #6C1B85);
+  text-transform: uppercase;
+  letter-spacing: 0.45px;
+}
+
+.appt-filter-input {
+  width: 100%;
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--border, #E0D0EF);
+  border-radius: 8px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.88rem;
+  color: var(--text-body, #3A2250);
+  background: #fff;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  box-sizing: border-box;
+}
+
+.appt-filter-input:focus {
+  outline: none;
+  border-color: var(--plum-mid, #6C1B85);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.09);
+}
+
+.appt-filter-input::placeholder {
+  color: #C0B0D0;
+  font-size: 0.84rem;
+}
+
+@media (max-width: 600px) {
+  .appt-filter-bar {
+    grid-template-columns: 1fr;
+  }
+}
