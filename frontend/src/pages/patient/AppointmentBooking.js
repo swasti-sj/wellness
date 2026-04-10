@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useLocation } from "react-router-dom";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "../../styles/doctor/DoctorAppointment.css";
@@ -27,6 +28,7 @@ const getNextDateForDay = (dayName) => {
 };
 
 export default function AppointmentBooking() {
+  const location = useLocation();
   const [doctors, setDoctors] = useState([]);
   const [selectedDoctorId, setSelectedDoctorId] = useState("");
   const [availableTimes, setAvailableTimes] = useState([]);
@@ -48,6 +50,12 @@ export default function AppointmentBooking() {
       return () => clearInterval(interval);
     }
   }, [token]);
+
+  useEffect(() => {
+    if (location.state?.selectedDoctorId) {
+      setSelectedDoctorId(location.state.selectedDoctorId);
+    }
+  }, [location.state]);
 
   const fetchAvailableSlots = async () => {
     try {

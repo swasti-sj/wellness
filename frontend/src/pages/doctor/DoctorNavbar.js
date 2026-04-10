@@ -66,6 +66,7 @@ export default function DoctorNavbar() {
             { label: "Appointments", path: "/docdashboard/doctor-appointment" },
             { label: "Refer", path: "/docdashboard/referral" },
             { label: "History", path: "/docdashboard/history" },
+            { label: "Profile", path: "/docdashboard/doctor-profile" },
           ].map((item) => (
             <button
               key={item.label}

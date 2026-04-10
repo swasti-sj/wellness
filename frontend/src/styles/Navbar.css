@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  align-self: center;
+  align-self:center;
   height: 100%;
 }
 
@@ -151,11 +151,6 @@
   transform: scale(0.96);
 }
 
-.profile-icon {
-  font-size: 1.6rem;
-  color: #fff;
-}
-
 /* ============================================
    PROFILE DROPDOWN
    ============================================ */
@@ -270,13 +265,11 @@
     opacity: 0;
     transform: translateY(-10px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
 /* ====== Hamburger Toggle (Responsive Addition) ====== */
 .hamburger-btn {
   display: none;
@@ -314,7 +307,6 @@
     display: flex;
   }
 }
-
 /* === Responsive fix: Profile inside hamburger === */
 @media (max-width: 768px) {
   .navbar-links button .fa-user-md {

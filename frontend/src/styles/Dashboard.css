@@ -1,260 +1,630 @@
-/* --- Global Reset & Base --- */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+/* ============================================================
+   DASHBOARD — College Medical Portal
+   Clean light theme · Purple structural · Amber accent
+   Font: Nunito — friendly yet professional
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700;800;900&display=swap');
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  --p-900: #1E0438;
+  --p-800: #2D0A4E;
+  --p-700: #4A1275;
+  --p-600: #5C1A8A;
+  --p-500: #7B2FBE;
+  --p-400: #9B51DA;
+  --p-300: #C084FC;
+  --p-200: #DDD6FE;
+  --p-100: #F3E8FF;
+  --p-50:  #FAF5FF;
+
+  --a-600: #B45309;
+  --a-500: #D97706;
+  --a-400: #F59E0B;
+  --a-300: #FCD34D;
+  --a-100: #FEF3C7;
+  --a-50:  #FFFBEB;
+
+  --n-900: #111827;
+  --n-800: #1F2937;
+  --n-700: #374151;
+  --n-600: #4B5563;
+  --n-500: #6B7280;
+  --n-400: #9CA3AF;
+  --n-300: #D1D5DB;
+  --n-200: #E5E7EB;
+  --n-100: #F3F4F6;
+  --n-50:  #F9FAFB;
+
+  --page-bg:  #F2EEF8;
+  --card-bg:  #FFFFFF;
+  --border:   #E5E7EB;
+
+  --radius-xl: 18px;
+  --radius-lg: 13px;
+  --radius-md: 9px;
+  --radius-sm: 6px;
+
+  --shadow-sm:  0 1px 3px rgba(74,18,117,0.07), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md:  0 4px 14px rgba(74,18,117,0.11), 0 2px 4px rgba(0,0,0,0.05);
+  --shadow-lg:  0 10px 30px rgba(74,18,117,0.15), 0 4px 8px rgba(0,0,0,0.05);
+
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* ============================================================
+   GLOBAL RESET
+   ============================================================ */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #faf6ff, #fff8f3);
-  color: #333;
-  line-height: 1.6;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  background-color: var(--page-bg);
+  color: var(--n-800);
+  line-height: 1.65;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* --- Dashboard Container --- */
+/* ============================================================
+   DASHBOARD WRAPPER
+   ============================================================ */
 .dashboard-container {
   width: 100%;
-  max-width: 1000px;
-  background: linear-gradient(135deg, #6a1b6f 0%, #89288f 100%);
-  color: #fff;
-  border-radius: 20px;
-  box-shadow: 0 8px 25px rgba(106, 27, 111, 0.25);
-  padding: 2.5rem 2rem;
-  margin: 2.5rem auto;
-  animation: fadeIn 0.5s ease-in-out;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 2rem 1.75rem 4rem;
+  animation: fadeUp 0.4s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================
+   LOADING STATE
+   ============================================================ */
+.loading-stats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.loading-stats p {
+  font-size: 0.95rem;
+  color: var(--n-400);
+  font-weight: 500;
+}
+
+/* ============================================================
+   STATS ROW
+   ============================================================ */
+.stats-section { margin-bottom: 2.5rem; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.1rem;
+}
+
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem 1.6rem 1.4rem;
   position: relative;
   overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-/* --- Soft Glow Overlay --- */
-.dashboard-container::before {
-  content: "";
+/* Coloured left stripe */
+.stat-card::before {
+  content: '';
   position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at top left,
-    rgba(255, 173, 74, 0.2),
-    transparent 60%
-  );
-  pointer-events: none;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 
-/* --- Fade Animation --- */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.stat-card.info::before    { background: linear-gradient(180deg, var(--p-500), var(--p-300)); }
+.stat-card.success::before { background: linear-gradient(180deg, var(--a-500), var(--a-300)); }
+.stat-card.warning::before { background: linear-gradient(180deg, var(--a-400), var(--a-300)); }
+
+.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.stat-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--n-400);
+  margin-bottom: 0.5rem;
 }
 
-/* --- Section Titles --- */
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.stat-card.info .stat-value    { color: var(--p-600); }
+.stat-card.success .stat-value { color: var(--a-600); }
+.stat-card.warning .stat-value { color: var(--a-500); }
+
+/* ============================================================
+   SECTION HEADERS
+   ============================================================ */
+.section-header {
+  margin-bottom: 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
 .visiting-doctors-title,
 .upcoming-title,
 .lastvisit-title,
 .faculty-title {
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #fff;
-  text-align: center;
-  margin-bottom: 1.8rem;
-  letter-spacing: 0.5px;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--p-800);
+  letter-spacing: -0.01em;
   position: relative;
+  padding-bottom: 0.6rem;
 }
 
 .visiting-doctors-title::after,
 .upcoming-title::after,
 .lastvisit-title::after,
 .faculty-title::after {
-  content: "";
-  display: block;
-  width: 60px;
-  height: 3px;
-  background: linear-gradient(90deg, #ffad4a, #fff);
-  margin: 0.6rem auto 0;
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 36px; height: 3px;
+  background: var(--a-400);
   border-radius: 2px;
 }
 
-/* --- Visiting Doctors Section --- */
-.visiting-doctors-list {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 2.5rem;
+.section-subtitle {
+  font-size: 0.84rem;
+  color: var(--n-500);
+  font-weight: 400;
+  margin-top: 0.15rem;
 }
 
+/* ============================================================
+   ERROR MESSAGE
+   ============================================================ */
+.error-message {
+  background: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  color: #991B1B;
+  padding: 0.8rem 1.1rem;
+  border-radius: var(--radius-md);
+  font-size: 0.855rem;
+  font-weight: 600;
+  margin-bottom: 1.2rem;
+}
+
+/* ============================================================
+   AVAILABLE DOCTORS — Clean always-visible cards
+   No expand, no hover panel — all info shown upfront
+   ============================================================ */
+.visiting-doctors-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 2.75rem;
+}
+
+/* The JS sets maxHeight and adds .expanded class via state —
+   we override those to keep cards fully static in appearance */
 .doctor-card {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 1.5rem;
-  width: 100%;
-  max-width: 18rem;
-  text-align: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(6px);
-  cursor: pointer;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0;                    /* padding handled by inner sections */
+  cursor: default;               /* not a clickable element visually */
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  box-shadow: var(--shadow-sm);
+  /* JS inline maxHeight — we override it */
+  max-height: none !important;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Purple top bar — always visible, not toggled */
+.doctor-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--p-600), var(--p-400));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .doctor-card:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-6px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-md);
+  border-color: var(--p-200);
+  transform: translateY(-3px);
+  cursor: default;
 }
 
+/* Doctor card main body */
+.doctor-card-body {
+  padding: 1.5rem 1.4rem 1rem;
+  flex: 1;
+}
+
+/* Name */
 .doctor-card-title {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #ffad4a;
-  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--n-900);
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
+  margin-top: 0.15rem;   /* clear the top border */
 }
 
-.doctor-card p {
-  color: #f3e9f3;
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
+/* Specialty pill */
+.doctor-card-specialty {
+  display: inline-block;
+  font-size: 0.69rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--p-700);
+  background: var(--p-100);
+  padding: 0.18rem 0.65rem;
+  border-radius: 20px;
+  margin-bottom: 1rem;
+}
+
+/* Next availability row */
+.doctor-card-availability {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.81rem;
+  color: var(--n-500);
+  line-height: 1.5;
+  padding: 0.6rem 0.75rem;
+  background: var(--n-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--n-100);
+}
+
+.doctor-card-availability strong {
+  color: var(--n-700);
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* The doctorHover panel — JS shows this on hover/expand.
+   We make it always show cleanly as a footer inside the card */
+.doctorHover {
+  padding: 0.85rem 1.4rem 1.3rem;
+  border-top: 1px solid var(--n-100);
+  background: var(--n-50);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  /* Remove the JS-driven animation — keep it static */
+  animation: none;
 }
 
 .doctorHover p {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 0.6rem;
-  margin: 0.5rem 0;
-  color: #f3e9f3;
+  font-size: 0.8rem;
+  color: var(--n-600);
+  padding: 0;
+  background: none;
+  border-radius: 0;
+  border-left: none;
+  margin-bottom: 0;
+  line-height: 1.5;
 }
 
-.doctorHover strong {
-  color: #ffad4a;
+.doctorHover p strong {
+  color: var(--p-700);
+  font-weight: 700;
+  margin-right: 0.3rem;
 }
 
-/* --- Buttons --- */
+/* Book Now button — full width, anchored to card bottom */
 .doctor-card-btn {
-  display: inline-block;
+  display: block;
+  width: 100%;
+  text-align: center;
   margin-top: 0.7rem;
-  padding: 0.65rem 1.3rem;
-  background: linear-gradient(135deg, #ffad4a 0%, #89288f 100%);
+  padding: 0.6rem 1.2rem;
+  border-radius: var(--radius-sm);
+  background: var(--p-700);
   color: #fff;
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.84rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
   border: none;
-  border-radius: 10px;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 173, 74, 0.25);
+  transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+  box-shadow: 0 2px 8px rgba(74,18,117,0.20);
 }
 
 .doctor-card-btn:hover {
-  background: linear-gradient(135deg, #89288f 0%, #ffad4a 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
+  background: var(--p-600);
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(74,18,117,0.28);
+  color: #fff;
+  text-decoration: none;
 }
 
-/* --- Upcoming & Last Visit Sections --- */
+.doctor-card-btn:active {
+  transform: translateY(0);
+}
+
+/* ============================================================
+   UPCOMING + RECENT VISIT SECTIONS
+   ============================================================ */
 .upcoming-section,
 .lastvisit-section {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 1.75rem;
-  margin: 1.5rem 0;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(6px);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 1.8rem 1.8rem 1.8rem 2.2rem;
+  margin-bottom: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+  transition: box-shadow 0.2s ease;
+}
+
+/* Left accent stripe */
+.upcoming-section::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--p-500), var(--p-300));
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+}
+
+.lastvisit-section::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--a-500), var(--a-300));
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
 }
 
 .upcoming-section:hover,
-.lastvisit-section:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+.lastvisit-section:hover { box-shadow: var(--shadow-md); }
+
+/* ============================================================
+   APPOINTMENT INFO — 2-column info grid
+   ============================================================ */
+.appointment-card {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.7rem;
 }
 
-.upcoming-section p,
-.lastvisit-section p {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 0.7rem 1rem;
-  border-radius: 10px;
-  margin: 0.4rem 0;
-  color: #f3e9f3;
-  font-size: 0.95rem;
+.appointment-card > p {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--n-50);
+  border: 1px solid var(--n-200);
+  border-radius: var(--radius-md);
+  padding: 0.8rem 1rem;
+  font-size: 0.885rem;
+  color: var(--n-800);
+  line-height: 1.45;
 }
 
-.upcoming-section strong,
-.lastvisit-section strong {
-  color: #ffad4a;
+.appointment-card > p > strong {
+  font-size: 0.67rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--n-400);
+  display: block;
 }
 
-/* --- Faculty Section --- */
+/* ============================================================
+   PRESCRIPTION — inside lastvisit-section
+   ============================================================ */
+.prescription-section {
+  grid-column: 1 / -1;
+  margin-top: 0.2rem;
+  padding: 1.1rem 1.1rem 1.1rem;
+  background: var(--p-50);
+  border: 1px solid var(--p-200);
+  border-radius: var(--radius-md);
+}
+
+/* The "Prescription:" <p> label */
+.prescription-section > p {
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: 0.68rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.09em !important;
+  text-transform: uppercase !important;
+  color: var(--p-600) !important;
+  display: block !important;
+  margin-bottom: 0.8rem !important;
+}
+
+.prescription-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.prescription-item {
+  background: #fff;
+  border: 1px solid var(--p-200);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+}
+
+.medication-name {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--p-800);
+  margin-bottom: 0.35rem;
+}
+
+.medication-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 1.1rem;
+}
+
+.medication-details span {
+  font-size: 0.77rem;
+  color: var(--n-500);
+}
+
+.medication-details .notes {
+  font-style: italic;
+  color: var(--n-400);
+  width: 100%;
+}
+
+.prescription-document { margin-top: 0.8rem; }
+
+.document-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--p-700);
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.42rem 0.95rem;
+  background: #fff;
+  border: 1px solid var(--p-300);
+  border-radius: var(--radius-sm);
+  transition: var(--transition);
+}
+
+.document-link:hover {
+  background: var(--p-100);
+  color: var(--p-800);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(74,18,117,0.12);
+  text-decoration: none;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-message {
+  text-align: center;
+  color: var(--n-400);
+  font-size: 0.875rem;
+  font-style: italic;
+  font-weight: 500;
+  padding: 2.5rem 1rem;
+  background: var(--n-50);
+  border: 1.5px dashed var(--n-300);
+  border-radius: var(--radius-md);
+}
+
+/* ============================================================
+   FACULTY SECTION
+   ============================================================ */
 .faculty-list {
   display: grid;
-  gap: 1.5rem;
+  gap: 1.1rem;
   grid-template-columns: 1fr;
-  margin-top: 1.5rem;
+  margin-top: 1.2rem;
 }
 
-@media (min-width: 640px) {
-  .faculty-list {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (min-width: 900px) {
-  .faculty-list {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
-}
+@media (min-width: 640px)  { .faculty-list { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px)  { .faculty-list { grid-template-columns: repeat(3, 1fr); } }
 
 .faculty-card {
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: left;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
-  transition: all 0.3s ease;
-  backdrop-filter: blur(6px);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.4rem;
+  position: relative;
+  overflow: hidden;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
 }
 
-.faculty-card:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+.faculty-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--a-500), var(--a-400));
 }
+
+.faculty-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
 
 .faculty-card-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: #ffad4a;
-  margin-bottom: 0.4rem;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--n-900);
+  margin-bottom: 0.35rem;
 }
 
-.faculty-card p {
-  color: #f3e9f3;
-  font-size: 0.95rem;
-  margin-bottom: 0.5rem;
-}
+.faculty-card p { color: var(--n-600); font-size: 0.86rem; margin-bottom: 0.3rem; }
 
 .faculty-card-email {
-  color: #fff;
-  font-weight: 600;
+  color: var(--p-600);
+  font-weight: 700;
+  font-size: 0.84rem;
   text-decoration: none;
-  transition: color 0.2s;
+  border-bottom: 1px solid transparent;
+  transition: var(--transition);
 }
 
 .faculty-card-email:hover {
-  color: #ffad4a;
-  text-decoration: underline;
+  color: var(--p-800);
+  border-bottom-color: var(--p-300);
+  text-decoration: none;
 }
 
-/* --- Responsive --- */
-@media (max-width: 768px) {
-  .dashboard-container {
-    padding: 2rem 1.5rem;
-  }
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; }
+}
 
-  .doctor-card {
-    max-width: 100%;
-  }
+@media (max-width: 768px) {
+  .dashboard-container { padding: 1.25rem 1rem 3rem; }
+  .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
+  .stat-value { font-size: 2rem; }
+  .visiting-doctors-list { grid-template-columns: 1fr; gap: 0.9rem; }
+  .appointment-card { grid-template-columns: 1fr; }
+  .upcoming-section,
+  .lastvisit-section { padding: 1.4rem 1.4rem 1.4rem 1.8rem; }
+}
+
+@media (max-width: 480px) {
+  .visiting-doctors-title,
+  .upcoming-title,
+  .lastvisit-title { font-size: 1.05rem; }
+  .doctor-card-body { padding: 1.2rem 1.2rem 0.9rem; }
+  .doctorHover { padding: 0.75rem 1.2rem 1.1rem; }
+  .upcoming-section,
+  .lastvisit-section { padding: 1.2rem 1.2rem 1.2rem 1.5rem; }
 }
