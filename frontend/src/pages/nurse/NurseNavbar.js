@@ -1,13 +1,31 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FaUserMd } from "react-icons/fa";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useLocation, Link } from "react-router-dom";
+import axios from "axios";
 import "../../styles/Navbar.css";
+
+const API_BASE = "http://localhost:5000/api";
 
 export default function NurseNavbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [nurse, setNurse] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const profileRef = useRef(null);
+  const token = localStorage.getItem("token");
+
+  // Fetch nurse profile for name/email in dropdown
+  useEffect(() => {
+    if (!token) return;
+    axios
+      .get(`${API_BASE}/nurse/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((r) => setNurse(r.data))
+      .catch(() => {});
+  }, [token]);
+
+  // Removed outside click handler to ensure dropdown click works reliably.
+  // The user will just click the profile icon again to close it.
 
   const activeTab = (() => {
     if (location.pathname === "/nurse-dashboard") return "Dashboard";
@@ -29,25 +47,13 @@ export default function NurseNavbar() {
     navigate("/");
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      const navbar = document.querySelector(".navbar");
-      if (window.scrollY > 60) navbar.classList.add("shrink");
-      else navbar.classList.remove("shrink");
-    };
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleResize);
-    };
-  }, []);
+  const initials = nurse?.name
+    ? nurse.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+    : "NU";
 
   const toggleMenu = () => {
     const navLinks = document.querySelector(".navbar-links");
-    navLinks.classList.toggle("show");
+    if (navLinks) navLinks.classList.toggle("show");
   };
 
   return (
@@ -56,7 +62,6 @@ export default function NurseNavbar() {
         <div className="navbar-logo">
           <img src="/WebIcon.plain.svg" alt="College Logo" className="login-logo" />
           <span className="navbar-title">IIT Dharwad (Nurse)</span>
-
           <button className="hamburger-btn" onClick={toggleMenu}>☰</button>
         </div>
 
@@ -74,57 +79,74 @@ export default function NurseNavbar() {
               {item.label}
             </button>
           ))}
-
-          {/* Profile inside hamburger (mobile view only) */}
-          {isMobile && (
-            <button
-              className="navbar-btn"
-              onClick={() => {
-                toggleMenu();
-                handleProfile();
-              }}
-            >
-              <FaUserMd style={{ marginRight: "8px" }} />
-              Profile
-            </button>
-          )}
-          {isMobile && (
-            <button
-              className="navbar-btn"
-              onClick={() => {
-                toggleMenu();
-                handleLogout();
-              }}
-            >
-              Logout
-            </button>
-          )}
         </div>
 
-        {/* Profile icon (desktop view only) */}
-        {!isMobile && (
-          <div className="relative">
-            <button
-              onClick={() => setShowProfileMenu((prev) => !prev)}
-              aria-label="Nurse profile"
-              title="Profile"
-              className="profile-btn"
-            >
-              <FaUserMd className="profile-icon" />
-            </button>
+        {/* Profile avatar button + dropdown (desktop) */}
+        <div className="relative" ref={profileRef}>
+          <button
+            onClick={() => setShowProfileMenu((prev) => !prev)}
+            aria-label="Nurse profile"
+            title={nurse?.name || "Profile"}
+            className="profile-btn"
+            style={{
+              background: "rgba(255,255,255,0.15)",
+              border: "2px solid rgba(255,255,255,0.4)",
+              color: "#fff",
+              width: "48px",
+              height: "48px",
+              borderRadius: "50%",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "1rem",
+              fontWeight: 700,
+              letterSpacing: "0.5px",
+            }}
+          >
+            {initials}
+          </button>
 
-            {showProfileMenu && (
-              <div className="profile-menu">
-                <button className="profile-menu-btn" onClick={handleProfile}>
-                  Profile
-                </button>
-                <button className="profile-menu-btn" onClick={handleLogout}>
-                  Logout
-                </button>
+          {showProfileMenu && (
+            <div style={{ 
+              position: 'absolute', 
+              top: '70px', 
+              right: '10px', 
+              background: '#fff', 
+              borderRadius: '12px', 
+              boxShadow: '0 8px 25px rgba(0,0,0,0.2)', 
+              minWidth: '200px', 
+              border: '2px solid #ffad4a', 
+              zIndex: 99999,
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden'
+            }}>
+              {/* Name + email header */}
+              <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #eee", background: "#fcfcfc" }}>
+                <div style={{ fontWeight: 700, color: "purple", fontSize: "0.85rem", lineHeight: 1.2 }}>
+                  {nurse?.name || "Nurse"}
+                </div>
+                <div style={{ fontSize: "0.7rem", color: "#888", marginTop: "4px" }}>
+                  {nurse?.email || "Logged In"}
+                </div>
               </div>
-            )}
-          </div>
-        )}
+              <Link 
+                to="/nurse-dashboard/nurse-profile"
+                onClick={() => setShowProfileMenu(false)}
+                style={{ display: 'block', textDecoration: 'none', width: '100%', padding: '0.9rem 1.25rem', background: 'transparent', border: 'none', borderBottom: '1px solid #eee', textAlign: 'left', cursor: 'pointer', fontWeight: 600, color: '#333', fontSize: '0.95rem' }}
+              >
+                View Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                style={{ width: '100%', padding: '0.9rem 1.25rem', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontWeight: 600, color: '#e53935', fontSize: '0.95rem' }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );

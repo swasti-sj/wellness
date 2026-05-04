@@ -161,7 +161,7 @@
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  min-width: 180px;
+  min-width: 200px;
   border: 2px solid #ffad4a;
   animation: slideDown 0.25s ease-out;
   overflow: hidden;

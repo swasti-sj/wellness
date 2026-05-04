@@ -15,6 +15,8 @@ const daySlotSchema = new mongoose.Schema({
           'no show',
           'cancelled by user',
           'cancelled by doctor',
+          'cancelled by nurse',
+          'cancelled by receptionist',
           'walk in'
         ],
         default: 'available'

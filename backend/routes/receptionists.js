@@ -194,7 +194,7 @@ router.patch("/entries/:entryId/status", async (req, res) => {
       return res.status(400).json({ error: "Status is required" });
     }
 
-    const validStatuses = ['Added', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'walk in'];
+    const validStatuses = ['Added', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'cancelled by nurse', 'cancelled by receptionist', 'walk in'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ error: "Invalid status" });
     }

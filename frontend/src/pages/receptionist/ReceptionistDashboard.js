@@ -22,14 +22,21 @@ export default function ReceptionistDashboard() {
   const [messageType, setMessageType] = useState('success'); // 'success' | 'error'
   const [editingRowId, setEditingRowId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
+  const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
 
   const token = localStorage.getItem('token');
   const apiBaseUrl = 'http://localhost:5000/api';
 
   useEffect(() => {
-    fetchAppointments();
-    fetchManualEntries();
-    fetchDoctors();
+    const loadData = () => {
+      fetchAppointments();
+      fetchManualEntries();
+      fetchDoctors();
+    };
+    
+    loadData();
+    const intervalId = setInterval(loadData, 60000); // Auto-refresh every 60s
+    return () => clearInterval(intervalId);
   }, []);
 
   const fetchDoctors = async () => {
@@ -110,14 +117,21 @@ export default function ReceptionistDashboard() {
 
   const handleStatusChange = async (itemId, newStatus) => {
     const manualEntry = manualEntries.find(e => e._id === itemId);
-    if (manualEntry) {
-      try {
+    const appointmentEntry = appointments.find(a => a._id === itemId);
+
+    try {
+      if (manualEntry) {
         await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, { status: newStatus });
-      } catch (error) {
-        showMessage('Error updating status', 'error');
-        return;
+      } else if (appointmentEntry) {
+        const token = localStorage.getItem('token');
+        await axios.patch(`${apiBaseUrl}/appointments/${itemId}/status`, { status: newStatus, token });
       }
+    } catch (error) {
+      const errMsg = error.response?.data?.error || error.message || 'Error updating status';
+      showMessage(`Error: ${errMsg}`, 'error');
+      return;
     }
+
     setAppointments(prev => prev.map(a => a._id === itemId ? { ...a, status: newStatus } : a));
     setManualEntries(prev => prev.map(e => e._id === itemId ? { ...e, status: newStatus } : e));
     showMessage('Status updated successfully');
@@ -139,30 +153,45 @@ export default function ReceptionistDashboard() {
 
   const handleSaveChanges = async (itemId) => {
     const manualEntry = manualEntries.find(e => e._id === itemId);
-    if (manualEntry) {
-      try {
+    const appointmentEntry = appointments.find(a => a._id === itemId);
+
+    try {
+      if (manualEntry) {
         await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}`, {
           patientName: editedValues.patientName,
           roll: editedValues.roll,
           doctorName: editedValues.doctorName,
           appointmentDate: editedValues.date || null
         });
-      } catch (error) {
-        showMessage('Error saving changes', 'error');
-        setEditingRowId(null);
-        setEditedValues({});
-        return;
+
+        // Update status if changed during edit
+        if (editedValues.status && editedValues.status !== manualEntry.status) {
+          await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, { status: editedValues.status });
+        }
+      } else if (appointmentEntry) {
+        // For standard appointments, only update status if it was modified
+        if (editedValues.status && editedValues.status !== appointmentEntry.status) {
+          const token = localStorage.getItem('token');
+          await axios.patch(`${apiBaseUrl}/appointments/${itemId}/status`, { status: editedValues.status, token });
+        }
       }
+
+      setAppointments(prev => prev.map(a =>
+        a._id === itemId ? { ...a, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : a.date } : a
+      ));
+      setManualEntries(prev => prev.map(e =>
+        e._id === itemId ? { ...e, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : e.date } : e
+      ));
+      setEditingRowId(null);
+      setEditedValues({});
+      showMessage('Changes saved successfully');
+
+    } catch (error) {
+      const errMsg = error.response?.data?.error || error.message || 'Error saving changes';
+      showMessage(`Error: ${errMsg}`, 'error');
+      setEditingRowId(null);
+      setEditedValues({});
     }
-    setAppointments(prev => prev.map(a =>
-      a._id === itemId ? { ...a, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : a.date } : a
-    ));
-    setManualEntries(prev => prev.map(e =>
-      e._id === itemId ? { ...e, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : e.date } : e
-    ));
-    setEditingRowId(null);
-    setEditedValues({});
-    showMessage('Changes saved successfully');
   };
 
   const handleAddEntry = async (e) => {
@@ -217,14 +246,28 @@ export default function ReceptionistDashboard() {
   const allData = [...appointments, ...manualEntries];
 
   const filteredData = useMemo(() => {
-    if (!searchQuery.trim()) return allData;
-    const fuse = new Fuse(allData, {
-      keys: ['patientName', 'roll', 'doctorName', 'date', 'status', 'email'],
-      threshold: 0.3,
-      includeScore: true
+    let result = allData;
+    if (searchQuery.trim()) {
+      const fuse = new Fuse(allData, {
+        keys: ['patientName', 'roll', 'doctorName', 'date', 'status', 'email'],
+        threshold: 0.3,
+        includeScore: true
+      });
+      result = fuse.search(searchQuery).map(r => r.item);
+    }
+
+    // Apply Sorting
+    return [...result].sort((a, b) => {
+      if (sortBy === 'name') {
+        return (a.patientName || '').localeCompare(b.patientName || '');
+      } else if (sortBy === 'newest') {
+        return new Date(b.date || 0) - new Date(a.date || 0);
+      } else if (sortBy === 'oldest') {
+        return new Date(a.date || 0) - new Date(b.date || 0);
+      }
+      return 0;
     });
-    return fuse.search(searchQuery).map(r => r.item);
-  }, [allData, searchQuery]);
+  }, [allData, searchQuery, sortBy]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -252,7 +295,8 @@ export default function ReceptionistDashboard() {
         <h1 className="rd-page-title">Receptionist Dashboard</h1>
 
         {/* Search Bar */}
-        <div className="rd-search-bar">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
+          <div className="rd-search-bar" style={{ flex: 1, marginBottom: 0 }}>
           <svg className="rd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
@@ -273,6 +317,30 @@ export default function ReceptionistDashboard() {
           {searchQuery && (
             <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
           )}
+        </div>
+          <select 
+            value={sortBy} 
+            onChange={(e) => setSortBy(e.target.value)}
+            className="rd-sort-select"
+            style={{
+              padding: '12px 20px',
+              borderRadius: '12px',
+              border: '1px solid #ddd',
+              background: '#fff',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              color: '#4A1060',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '180px',
+              height: '48px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)'
+            }}
+          >
+            <option value="newest">Latest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Patient Name (A-Z)</option>
+          </select>
         </div>
 
         {/* Add Entry Form — Horizontal */}
@@ -438,8 +506,8 @@ export default function ReceptionistDashboard() {
                           {isEditing ? (
                             <select
                               className="rd-status-select"
-                              value={item.status}
-                              onChange={(e) => handleStatusChange(item._id, e.target.value)}
+                              value={editedValues.status || item.status}
+                              onChange={(e) => handleEditFieldChange('status', e.target.value)}
                             >
                               <option value="booked">Booked</option>
                               <option value="attended">Attended</option>

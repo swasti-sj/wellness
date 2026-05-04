@@ -39,7 +39,7 @@ const ReceptionistEntrySchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['Added', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'walk in'],
+    enum: ['Added', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'cancelled by nurse', 'cancelled by receptionist', 'walk in'],
     default: 'Added'
   },
   addedBy: {

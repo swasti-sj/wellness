@@ -702,16 +702,19 @@ router.patch("/:appointmentId/status", async (req, res) => {
 
     // Verify token and role
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'doctor' && decoded.role !== 'nurse') {
-      return res.status(403).json({ error: "Access denied. Only doctors and nurses can update appointment status." });
+    if (decoded.role !== 'doctor' && decoded.role !== 'nurse' && decoded.role !== 'receptionist') {
+      return res.status(403).json({ error: "Access denied. Only doctors, nurses, and receptionists can update appointment status." });
     }
 
-    // For doctors, verify ownership; for nurses, allow all
+    let appointment;
+    let doctor; // Declare doctor here so it's accessible below
+
+    // For doctors, verify ownership; for nurses and receptionists, allow all
     if (decoded.role === 'doctor') {
-      const doctor = await Doctor.findById(decoded.id);
+      doctor = await Doctor.findById(decoded.id);
       if (!doctor) return res.status(404).json({ error: "Doctor not found" });
 
-      const appointment = await Appointment.findById(appointmentId);
+      appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
       if (appointment.doctor.toString() !== doctor._id.toString()) {
@@ -722,21 +725,33 @@ router.patch("/:appointmentId/status", async (req, res) => {
       const nurse = await Nurse.findById(decoded.id);
       if (!nurse) return res.status(404).json({ error: "Nurse not found" });
 
-      const appointment = await Appointment.findById(appointmentId);
+      appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+      
+      doctor = await Doctor.findById(appointment.doctor);
+    } else if (decoded.role === 'receptionist') {
+      const Receptionist = require("../models/Receptionist");
+      const receptionist = await Receptionist.findById(decoded.id);
+      if (!receptionist) return res.status(404).json({ error: "Receptionist not found" });
+
+      appointment = await Appointment.findById(appointmentId);
+      if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+      
+      doctor = await Doctor.findById(appointment.doctor);
     }
 
     // Update status
-    const validStatuses = ["booked","attended","no show","cancelled by user","cancelled by doctor","walk in","available"];
+    const validStatuses = ["booked","attended","no show","cancelled by user","cancelled by doctor","cancelled by nurse","cancelled by receptionist","walk in","available"];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: "Invalid status" });
+      console.log("[API] PATCH Status Error: Invalid status received:", status);
+      return res.status(400).json({ error: "Invalid status: " + status });
     }
 
     appointment.status = status;
     await appointment.save();
 
     // If marking as completed or no-show, free up the slot for future bookings
-    if (status === "attended" || status === "no show") {
+    if ((status === "attended" || status === "no show") && doctor) {
       const daySlot = doctor.weeklySlots.find(d => d.day === appointment.slotDay);
       if (daySlot) {
         const timeSlot = daySlot.times.find(t => t.time === appointment.slotTime);
@@ -754,7 +769,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("Error in PATCH status:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -997,8 +1012,9 @@ router.post("/nurse-book", async (req, res) => {
   try {
     console.log("[API] POST /nurse-book called");
 
-    const { token, patientEmail, patientPhone, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { token, patientEmail, patientPhone, doctorId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
+    if (!doctorId) return res.status(400).json({ error: "Doctor ID is required" });
 
     // Verify nurse
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -1008,12 +1024,17 @@ router.post("/nurse-book", async (req, res) => {
     const nurse = await Nurse.findById(decoded.id);
     if (!nurse) return res.status(404).json({ error: "Nurse not found" });
 
+    // Verify doctor
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) return res.status(404).json({ error: "Doctor not found" });
+
     // Find patient by email
     const user = await User.findOne({ email: patientEmail });
     if (!user) return res.status(404).json({ error: "Patient not found" });
 
     // Create appointment
     const appointment = new Appointment({
+      doctor: doctor._id,
       user: user._id,
       startDateTime,
       endDateTime,
@@ -1024,7 +1045,11 @@ router.post("/nurse-book", async (req, res) => {
     });
     await appointment.save();
 
-    res.json({ success: true, appointment });
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate("user", "name email roll")
+      .populate("doctor", "name specialization");
+
+    res.json({ success: true, appointment: populatedAppointment });
   } catch (err) {
     console.error("Error booking appointment:", err);
     res.status(500).json({ error: err.message });

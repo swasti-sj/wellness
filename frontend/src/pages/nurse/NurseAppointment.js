@@ -36,10 +36,12 @@ export default function NurseAppointment({ apiBaseUrl }) {
   const [bookingData, setBookingData] = useState({
     patientEmail: "",
     patientPhone: "",
+    doctorId: "",
     date: "",
     time: "",
     duration: 30,
   });
+  const [doctors, setDoctors] = useState([]);
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
@@ -64,9 +66,19 @@ export default function NurseAppointment({ apiBaseUrl }) {
   useEffect(() => {
     if (!apiBaseUrl || !token) return;
     fetchAppointments();
+    fetchDoctors();
     const interval = setInterval(fetchAppointments, 60000);
     return () => clearInterval(interval);
   }, [apiBaseUrl, token]);
+
+  const fetchDoctors = async () => {
+    try {
+      const res = await axios.get(`${apiBaseUrl}/doctors/list`);
+      setDoctors(res.data || []);
+    } catch (err) {
+      console.error("Error fetching doctors:", err);
+    }
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -143,6 +155,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
         token,
         patientEmail: bookingData.patientEmail,
         patientPhone: bookingData.patientPhone,
+        doctorId: bookingData.doctorId,
         startDateTime,
         endDateTime,
         slotDay: new Date(bookingData.date).toLocaleDateString("en-US", { weekday: "long" }),
@@ -373,7 +386,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
                       <option value="booked" disabled>— Update Status —</option>
                       <option value="attended">Mark Completed</option>
                       <option value="no show">Mark No-Show</option>
-                      <option value="walk_in">Mark Walk-in</option>
+                      <option value="walk in">Mark Walk-in</option>
                     </select>
                   </div>
                 </div>
@@ -477,6 +490,21 @@ export default function NurseAppointment({ apiBaseUrl }) {
                     value={bookingData.patientPhone}
                     onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })}
                   />
+                </div>
+                <div className="booking-field">
+                  <label>Doctor</label>
+                  <select
+                    value={bookingData.doctorId}
+                    onChange={(e) => setBookingData({ ...bookingData, doctorId: e.target.value })}
+                    required
+                  >
+                    <option value="">-- Select Doctor --</option>
+                    {doctors.map(doc => (
+                      <option key={doc._id} value={doc._id}>
+                        {doc.name} ({doc.specialization || "General"})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="booking-field">
                   <label>Date</label>

@@ -11,7 +11,7 @@ const AppointmentSchema = new mongoose.Schema({
   slotTime: { type: String },
   bookedBy: { 
     type: String, 
-    enum: ['user', 'doctor'], 
+    enum: ['user', 'doctor', 'nurse', 'receptionist'], 
     default: 'user' 
   }, // Track who made the booking
   status: {
@@ -22,6 +22,8 @@ const AppointmentSchema = new mongoose.Schema({
       "no show",
       "cancelled by user",
       "cancelled by doctor",
+      "cancelled by nurse",
+      "cancelled by receptionist",
       "walk in",
       "available"
     ],
