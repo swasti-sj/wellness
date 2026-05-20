@@ -5,6 +5,7 @@ const Pharmacist = require('../models/Pharmacist');
 const Medicine = require('../models/Medicine');
 const StockTransaction = require('../models/StockTransaction');
 const MedicineIssuance = require('../models/MedicineIssuance');
+const { logActivity, getClientIp } = require('../utils/audit');
 
 // Middleware: any authenticated user can READ
 const verifyUser = async (req, res, next) => {
@@ -209,6 +210,25 @@ router.post('/', verifyPharmacist, async (req, res) => {
       });
     }
 
+    // Audit: New medicine added
+    try {
+      await logActivity({
+        userId: req.pharmacist._id,
+        userName: req.pharmacist.name || req.pharmacist.email,
+        userEmail: req.pharmacist.email || '',
+        role: 'pharmacist',
+        sessionId: req.pharmacist.sessionId || null,
+        module: 'Medicine',
+        action: 'ADD_MEDICINE',
+        description: `Added new medicine ${newMedicine.name} with opening stock ${newMedicine.stockCount}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { medicineId: newMedicine._id, stock: newMedicine.stockCount }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write medicine add audit log:', auditErr.message);
+    }
+
     res.status(201).json({ success: true, medicine: newMedicine });
   } catch (err) {
     if (err.code === 11000) {
@@ -314,6 +334,28 @@ router.put('/:id', verifyPharmacist, async (req, res) => {
 
     const updated = await Medicine.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
     
+    // Audit: Stock or medicine updated (record old/new for meaningful fields)
+    try {
+      const changedFields = {};
+      if (updates.stockCount !== undefined) changedFields.stockCount = { before: prevStock, after: updates.stockCount };
+      if (updates.expiryDate !== undefined) changedFields.expiryDate = { before: medicine.expiryDate, after: updates.expiryDate };
+      await logActivity({
+        userId: req.pharmacist._id,
+        userName: req.pharmacist.name || req.pharmacist.email,
+        userEmail: req.pharmacist.email || '',
+        role: 'pharmacist',
+        sessionId: req.pharmacist.sessionId || null,
+        module: 'Medicine',
+        action: 'UPDATE_MEDICINE',
+        description: `Updated medicine ${medicine.name}` + (changedFields.stockCount ? `: stock ${changedFields.stockCount.before} → ${changedFields.stockCount.after}` : ''),
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { medicineId: updated._id, changes: changedFields }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write medicine update audit log:', auditErr.message);
+    }
+
     console.log('Medicine updated successfully:', updated._id);
     res.json({ success: true, medicine: updated });
     
@@ -348,6 +390,25 @@ router.delete('/:id', verifyPharmacist, async (req, res) => {
         performedBy: req.pharmacist._id,
         notes: 'Medicine removed/deactivated from inventory'
       });
+    }
+
+    // Audit: Medicine removed/deactivated
+    try {
+      await logActivity({
+        userId: req.pharmacist._id,
+        userName: req.pharmacist.name || req.pharmacist.email,
+        userEmail: req.pharmacist.email || '',
+        role: 'pharmacist',
+        sessionId: req.pharmacist.sessionId || null,
+        module: 'Medicine',
+        action: 'DELETE_MEDICINE',
+        description: `Deleted/Deactivated medicine ${medicine.name}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { medicineId: medicine._id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write medicine delete audit log:', auditErr.message);
     }
 
     res.json({ success: true });

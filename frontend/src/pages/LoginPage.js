@@ -58,6 +58,8 @@ export default function LoginPage() {
         navigate('/nurse-dashboard');
       } else if (role === 'pharmacist') {
         navigate('/pharmacist-dashboard');
+      } else if (role === 'admin') {
+        navigate('/admin/audit');
       } else {
         console.log('LoginPage: Role is patient, navigating to patient dashboard.');
         navigate('/patdashboard');
@@ -87,6 +89,10 @@ export default function LoginPage() {
       console.log('LoginPage: Role is pharmacist, navigating to pharmacist initial profile.');
       navigate('/pharmacist/initial-profile');
       return <div>Redirecting to pharmacist profile...</div>;
+    } else if (role === 'admin') {
+      console.log('LoginPage: Role is admin, redirecting to audit page.');
+      navigate('/admin/audit');
+      return <div>Redirecting to audit page...</div>;
     }
 
     console.log('LoginPage: Role is not doctor or other, rendering InitialProfileForm.');

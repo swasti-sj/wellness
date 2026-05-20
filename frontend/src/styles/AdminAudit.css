@@ -1,0 +1,129 @@
+.admin-audit-page {
+  padding: 26px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #1e1e1e;
+}
+
+.admin-audit-header {
+  margin-bottom: 22px;
+}
+
+.admin-audit-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+}
+
+.admin-audit-header p {
+  margin: 0;
+  color: #555;
+}
+
+.admin-audit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+}
+
+.admin-filter-row input,
+.admin-filter-row select {
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.admin-audit-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-audit-actions button {
+  padding: 10px 16px;
+  background: #1f6feb;
+  border: none;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.admin-audit-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-audit-table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.admin-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.admin-audit-table th,
+.admin-audit-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.admin-audit-table th {
+  background: #f8f9ff;
+  font-weight: 700;
+}
+
+.admin-audit-table tbody tr:hover {
+  background: #f5f7ff;
+}
+
+.admin-audit-error,
+.admin-audit-loading,
+.admin-audit-empty {
+  padding: 14px 16px;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: #fff3f3;
+  color: #b3261e;
+}
+
+.admin-audit-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.admin-audit-pagination button {
+  padding: 10px 16px;
+  border: none;
+  background: #333;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.admin-audit-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

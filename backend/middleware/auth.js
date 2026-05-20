@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { logActivity } = require('../utils/audit');
 
 function authMiddleware(req, res, next) {
   const token = req.headers.authorization?.split(' ')[1];
@@ -6,7 +7,10 @@ function authMiddleware(req, res, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded; // { id, email, role }
+    req.user = decoded; // { id, email, role, sessionId }
+    // IMPORTANT: Removed auto-request audit logging here. Audits must be created
+    // explicitly within business controllers using `logActivity()` to ensure
+    // only meaningful business events are recorded (not every API request).
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });

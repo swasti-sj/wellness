@@ -8,6 +8,7 @@ const Appointment = require('../models/Appointment');
 const Note = require("../models/Note");
 const Prescription = require("../models/Prescription");
 const mongoose = require("mongoose");
+const { logActivity, getClientIp, parseUserAgent } = require('../utils/audit');
 
 // ===============================
 // PATIENT BOOK APPOINTMENT ENDPOINT
@@ -128,6 +129,27 @@ router.post("/book", async (req, res) => {
     await doctor.save();
 
     const populatedAppointment = await appointment.populate("doctor", "name email phone");
+
+    // Business-audit: Appointment booked
+    try {
+      await logActivity({
+        userId: user._id,
+        userName: user.name || user.email,
+        userEmail: user.email || '',
+        role: decoded.role || 'user',
+        sessionId: decoded.sessionId || null,
+        module: 'Appointments',
+        action: 'BOOK_APPOINTMENT',
+        description: `Booked appointment for ${user.name} with Dr ${doctor.name} (Appointment ID: ${appointment._id})`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        deviceInfo: req.headers['user-agent'] || '',
+        browserInfo: req.headers['user-agent'] || '',
+        details: { appointmentId: appointment._id, doctorId: doctor._id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write appointment audit log:', auditErr.message);
+    }
 
     res.json({
       success: true,
@@ -379,6 +401,26 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
     // --- Delete or mark cancelled ---
     if (diffMinutes <= 15) {
       await Appointment.findByIdAndDelete(appointment._id);
+      // Audit: Appointment deleted (early cancel)
+      try {
+        await logActivity({
+          userId: user._id,
+          userName: user.name || user.email,
+          userEmail: user.email || '',
+          role: decoded.role || 'user',
+          sessionId: decoded.sessionId || null,
+          module: 'Appointments',
+          action: 'CANCEL_APPOINTMENT',
+          description: `Cancelled appointment ID ${appointment._id} (deleted within 15 minutes)`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          deviceInfo: req.headers['user-agent'] || '',
+          details: { appointmentId: appointment._id }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write appointment cancellation audit log:', auditErr.message);
+      }
+
       return res.json({ success: true, message: "Appointment deleted (cancelled within 15 minutes)" });
     } else {
       appointment.status = "cancelled by user";
@@ -389,6 +431,26 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
       let msg = "Appointment cancelled by user.";
       if (calendarDeletionErrors.length)
         msg += ` Note: Could not remove from ${calendarDeletionErrors.join(" and ")}.`;
+
+      // Audit: Appointment cancelled (marked)
+      try {
+        await logActivity({
+          userId: user._id,
+          userName: user.name || user.email,
+          userEmail: user.email || '',
+          role: decoded.role || 'user',
+          sessionId: decoded.sessionId || null,
+          module: 'Appointments',
+          action: 'CANCEL_APPOINTMENT',
+          description: `Cancelled appointment ID ${appointment._id}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          deviceInfo: req.headers['user-agent'] || '',
+          details: { appointmentId: appointment._id }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write appointment cancellation audit log:', auditErr.message);
+      }
 
       return res.json({ success: true, message: msg });
     }

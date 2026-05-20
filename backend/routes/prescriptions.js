@@ -9,6 +9,7 @@ const MedicineIssuance = require("../models/MedicineIssuance");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { logActivity, getClientIp } = require('../utils/audit');
 
 const prescriptionStorage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -93,6 +94,26 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
           quantityIssued: p.quantity,
           doctor: decoded.role === "doctor" ? decoded.id : appointment.doctor
         }).save();
+
+        // Audit: Medicine issued to patient
+        try {
+          const medName = med.name || p.medication || 'Medicine';
+          await logActivity({
+            userId: decoded.id,
+            userName: decoded.name || decoded.email || '',
+            userEmail: decoded.email || '',
+            role: decoded.role,
+            sessionId: decoded.sessionId || null,
+            module: 'Medicine',
+            action: 'ISSUE_MEDICINE',
+            description: `Issued ${p.quantity} × ${medName} to patient (Appointment ID: ${appointment._id})`,
+            severity: 'AUDIT',
+            ipAddress: getClientIp(req),
+            details: { medicineId: p.medicine, patientId: appointment.user, quantity: p.quantity }
+          });
+        } catch (auditErr) {
+          console.warn('Failed to write medicine issuance audit log:', auditErr.message);
+        }
       }
     }
 
@@ -114,6 +135,24 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
     );
 
     res.json({ success: true, prescription: updatedPrescription });
+    // Audit: Prescription created/updated
+    try {
+      await logActivity({
+        userId: decoded.id,
+        userName: decoded.name || decoded.email || '',
+        userEmail: decoded.email || '',
+        role: decoded.role,
+        sessionId: decoded.sessionId || null,
+        module: 'Prescription',
+        action: 'CREATE_OR_UPDATE_PRESCRIPTION',
+        description: `Created/Updated prescription for patient (Appointment ID: ${appointmentId})`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { appointmentId, prescriptionId: updatedPrescription._id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write prescription audit log:', auditErr.message);
+    }
   } catch (err) {
     console.error("❌ Prescription save error:", err.message, err.stack);
     res.status(500).json({ error: `Server error: ${err.message}` });

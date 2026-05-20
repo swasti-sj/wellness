@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
 import { useApi } from '../context/ApiContext';
@@ -6,10 +6,17 @@ import { useApi } from '../context/ApiContext';
 export default function OthersLoginPage() {
   const navigate = useNavigate();
   const apiBaseUrl = useApi();
+  const [error, setError] = useState('');
 
   // Add 'login-page' class to body only on this page
   useEffect(() => {
     document.body.classList.add('login-page');
+
+    const query = new URLSearchParams(window.location.search);
+    const authError = query.get('error');
+    if (authError === 'admin_not_authorized') {
+      setError('Admin login is restricted to authorized email accounts only.');
+    }
 
     // Clean up when component unmounts
     return () => {
@@ -35,6 +42,7 @@ export default function OthersLoginPage() {
       </div>
 
       <div className="login-right">
+        {error && <div className="login-error-message">{error}</div>}
         <a
           href={`${apiBaseUrl}/auth/google?role=receptionist`}
           className="google-btn pat"
@@ -52,6 +60,13 @@ export default function OthersLoginPage() {
           className="google-btn others"
         >
           Login as Pharmacist
+        </a>
+        <a
+          href={`${apiBaseUrl}/auth/google?role=admin`}
+          className="google-btn others"
+          style={{ backgroundColor: '#4A90E2' }}
+        >
+          Login as Admin
         </a>
       </div>
     </div>

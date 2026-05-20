@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import {React,useEffect} from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -46,6 +46,8 @@ import InitialPharmacistProfileForm from "./pages/pharmacist/InitialPharmacistPr
 import PharmacistNavbar from "./pages/pharmacist/PharmacistNavbar";
 import PharmacistProfile from "./pages/pharmacist/PharmacistProfile";
 import PharmacistStockHistory from './pages/pharmacist/PharmacistStockHistory';
+import AdminAuditPage from './pages/admin/AdminAuditPage';
+import { useApi } from './context/ApiContext';
 
 
 // Layout wrapper with Navbar
@@ -122,6 +124,18 @@ function LoginRedirect() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const decodeJwtRole = (token) => {
+    try {
+      const segments = token.split('.');
+      if (segments.length < 2) return null;
+      const payload = JSON.parse(atob(segments[1].replace(/-/g, '+').replace(/_/g, '/')));
+      return payload.role || null;
+    } catch (error) {
+      console.warn('Unable to decode JWT role', error);
+      return null;
+    }
+  };
+
   useEffect(() => {
     console.log("🔄 LoginRedirect useEffect triggered");
     console.log("📍 Current location:", location);
@@ -130,13 +144,18 @@ function LoginRedirect() {
     const params = new URLSearchParams(location.search);
     const token = params.get("token");
     const firstLogin = params.get("firstLogin");
-    const role = params.get("role");
+    const queryRole = params.get("role");
+    const jwtRole = token ? decodeJwtRole(token) : null;
+    const role = jwtRole || queryRole;
 
-    console.log("🔑 Extracted query params →", { token, firstLogin, role });
+    console.log("🔑 Extracted login data →", { token, firstLogin, queryRole, jwtRole, role });
 
     if (token) {
       console.log("✅ Token found. Saving to localStorage...");
       localStorage.setItem("token", token);
+      if (role) {
+        localStorage.setItem("role", role);
+      }
     } else {
       console.warn("⚠️ No token found in query params");
     }
@@ -146,32 +165,37 @@ function LoginRedirect() {
 
       if (role === "doctor") {
         console.log("👨‍⚕️ Redirecting doctor to initial doctor profile setup...");
-        navigate("/docdashboard/initial-doctor-profile");
+        navigate("/docdashboard/initial-doctor-profile", { replace: true });
       } else if (role === "receptionist") {
         console.log("👩‍💼 Redirecting receptionist to initial profile setup...");
-        navigate("/receptionist/initial-profile");
+        navigate("/receptionist/initial-profile", { replace: true });
       } else if (role === "nurse") {
         console.log("👩‍⚕️ Redirecting nurse to initial profile setup...");
-        navigate("/nurse/initial-profile");
+        navigate("/nurse/initial-profile", { replace: true });
       } else if (role === "pharmacist") {
         console.log("💊 Redirecting pharmacist to initial profile setup...");
-        navigate("/pharmacist/initial-profile");
+        navigate("/pharmacist/initial-profile", { replace: true });
+      } else if (role === "admin") {
+        console.log("🛡️ Redirecting admin to audit page...");
+        navigate("/admin/audit", { replace: true });
       } else {
         console.log("🙋 Redirecting patient to initial profile setup...");
-        navigate("/patdashboard/initial-profile");
+        navigate("/patdashboard/initial-profile", { replace: true });
       }
     } else {
       console.log("➡️ Not first login. Redirecting to dashboard...");
       if (role === "doctor") {
-        navigate("/docdashboard");
+        navigate("/docdashboard", { replace: true });
       } else if (role === "receptionist") {
-        navigate("/receptionist-dashboard");
+        navigate("/receptionist-dashboard", { replace: true });
       } else if (role === "nurse") {
-        navigate("/nurse-dashboard");
+        navigate("/nurse-dashboard", { replace: true });
       } else if (role === "pharmacist") {
-        navigate("/pharmacist-dashboard");
+        navigate("/pharmacist-dashboard", { replace: true });
+      } else if (role === "admin") {
+        navigate("/admin/audit", { replace: true });
       } else {
-        navigate("/patdashboard");
+        navigate("/patdashboard", { replace: true });
       }
     }
   }, [location, navigate]);
@@ -181,35 +205,7 @@ function LoginRedirect() {
 
 function App() {
   console.log("🚀 App component rendering");
-  const env_api = process.env.REACT_APP_BACKEND_URL;
-  const [apiBaseUrl, setApiBaseUrl] = useState("");
-
-  useEffect(() => {
-    // Try to fetch runtime config from backend. If it fails or the
-    // backend doesn't return a usable apiBaseUrl, fall back to a
-    // sensible default so the app can render.
-    fetch(`${env_api}/config`)
-      .then((res) => res.json())
-      .then((cfg) => {
-        console.log("Config from backend:", cfg);
-        const base =
-          cfg && cfg.apiBaseUrl ? cfg.apiBaseUrl :`${env_api}`;
-        if (!cfg || !cfg.apiBaseUrl) {
-          console.warn("Config missing apiBaseUrl; using fallback", base);
-        }
-        setApiBaseUrl(base);
-        
-      })
-      .catch((err) => {
-        console.error(
-          `Failed to load config, using fallback ${env_api}`,
-          err
-        );
-        setApiBaseUrl(env_api);
-
-       
-      });
-  }, []);
+  const apiBaseUrl = useApi();
 
   if (!apiBaseUrl) {
     return <div>Loading Application...</div>;
@@ -223,6 +219,8 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/others-login" element={<OthersLoginPage />} />
         <Route path="/login" element={<LoginRedirect />} />
+        {/* Admin routes */}
+        <Route path="/admin/audit" element={<AdminAuditPage />} />
         {/* Patient routes */}
         <Route path="/dashboard" element={<PatientDashboardLayout />}>
           <Route index element={<Dashboard />} />{" "}
