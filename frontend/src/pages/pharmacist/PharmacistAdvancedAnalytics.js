@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 // ─── CSV export ────────────────────────────────────────────────────────────
 function exportMovementCSV(movementData) {
@@ -31,9 +31,10 @@ export default function PharmacistAdvancedAnalytics() {
   const [issuanceSummary, setIssuanceSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+  const apiBaseUrl = useApi();
   const token = localStorage.getItem('token');
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
+const API_BASE = `${apiBaseUrl}/api`;
 
   const buildParams = useCallback(() => {
     if (dateMode === 'custom' && customFrom && customTo) {
@@ -55,10 +56,10 @@ export default function PharmacistAdvancedAnalytics() {
     try {
       const { usageParams, movementParams } = buildParams();
       const [usageRes, movementRes, expiryRes, summaryRes] = await Promise.all([
-        axios.get(`${API}/medicines/analytics/usage`,         { ...authHeader, params: usageParams }),
-        axios.get(`${API}/medicines/analytics/stock-movement`, { ...authHeader, params: movementParams }),
-        axios.get(`${API}/medicines/analytics/expiry-summary`, authHeader),
-        axios.get(`${API}/issuances/stats/summary`,            authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/usage`,         { ...authHeader, params: usageParams }),
+        axios.get(`${API_BASE}/medicines/analytics/stock-movement`, { ...authHeader, params: movementParams }),
+        axios.get(`${API_BASE}/medicines/analytics/expiry-summary`, authHeader),
+        axios.get(`${API_BASE}/issuances/stats/summary`,            authHeader),
       ]);
       setUsageData(usageRes.data.usage || []);
       setMovementData(movementRes.data.movementData || []);

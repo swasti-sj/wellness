@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 const getDaysToExpiry = (date) =>
   Math.max(0, Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24)));
@@ -25,7 +25,8 @@ export default function PharmacistIssuanceRecords() {
   const [recentIssuances, setRecentIssuances] = useState([]);
   const [topUsed, setTopUsed] = useState([]);
   const [usagePeriod, setUsagePeriod] = useState('month');
-
+  const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   // Issuance filter states (medicine/module, doctor, patient, dates)
   const [issuances, setIssuances] = useState([]);
   const [issuancePage, setIssuancePage] = useState(1);
@@ -54,11 +55,11 @@ export default function PharmacistIssuanceRecords() {
     setError('');
     try {
       const [statsRes, summaryRes, medsRes, doctorsRes, usageRes] = await Promise.all([
-        axios.get(`${API}/medicines/stats`, authHeader),
-        axios.get(`${API}/issuances/stats/summary`, authHeader),
-        axios.get(`${API}/medicines`, authHeader),
-        axios.get(`${API}/doctors/list`, authHeader),
-        axios.get(`${API}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
+        axios.get(`${API_BASE}/medicines/stats`, authHeader),
+        axios.get(`${API_BASE}/issuances/stats/summary`, authHeader),
+        axios.get(`${API_BASE}/medicines`, authHeader),
+        axios.get(`${API_BASE}/doctors/list`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
       ]);
 
       setStats(statsRes.data);
@@ -102,7 +103,7 @@ export default function PharmacistIssuanceRecords() {
         ...(fromDate && { from: fromDate }),
         ...(toDate && { to: toDate })
       };
-      const res = await axios.get(`${API}/issuances`, { ...authHeader, params });
+      const res = await axios.get(`${API_BASE}/issuances`, { ...authHeader, params });
       setIssuances(res.data.issuances || []);
       setRecentIssuances(res.data.issuances || []);
       setIssuanceTotal(res.data.total || 0);

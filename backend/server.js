@@ -55,7 +55,7 @@ if (process.env.NODE_ENV !== "production") {
   mongoose.set("debug", true);
 }
 
-const mongoUri = process.env.MONGO_URI || "mongodb://localhost:27017/medapp";
+const mongoUri = process.env.MONGO_URI;
 mongoose
   .connect(mongoUri, {
     useNewUrlParser: true,
@@ -93,7 +93,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "http://localhost:5000/auth/google/callback",
+      callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`,
       scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
     },
     (accessToken, refreshToken, profile, done) => {
@@ -179,7 +179,7 @@ app.get(
       );
       console.log("📤 Redirecting doctor to frontend with token...");
       res.redirect(
-        `http://localhost:3000/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
+        `${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
       );
     } else if (role === "nurse") {
   let nurse = await Nurse.findOne({ email });
@@ -210,7 +210,7 @@ app.get(
   );
 
   return res.redirect(
-    `http://localhost:3000/login?token=${token}&role=nurse&firstLogin=${firstLogin}`
+    `${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`
   );
 }
 else if (role === "receptionist") {
@@ -242,7 +242,7 @@ else if (role === "receptionist") {
   );
 
   return res.redirect(
-    `http://localhost:3000/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`
+    `${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`
   );
 }
 else if (role === "pharmacist") {
@@ -274,7 +274,7 @@ else if (role === "pharmacist") {
   );
 
   return res.redirect(
-    `http://localhost:3000/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`
+    `${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`
   );
 }
    
@@ -319,7 +319,7 @@ else if (role === "pharmacist") {
       );
       console.log("📤 Redirecting patient to frontend with token...");
       res.redirect(
-        `http://localhost:3000/login?token=${token}&role=patient&firstLogin=${firstLogin}`
+        `${process.env.FRONTEND_URL}/login?token=${token}&role=patient&firstLogin=${firstLogin}`
       );
     }
   }
@@ -344,15 +344,14 @@ app.use("/api/receptionist", require("./routes/receptionists"));
 app.use("/api/pharmacist", require("./routes/pharmacists"));
 const PORT = process.env.PORT || 5000;
 app.get("/config", (req, res) => {
-  // Return a sensible default when LOCALHOST_URL isn't set so frontend
+ // Return a sensible default when LOCALHOST_URL isn't set so frontend
   // doesn't hang waiting for configuration.
   const defaultApiBase =
-    process.env.LOCALHOST_URL || `http://localhost:${PORT}`;
+    process.env.BACKEND_URL;
   res.json({
     apiBaseUrl: defaultApiBase,
   });
 });
-
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);
 });

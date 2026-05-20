@@ -3,7 +3,7 @@ import axios from 'axios';
 import Fuse from 'fuse.js';
 import '../../styles/doctor/DoctorPrescription.css';
 import DocumentUpload from './documentUpload';
-
+import { useApi } from '../../context/ApiContext';
 function DoctorPrescription({ appointmentId, patientId }) {
   const [current, setCurrent] = useState([]);
   const [previous, setPrevious] = useState([]);
@@ -19,7 +19,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
   const [bookNo, setBookNo] = useState('');
   const [prescriptionNo, setPrescriptionNo] = useState('');
   const token = localStorage.getItem('token');
-
+  const apiBaseUrl = useApi();
   useEffect(() => {
     const load = async () => {
       if (!appointmentId || !patientId) return;
@@ -27,9 +27,9 @@ function DoctorPrescription({ appointmentId, patientId }) {
       setError('');
       try {
         const [cur, prev, meds] = await Promise.all([
-          axios.get(`http://localhost:5000/api/prescriptions/${appointmentId}`, { params: { token } }),
-          axios.get(`http://localhost:5000/api/prescriptions/latest/${patientId}`, { params: { token } }),
-          axios.get('http://localhost:5000/api/medicines?inStock=true', { params: { token } })
+          axios.get(`${apiBaseUrl}/api/prescriptions/${appointmentId}`, { params: { token } }),
+          axios.get(`${apiBaseUrl}/api/prescriptions/latest/${patientId}`, { params: { token } }),
+          axios.get(`${apiBaseUrl}/api/medicines?inStock=true`, { params: { token } })
         ]);
 
         const medsList = meds.data.medicines || [];
@@ -119,7 +119,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
         formData.append('existingDocumentUrl', documentUrl);
       }
 
-      const r = await axios.post('http://localhost:5000/api/prescriptions/save', formData, {
+      const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

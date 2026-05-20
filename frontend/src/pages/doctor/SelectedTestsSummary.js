@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/SelectedTestsSummary.css';
 import DocumentUpload from './documentUpload';
-
+import { useApi } from '../../context/ApiContext';
 function SelectedTestsSummary({ appointmentId, onEditClick }) {
   const [tests, setTests] = useState([]);
   const [labTestDocumentUrl, setLabTestDocumentUrl] = useState('');
@@ -12,12 +12,12 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const token = localStorage.getItem('token');
-
+  const apiBaseUrl = useApi();
   useEffect(() => {
     const load = async () => {
       if (!appointmentId) return;
       try {
-        const r = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, { params: { token } });
+        const r = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, { params: { token } });
         setTests((r.data.tests || []).filter((t) => t.selected));
         setLabTestDocumentUrl(r.data.labTestDocumentUrl || '');
       } catch (e) {
@@ -34,7 +34,7 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
     setError('');
     setIsSaving(true);
     try {
-      const existing = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, { params: { token } });
+      const existing = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, { params: { token } });
       const formData = new FormData();
       formData.append('token', token);
       formData.append('appointmentId', appointmentId);
@@ -48,7 +48,7 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
         formData.append('existingLabTestDocumentUrl', labTestDocumentUrl);
       }
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+      const response = await axios.post('${apiBaseUrl}/api/tests/save', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

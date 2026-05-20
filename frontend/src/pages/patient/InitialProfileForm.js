@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
-
+import { useApi } from '../../context/ApiContext';
 function InitialProfileForm() {
   console.log("hi");
   const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '', uhid: '', consentAccepted: false });
   const navigate = useNavigate();
-
+  const apiBaseUrl = useApi();
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
@@ -16,7 +16,7 @@ function InitialProfileForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.post('http://localhost:5000/api/users/profile', form, {
+      await axios.post(`${apiBaseUrl}/api/users/profile`, form, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

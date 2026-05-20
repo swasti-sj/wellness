@@ -1,9 +1,11 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
+import { useApi } from '../context/ApiContext';
 
 export default function OthersLoginPage() {
   const navigate = useNavigate();
+  const apiBaseUrl = useApi();
 
   // Add 'login-page' class to body only on this page
   useEffect(() => {
@@ -34,19 +36,19 @@ export default function OthersLoginPage() {
 
       <div className="login-right">
         <a
-          href="http://localhost:5000/auth/google?role=receptionist"
+          href={`${apiBaseUrl}/auth/google?role=receptionist`}
           className="google-btn pat"
         >
           Login as Receptionist
         </a>
         <a
-          href="http://localhost:5000/auth/google?role=nurse"
+          href={`${apiBaseUrl}/auth/google?role=nurse`}
           className="google-btn doc"
         >
           Login as Nurse
         </a>
         <a
-          href="http://localhost:5000/auth/google?role=pharmacist"
+          href={`${apiBaseUrl}/auth/google?role=pharmacist`}
           className="google-btn others"
         >
           Login as Pharmacist

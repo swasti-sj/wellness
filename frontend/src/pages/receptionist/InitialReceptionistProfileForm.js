@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
+import { useApi } from '../../context/ApiContext';
 
 export default function InitialReceptionistProfileForm() {
   const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-
+  const apiBaseUrl = useApi();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -16,7 +17,7 @@ export default function InitialReceptionistProfileForm() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await axios.post('http://localhost:5000/api/receptionist/profile', form, {
+      await axios.post(`${apiBaseUrl}/api/receptionist/profile`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       navigate('/receptionist-dashboard');

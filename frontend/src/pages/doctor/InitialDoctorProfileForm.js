@@ -77,7 +77,7 @@ function InitialDoctorProfileForm({ apiBaseUrl }) {
     }));
 
     try {
-      await axios.post(`${apiBaseUrl}/doctors/profile`, processedForm, {
+      await axios.post(`${apiBaseUrl}/api/doctors/profile`, processedForm, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/Navbar.css";
+import { useApi } from '../../context/ApiContext';
 
-const API_BASE = "http://localhost:5000/api";
 
 export default function ReceptionistNavbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -12,7 +12,8 @@ export default function ReceptionistNavbar() {
   const location = useLocation();
   const profileRef = useRef(null);
   const token = localStorage.getItem("token");
-
+const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   // Fetch receptionist profile for name/email in dropdown
   useEffect(() => {
     if (!token) return;

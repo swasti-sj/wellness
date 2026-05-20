@@ -186,7 +186,7 @@ function TestPage({ apiBaseUrl }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
           params: { token }
         });
 
@@ -240,7 +240,7 @@ function TestPage({ apiBaseUrl }) {
   // Fetch existing hospital referral and certificate data to preserve when saving
   const fetchExistingData = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+      const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
         params: { token }
       });
       return {
@@ -286,7 +286,7 @@ function TestPage({ apiBaseUrl }) {
         formData.append('existingLabTestDocumentUrl', labTestDocumentUrl);
       }
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

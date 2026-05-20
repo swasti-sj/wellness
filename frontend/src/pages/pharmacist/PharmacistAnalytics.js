@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 export default function PharmacistAnalytics() {
   const [usagePeriod, setUsagePeriod] = useState('month');
@@ -12,7 +12,8 @@ export default function PharmacistAnalytics() {
   const [issuanceSummary, setIssuanceSummary] = useState(null);
   const [expirySummary, setExpirySummary] = useState(null);
   const [loading, setLoading] = useState(true);
-
+const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   const token = localStorage.getItem('token');
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -20,10 +21,10 @@ export default function PharmacistAnalytics() {
     setLoading(true);
     try {
       const [usageRes, movementRes, summaryRes, expiryRes] = await Promise.all([
-        axios.get(`${API}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
-        axios.get(`${API}/medicines/analytics/stock-movement?days=${movementDays}`, authHeader),
-        axios.get(`${API}/issuances/stats/summary`, authHeader),
-        axios.get(`${API}/medicines/analytics/expiry-summary`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/stock-movement?days=${movementDays}`, authHeader),
+        axios.get(`${API_BASE}/issuances/stats/summary`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/expiry-summary`, authHeader),
       ]);
       setTopUsed(usageRes.data.usage || []);
       setDailyMovement(movementRes.data);

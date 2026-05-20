@@ -2,8 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/Navbar.css";
-
-const API_BASE = "http://localhost:5000/api";
+import { useApi } from '../../context/ApiContext';
 
 export default function NurseNavbar() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -12,6 +11,9 @@ export default function NurseNavbar() {
   const location = useLocation();
   const profileRef = useRef(null);
   const token = localStorage.getItem("token");
+  const apiBaseUrl = useApi();
+    const API_BASE = `${apiBaseUrl}/api`;
+
 
   // Fetch nurse profile for name/email in dropdown
   useEffect(() => {

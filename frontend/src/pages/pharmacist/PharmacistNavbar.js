@@ -2,8 +2,9 @@ import React, { useEffect, useState, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistNavbar.css';
+import { useApi } from '../../context/ApiContext';
 
-const API_BASE = 'http://localhost:5000/api';
+
 
 const NAV_LINKS = [
   { to: '/pharmacist-dashboard',                    label: 'Dashboard' },
@@ -24,7 +25,8 @@ export default function PharmacistNavbar() {
   const [pharmacist, setPharmacist] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const token = localStorage.getItem('token');
-
+  const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   useEffect(() => {
     if (!token) return;
     axios.get(`${API_BASE}/pharmacist/profile`, {

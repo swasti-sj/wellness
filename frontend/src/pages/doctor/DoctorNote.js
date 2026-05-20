@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useApi } from '../../context/ApiContext';
 import "../../styles/doctor/DoctorNote.css";
 
-const API_BASE = 'http://localhost:5000/api';
-
 function DoctorNote({ appointmentId }) {
+const apiBase = useApi();
   const [notes, setNotes] = useState([]);
   const [newText, setNewText] = useState('');
   const [pendingFiles, setPending] = useState([]);
@@ -26,7 +26,7 @@ function DoctorNote({ appointmentId }) {
     if (!appointmentId) return;
     setIsLoading(true); setError('');
     try {
-      const r = await axios.get(`${API_BASE}/notes/${appointmentId}`, { params: { token } });
+      const r = await axios.get(`${apiBase}/api/notes/${appointmentId}`, { params: { token } });
       setNotes(r.data.notes || []);
     } catch (e) {
       setError('Could not load notes. ' + (e.response?.data?.error || ''));
@@ -47,14 +47,14 @@ function DoctorNote({ appointmentId }) {
     if (!newText.trim()) { setError('Note text is required.'); return; }
     setError(''); setIsSaving(true);
     try {
-      const r = await axios.post(`${API_BASE}/notes/add`, { token, appointmentId, text: newText });
+      const r = await axios.post(`${apiBase}/api/notes/add`, { token, appointmentId, text: newText });
       if (!r.data.success) throw new Error('Add failed');
       let note = r.data.note;
       if (pendingFiles.length) {
         const fd = new FormData();
         fd.append('token', token);
         pendingFiles.forEach(f => fd.append('images', f));
-        const ir = await axios.post(`${API_BASE}/notes/${note._id}/images`, fd,
+        const ir = await axios.post(`${apiBase}/api/notes/${note._id}/images`, fd,
           { headers: { 'Content-Type': 'multipart/form-data' } });
         if (ir.data.success) note = ir.data.note;
       }
@@ -71,7 +71,7 @@ function DoctorNote({ appointmentId }) {
     if (!editText.trim()) { setError('Note cannot be empty.'); return; }
     setError('');
     try {
-      const r = await axios.put(`${API_BASE}/notes/${id}`, { token, text: editText });
+      const r = await axios.put(`${apiBase}/api/notes/${id}`, { token, text: editText });
       if (r.data.success) { setNotes(notes.map(n => n._id === id ? r.data.note : n)); cancelEdit(); }
     } catch (e) { setError('Failed to update. ' + (e.response?.data?.error || '')); }
   };
@@ -79,7 +79,7 @@ function DoctorNote({ appointmentId }) {
   const delNote = async (id) => {
     if (!window.confirm('Delete this note?')) return;
     try {
-      const r = await axios.delete(`${API_BASE}/notes/${id}`, { params: { token } });
+      const r = await axios.delete(`${apiBase}/api/notes/${id}`, { params: { token } });
       if (r.data.success) setNotes(notes.filter(n => n._id !== id));
     } catch (e) { setError('Failed to delete.'); }
   };
@@ -94,7 +94,7 @@ function DoctorNote({ appointmentId }) {
       const fd = new FormData();
       fd.append('token', token);
       for (let i = 0; i < files.length; i++) fd.append('images', files[i]);
-      const r = await axios.post(`${API_BASE}/notes/${id}/images`, fd,
+      const r = await axios.post(`${apiBase}/api/notes/${id}/images`, fd,
         { headers: { 'Content-Type': 'multipart/form-data' } });
       if (r.data.success) setNotes(notes.map(n => n._id === id ? r.data.note : n));
     } catch (e) { setError('Upload failed.'); }
@@ -107,7 +107,7 @@ function DoctorNote({ appointmentId }) {
   const delImg = async (noteId, idx) => {
     if (!window.confirm('Delete this image?')) return;
     try {
-      const r = await axios.delete(`${API_BASE}/notes/${noteId}/images/${idx}`, { params: { token } });
+      const r = await axios.delete(`${apiBase}/api/notes/${noteId}/images/${idx}`, { params: { token } });
       if (r.data.success) setNotes(notes.map(n => n._id === noteId ? r.data.note : n));
     } catch (e) { setError('Delete image failed.'); }
   };
@@ -115,6 +115,14 @@ function DoctorNote({ appointmentId }) {
   const fmt = (d) => new Date(d).toLocaleString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
+
+  const buildDocumentUrl = (url) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
+      return url;
+    }
+    return `${apiBase}${url}`;
+  };
 
   return (
     <div className="dn-root">
@@ -194,8 +202,8 @@ function DoctorNote({ appointmentId }) {
                     <div className="dn-imgs-grid">
                       {note.images.map((img, idx) => (
                         <div key={idx} className="dn-img-card">
-                          <img src={`http://localhost:5000${img.url}`} alt={img.caption || `Attachment ${idx + 1}`}
-                            onClick={() => setLightbox(`http://localhost:5000${img.url}`)} />
+                          <img src={buildDocumentUrl(img.url)} alt={img.caption || `Attachment ${idx + 1}`}
+                            onClick={() => setLightbox(buildDocumentUrl(img.url))} />
                           <button className="dn-img-del" onClick={() => delImg(note._id, idx)} title="Remove">✕</button>
                         </div>
                       ))}
@@ -219,3 +227,4 @@ function DoctorNote({ appointmentId }) {
 }
 
 export default DoctorNote;
+

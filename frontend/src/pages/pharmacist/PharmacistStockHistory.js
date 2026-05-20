@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 const TX_TYPES = [
   { value: '',                label: 'All Types' },
@@ -59,7 +59,8 @@ export default function PharmacistStockHistory() {
   const [txType, setTxType] = useState('');
   const [quickFilter, setQuickFilter] = useState('month');
   const [medSearch, setMedSearch] = useState('');
-
+  const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   const token = localStorage.getItem('token');
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
 
@@ -75,7 +76,7 @@ export default function PharmacistStockHistory() {
   };
 
   useEffect(() => {
-    axios.get(`${API}/medicines`, authHeader)
+    axios.get(`${API_BASE}/medicines`, authHeader)
       .then(r => setMedicines(r.data.medicines || []))
       .catch(() => {});
   }, []);
@@ -92,7 +93,7 @@ export default function PharmacistStockHistory() {
         ...(txType         && { type: txType          }),
         limit: 200,
       };
-      const res = await axios.get(`${API}/medicines/${selectedMed}/transactions`, { ...authHeader, params });
+      const res = await axios.get(`${API_BASE}/medicines/${selectedMed}/transactions`, { ...authHeader, params });
       setTransactions(res.data.transactions || []);
     } catch (e) {
       setError('Failed to load stock history');

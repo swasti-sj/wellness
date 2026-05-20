@@ -73,7 +73,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
 
   const fetchDoctors = async () => {
     try {
-      const res = await axios.get(`${apiBaseUrl}/doctors/list`);
+      const res = await axios.get(`${apiBaseUrl}/api/doctors/list`);
       setDoctors(res.data || []);
     } catch (err) {
       console.error("Error fetching doctors:", err);
@@ -82,7 +82,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(`${apiBaseUrl}/appointments/all-appointments`, {
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`, {
         params: { token },
       });
       const formatted = res.data.appointments.map((appt) => ({
@@ -151,7 +151,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
     try {
       const startDateTime = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
       const endDateTime = new Date(new Date(startDateTime).getTime() + bookingData.duration * 60000).toISOString();
-      const res = await axios.post(`${apiBaseUrl}/appointments/nurse-book`, {
+      const res = await axios.post(`${apiBaseUrl}/api/appointments/nurse-book`, {
         token,
         patientEmail: bookingData.patientEmail,
         patientPhone: bookingData.patientPhone,
@@ -175,7 +175,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
   const handleCancelAppointment = async (appointmentId, slotDay, slotTime) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
     try {
-      const res = await axios.delete(`${apiBaseUrl}/appointments/${appointmentId}/nurse-cancel`, {
+      const res = await axios.delete(`${apiBaseUrl}/api/appointments/${appointmentId}/nurse-cancel`, {
         data: { token, slotDay, slotTime },
       });
       if (res.data.success) {
@@ -198,7 +198,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
 
   const handleStatusUpdate = async (appointmentId, newStatus) => {
     try {
-      const res = await axios.patch(`${apiBaseUrl}/appointments/${appointmentId}/status`, {
+      const res = await axios.patch(`${apiBaseUrl}/api/appointments/${appointmentId}/status`, {
         token, status: newStatus,
       });
       if (res.data.success) {

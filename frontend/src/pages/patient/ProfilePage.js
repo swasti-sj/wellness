@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/PatientProfile.css";
-
+import { useApi } from '../../context/ApiContext';
 function PatientProfile() {
   const [profile, setProfile] = useState(null);
-
+const apiBaseUrl = useApi();
   useEffect(() => {
     axios
-      .get("http://localhost:5000/api/users/profile", {
+      .get(`${apiBaseUrl}/api/users/profile`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },

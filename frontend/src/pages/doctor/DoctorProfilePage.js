@@ -18,7 +18,7 @@ function DoctorProfilePage({ apiBaseUrl }) {
           return;
         }
 
-        const res = await axios.get(`${apiBaseUrl}/doctors/profile`, {
+        const res = await axios.get(`${apiBaseUrl}/api/doctors/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(res.data);
@@ -67,7 +67,7 @@ function DoctorProfilePage({ apiBaseUrl }) {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
-      await axios.put(`${apiBaseUrl}/doctors/profile`, profile, {
+      await axios.put(`${apiBaseUrl}/api/doctors/profile`, profile, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Profile updated successfully!');

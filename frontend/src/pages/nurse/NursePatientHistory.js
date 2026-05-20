@@ -59,7 +59,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
 
   useEffect(() => {
     if (!apiBaseUrl) return;
-    axios.get(`${apiBaseUrl}/doctors/list`)
+    axios.get(`${apiBaseUrl}/api/doctors/list`)
       .then(res => setDoctors(res.data || []))
       .catch(() => { });
   }, [apiBaseUrl]);
@@ -68,7 +68,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     if (!apiBaseUrl) return;
     const fetchRecent = async () => {
       try {
-        const res = await axios.get(`${apiBaseUrl}/appointments/patient-history`, {
+        const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
           params: { token, query: "", limit: 5 },
         });
         const appts = res.data?.appointments || [];
@@ -85,7 +85,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     if (!q.trim()) return alert("Enter patient name, roll number or email");
     setIsLoading(true); setError(""); setHasSearched(true);
     try {
-      const res = await axios.get(`${apiBaseUrl}/appointments/patient-history`, {
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
         params: { token, query: q },
       });
       const appts = res.data?.appointments || [];
@@ -116,7 +116,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     e.preventDefault();
     if (!patientInfo?.email || !doctorId) return alert("Please ensure patient email and a doctor are selected.");
     try {
-      const response = await axios.post(`${apiBaseUrl}/referrals`, { token, patientEmail: patientInfo.email, referredDoctorId: doctorId, reason });
+      const response = await axios.post(`${apiBaseUrl}/api/referrals`, { token, patientEmail: patientInfo.email, referredDoctorId: doctorId, reason });
       if (response.data?.success) { alert("Patient referred successfully!"); setDoctorId(""); setReason(""); }
       else alert(response.data?.error || "Referral failed");
     } catch (err) { alert("Failed to refer patient: " + (err.response?.data?.error || err.message)); }
@@ -124,10 +124,10 @@ export default function NursePatientHistory({ apiBaseUrl }) {
 
   const fetchVisitData = async (a) => {
     const [vitalsRes, notesRes, rxRes, testsRes] = await Promise.allSettled([
-      axios.get(`${apiBaseUrl}/vitals/${a._id}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/notes/${a._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/tests/${a._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/vitals/${a._id}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/notes/${a._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/tests/${a._id}`, { params: { token } }).catch(() => null),
     ]);
     return {
       appt: a,

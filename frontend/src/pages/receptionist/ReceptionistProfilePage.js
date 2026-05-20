@@ -2,10 +2,13 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/PatientProfile.css";
 import ReceptionistNavbar from "./ReceptionistNavbar";
+import { useApi } from "../../context/ApiContext";
 
 function ReceptionistProfilePage() {
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
+  const apiBaseUrl = useApi();
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -16,7 +19,7 @@ function ReceptionistProfilePage() {
           return;
         }
 
-        const response = await axios.get("http://localhost:5000/api/receptionist/profile", {
+        const response = await axios.get(`${apiBaseUrl}/api/receptionist/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

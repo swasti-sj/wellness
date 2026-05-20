@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/VisitHistory.css";
-
+import { useApi } from "../../context/ApiContext";
 function VisitHistory() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const apiBaseUrl = useApi();
   const fetchHistory = async () => {
     setLoading(true);
     setError("");
 
     try {
       const token = localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/appointments/history", {
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/history`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -24,10 +24,10 @@ function VisitHistory() {
       const enrichedAppointments = await Promise.all(
         appointmentsData.map(async (appt) => {
           const [prescResult, testResult] = await Promise.allSettled([
-            axios.get(`http://localhost:5000/api/prescriptions/${appt._id}`, {
+            axios.get(`${apiBaseUrl}/api/prescriptions/${appt._id}`, {
               params: { token },
             }),
-            axios.get(`http://localhost:5000/api/tests/${appt._id}`, {
+            axios.get(`${apiBaseUrl}/api/tests/${appt._id}`, {
               params: { token },
             }),
           ]);
@@ -68,7 +68,7 @@ function VisitHistory() {
 
     try {
       await axios.patch(
-        `http://localhost:5000/api/appointments/${id}/cancel`,
+        `${apiBaseUrl}/api/appointments/${id}/cancel`,
         {},
         {
           headers: {

@@ -17,7 +17,7 @@ function NurseProfilePage({ apiBaseUrl }) {
           setError('No authentication token found. Please log in.');
           return;
         }
-        const res = await axios.get(`${apiBaseUrl}/nurse/profile`, {
+        const res = await axios.get(`${apiBaseUrl}/api/nurse/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setProfile(res.data);
@@ -38,7 +38,7 @@ function NurseProfilePage({ apiBaseUrl }) {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
-      await axios.put(`${apiBaseUrl}/nurse/profile`, profile, {
+      await axios.put(`${apiBaseUrl}/api/nurse/profile`, profile, {
         headers: { Authorization: `Bearer ${token}` },
       });
       alert('Profile updated successfully.');

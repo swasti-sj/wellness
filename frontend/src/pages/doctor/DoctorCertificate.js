@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/DoctorCertificate.css';
 import DocumentUpload from './documentUpload';
-
+import { useApi } from '../../context/ApiContext';
 function DoctorCertificate({ appointmentId }) {
   const [issued, setIssued] = useState(false);
   const [clinicalDetails, setClinicalDetails] = useState('');
@@ -14,7 +14,7 @@ function DoctorCertificate({ appointmentId }) {
   const [uploading, setUploading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const fileInputRef = useRef(null);
-
+  const apiBaseUrl = useApi();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -24,7 +24,7 @@ function DoctorCertificate({ appointmentId }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
           params: { token }
         });
 
@@ -47,7 +47,7 @@ function DoctorCertificate({ appointmentId }) {
 
   const fetchExistingData = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+      const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
         params: { token }
       });
       return {
@@ -87,7 +87,7 @@ function DoctorCertificate({ appointmentId }) {
       formData.append('tests', JSON.stringify(existingData.tests));
       formData.append('hospitalReferral', JSON.stringify(existingData.hospitalReferral));
       formData.append('certificate', JSON.stringify({ issued: false, clinicalDetails: '' }));
-      await axios.post('http://localhost:5000/api/tests/save', formData, {
+      await axios.post(`${apiBaseUrl}/api/tests/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
     } catch (err) {
@@ -115,7 +115,7 @@ function DoctorCertificate({ appointmentId }) {
         formData.append('existingImageUrl', previewUrl);
       }
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

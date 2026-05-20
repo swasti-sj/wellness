@@ -2,12 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/LoginPage.css';
 import InitialProfileForm from './patient/InitialProfileForm';
+import { useApi } from '../context/ApiContext';
 
 export default function LoginPage() {
   const [token, setToken] = useState('');
   const [firstLogin, setFirstLogin] = useState(false);
   const navigate = useNavigate();
-
+  const apiBaseUrl = useApi();
   // Add 'login-page' class to body only on this page
   useEffect(() => {
     document.body.classList.add('login-page');
@@ -105,13 +106,13 @@ export default function LoginPage() {
 
         <div className="login-right">
           <a
-            href="http://localhost:5000/auth/google?role=patient"
+            href={`${apiBaseUrl}/auth/google?role=patient`}
             className="google-btn pat"
           >
             Login as Patient
           </a>
           <a
-            href="http://localhost:5000/auth/google?role=doctor"
+            href={`${apiBaseUrl}/auth/google?role=doctor`}
             className="google-btn doc"
           >
             Login as Doctor

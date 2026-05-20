@@ -1,3 +1,5 @@
+const API_BASE =
+  process.env.REACT_APP_BACKEND_URL;
 export const buildDocumentUrl = (url) => {
   if (!url) return "";
   if (
@@ -8,7 +10,7 @@ export const buildDocumentUrl = (url) => {
   ) {
     return url;
   }
-  return `http://localhost:5000${url}`;
+  return `${API_BASE}${url}`;
 };
 
 export const getDocumentName = (url, fallback = "View document") => {
@@ -16,3 +18,4 @@ export const getDocumentName = (url, fallback = "View document") => {
   const parts = url.split("/");
   return parts[parts.length - 1] || fallback;
 };
+

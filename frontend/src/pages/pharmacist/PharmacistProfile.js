@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/pharmacist/PharmacistProfile.css';
-
+import { useApi } from '../../context/ApiContext';
 export default function PharmacistProfile() {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -10,7 +10,7 @@ export default function PharmacistProfile() {
   const [error, setError] = useState('');
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
-
+  const apiBaseUrl = useApi();
   useEffect(() => {
     if (token) {
       loadProfile();
@@ -24,7 +24,7 @@ export default function PharmacistProfile() {
     try {
       setLoading(true);
       setError('');
-      const res = await axios.get('http://localhost:5000/api/pharmacist/profile', {
+      const res = await axios.get(`${apiBaseUrl}/api/pharmacist/profile`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data);
@@ -53,7 +53,7 @@ export default function PharmacistProfile() {
         phone: profile.phone,
         email: profile.email
       };
-      await axios.post('http://localhost:5000/api/pharmacist/profile', payload, {
+      await axios.post(`${apiBaseUrl}/api/pharmacist/profile`, payload, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setEditMode(false);

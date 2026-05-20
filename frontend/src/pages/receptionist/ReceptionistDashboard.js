@@ -3,6 +3,7 @@ import axios from 'axios';
 import Fuse from 'fuse.js';
 import ReceptionistNavbar from './ReceptionistNavbar';
 import '../../styles/receptionist/ReceptionistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
 export default function ReceptionistDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -25,7 +26,7 @@ export default function ReceptionistDashboard() {
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
 
   const token = localStorage.getItem('token');
-  const apiBaseUrl = 'http://localhost:5000/api';
+  const apiBaseUrl = useApi();
 
   useEffect(() => {
     const loadData = () => {
@@ -41,7 +42,7 @@ export default function ReceptionistDashboard() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/doctors/list`);
+      const response = await axios.get(`${apiBaseUrl}/api/doctors/list`);
       setDoctors(response.data || []);
     } catch (error) {
       console.error('Error fetching doctors:', error);
@@ -51,7 +52,7 @@ export default function ReceptionistDashboard() {
   const fetchAppointments = async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${apiBaseUrl}/appointments/all-appointments`);
+      const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`);
       const formatted = (response.data.appointments || []).map(appt => ({
         _id: appt._id,
         patientName: appt.user?.name || 'Unknown',
@@ -77,7 +78,7 @@ export default function ReceptionistDashboard() {
 
   const fetchManualEntries = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/receptionist/entries`);
+      const response = await axios.get(`${apiBaseUrl}/api/receptionist/entries`);
       const entries = (response.data.entries || []).map(entry => ({
         _id: entry._id,
         patientName: entry.patientName,
@@ -121,10 +122,10 @@ export default function ReceptionistDashboard() {
 
     try {
       if (manualEntry) {
-        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, { status: newStatus });
+        await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: newStatus });
       } else if (appointmentEntry) {
         const token = localStorage.getItem('token');
-        await axios.patch(`${apiBaseUrl}/appointments/${itemId}/status`, { status: newStatus, token });
+        await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: newStatus, token });
       }
     } catch (error) {
       const errMsg = error.response?.data?.error || error.message || 'Error updating status';
@@ -157,7 +158,7 @@ export default function ReceptionistDashboard() {
 
     try {
       if (manualEntry) {
-        await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}`, {
+        await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}`, {
           patientName: editedValues.patientName,
           roll: editedValues.roll,
           doctorName: editedValues.doctorName,
@@ -166,13 +167,13 @@ export default function ReceptionistDashboard() {
 
         // Update status if changed during edit
         if (editedValues.status && editedValues.status !== manualEntry.status) {
-          await axios.patch(`${apiBaseUrl}/receptionist/entries/${itemId}/status`, { status: editedValues.status });
+          await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: editedValues.status });
         }
       } else if (appointmentEntry) {
         // For standard appointments, only update status if it was modified
         if (editedValues.status && editedValues.status !== appointmentEntry.status) {
           const token = localStorage.getItem('token');
-          await axios.patch(`${apiBaseUrl}/appointments/${itemId}/status`, { status: editedValues.status, token });
+          await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: editedValues.status, token });
         }
       }
 
@@ -208,7 +209,7 @@ export default function ReceptionistDashboard() {
       const appointmentDateTime = formData.date
         ? new Date(`${formData.date}T00:00:00`).toISOString()
         : null;
-      const response = await axios.post(`${apiBaseUrl}/receptionist/entries`, {
+      const response = await axios.post(`${apiBaseUrl}/api/receptionist/entries`, {
         patientName: formData.name,
         roll: formData.rollNo,
         role: formData.role,

@@ -2,13 +2,13 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/pharmacist/PharmacistProfile.css'; // Reusing the same premium styles
-
+import { useApi } from '../../context/ApiContext';
 export default function InitialPharmacistProfileForm() {
   const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
-
+const apiBaseUrl = useApi();
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
@@ -18,7 +18,7 @@ export default function InitialPharmacistProfileForm() {
     setLoading(true);
     setError('');
     try {
-      await axios.post('http://localhost:5000/api/pharmacist/profile', form, {
+      await axios.post(`${apiBaseUrl}/api/pharmacist/profile`, form, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       navigate('/pharmacist-dashboard');

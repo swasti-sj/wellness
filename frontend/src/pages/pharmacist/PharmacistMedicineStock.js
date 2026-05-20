@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
+
 
 const UNITS = ['tablets', 'capsules', 'ml', 'syrup (bottle)', 'sachets', 'vials', 'ampoules', 'strips', 'tubes', 'injections', 'cream (tube)', 'ointment', 'drops', 'powder', 'suppositories'];
 const CATEGORIES = ['General', 'Antibiotic', 'Analgesic', 'Antacid', 'Antidiabetic', 'Antihypertensive', 'Antihistamine', 'Antifungal', 'Antiviral', 'Cardiovascular', 'Dermatology', 'ENT', 'Gastrointestinal', 'Gynaecology', 'Neurology', 'Ophthalmology', 'Orthopaedic', 'Paediatric', 'Psychiatric', 'Respiratory', 'Urology', 'Vitamins & Supplements', 'Other'];
@@ -229,7 +230,7 @@ export default function PharmacistMedicineStock() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-
+  const API = `${useApi()}/api`;
   // Filters / Sort
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');

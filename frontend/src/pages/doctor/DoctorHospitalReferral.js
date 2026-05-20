@@ -3,7 +3,7 @@ import axios from 'axios';
 import '../../styles/doctor/DoctorHospitalReferral.css';
 import DocumentUpload from './documentUpload';
 import { buildDocumentUrl, getDocumentName } from './documentHelpers';
-
+import { useApi } from '../../context/ApiContext';
 function DoctorHospitalReferral({ appointmentId }) {
   const [refer, setRefer] = useState(false);
   const [hospitalName, setHospitalName] = useState('');
@@ -18,7 +18,7 @@ function DoctorHospitalReferral({ appointmentId }) {
   const [saved, setSaved] = useState(false);
   const [isEditing, setIsEditing] = useState(true);
   const token = localStorage.getItem('token');
-
+  const apiBaseUrl = useApi();
   useEffect(() => {
     const fetchReferralData = async () => {
       if (!appointmentId) return;
@@ -26,7 +26,7 @@ function DoctorHospitalReferral({ appointmentId }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
           params: { token }
         });
 
@@ -54,7 +54,7 @@ function DoctorHospitalReferral({ appointmentId }) {
 
   const fetchExistingData = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+      const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
         params: { token }
       });
       return {
@@ -92,7 +92,7 @@ function DoctorHospitalReferral({ appointmentId }) {
         formData.append('existingCashlessFormDocumentUrl', cashlessFormDocumentUrl);
       }
 
-      const response = await axios.post('http://localhost:5000/api/tests/save', formData, {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -115,7 +115,7 @@ function DoctorHospitalReferral({ appointmentId }) {
     setIsLoading(true);
     try {
       const existingData = await fetchExistingData();
-      const response = await axios.post('http://localhost:5000/api/tests/save', {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, {
         token,
         appointmentId,
         tests: existingData.tests,

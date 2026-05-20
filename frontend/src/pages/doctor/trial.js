@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import '../../styles/doctor/trial.css';
 import axios from 'axios';
+import { useApi } from '../../context/ApiContext';
 function FileRow({ file }) {
   const [checkedItems, setCheckedItems] = useState({});
-
+const apiBaseUrl = useApi();
   const toggleCheckbox = (idx) => {
     setCheckedItems((prev) => ({
       ...prev,
@@ -44,7 +45,7 @@ function Trial() {
 
   useEffect(() => {
   axios
-    .get('http://localhost:5000/api/trialread/files')
+    .get(`${apiBaseUrl}/api/trialread/files`)
     .then((res) => {
       setFiles(res.data);
       setLoading(false);
@@ -134,7 +135,7 @@ function Trial() {
   const handleSave = async () => {
     try {
       for (const file of editedFiles) {
-        const res = await axios.put(`http://localhost:5000/api/trialread/files/${file._id}`, file);
+        const res = await axios.put(`${apiBaseUrl}/api/trialread/files/${file._id}`, file);
         if (res.status !== 200) throw new Error(`Failed to update file with ID ${file._id}`);
       }
       alert('Files updated successfully!');

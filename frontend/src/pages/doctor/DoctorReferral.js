@@ -52,7 +52,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
   useEffect(() => {
     const fetchDoctors = async () => {
       try {
-        const res = await axios.get(`${apiBaseUrl}/doctors/list`);
+        const res = await axios.get(`${apiBaseUrl}/api/doctors/list`);
         setDoctors(res.data || []);
       } catch (err) {
         console.error("Error fetching doctors:", err);
@@ -65,10 +65,10 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
   const fetchReferrals = useCallback(async () => {
     try {
       const [incomingRes, sentRes] = await Promise.all([
-        axios.get(`${apiBaseUrl}/referrals/all`, {
+        axios.get(`${apiBaseUrl}/api/referrals/all`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        axios.get(`${apiBaseUrl}/referrals/mine`, {
+        axios.get(`${apiBaseUrl}/api/referrals/mine`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
@@ -102,7 +102,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
 
     try {
       const response = await axios.post(
-        `${apiBaseUrl}/referrals`,
+        `${apiBaseUrl}/api/referrals`,
         { token, patientEmail, referredDoctorId: doctorId, reason },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -123,7 +123,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
   const markAsRead = async (id) => {
     try {
       await axios.patch(
-        `${apiBaseUrl}/referrals/${id}/read`,
+        `${apiBaseUrl}/api/referrals/${id}/read`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -151,7 +151,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
     setSubmitting(true);
     try {
       await axios.patch(
-        `${apiBaseUrl}/referrals/${activeDrawer.id}/${activeDrawer.action}`,
+        `${apiBaseUrl}/api/referrals/${activeDrawer.id}/${activeDrawer.action}`,
         { responseNote },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -179,7 +179,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
     setHistoryLoading(referral._id);
     try {
       // Step 1: fetch all appointments for this patient
-      const res = await axios.get(`${apiBaseUrl}/appointments/patient-history`, {
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
         params: { token, query: patientEmail },
       });
       const appts = res.data?.appointments || [];
@@ -196,10 +196,10 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
       const visitDataArr = await Promise.all(
         patientAppts.map(async (a) => {
           const [vitalsRes, notesRes, rxRes, testsRes] = await Promise.allSettled([
-            axios.get(`${apiBaseUrl}/vitals/${a._id}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-            axios.get(`${apiBaseUrl}/notes/${a._id}`, { params: { token } }).catch(() => null),
-            axios.get(`${apiBaseUrl}/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
-            axios.get(`${apiBaseUrl}/tests/${a._id}`, { params: { token } }).catch(() => null),
+            axios.get(`${apiBaseUrl}/api/vitals/${a._id}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+            axios.get(`${apiBaseUrl}/api/notes/${a._id}`, { params: { token } }).catch(() => null),
+            axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
+            axios.get(`${apiBaseUrl}/api/tests/${a._id}`, { params: { token } }).catch(() => null),
           ]);
           return {
             appt: a,

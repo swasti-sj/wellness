@@ -63,7 +63,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
     const fetchVitals = async () => {
       if (!apiBaseUrl || !appointmentId) return;
       try {
-        const res = await axios.get(`${apiBaseUrl}/vitals/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/vitals/${appointmentId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -124,7 +124,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
         payload.append('existingCaseSheetDocumentUrl', caseSheetDocumentUrl);
       }
 
-      const res = await axios.post(`${apiBaseUrl}/vitals/save`, payload, {
+      const res = await axios.post(`${apiBaseUrl}/api/vitals/save`, payload, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'

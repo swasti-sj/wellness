@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { buildDocumentUrl, getDocumentName } from './documentHelpers';
-
+import { useApi } from '../../context/ApiContext';
 function HospitalReferralSummary({ appointmentId }) {
   const [referral, setReferral] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const apiBaseUrl = useApi();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -13,7 +13,7 @@ function HospitalReferralSummary({ appointmentId }) {
       if (!appointmentId) return;
 
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
           params: { token }
         });
 

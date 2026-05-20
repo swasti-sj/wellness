@@ -6,6 +6,7 @@ import moment from "moment";
 import "../../styles/doctor/DoctorAppointment.css";
 import "../../styles/AppointmentBooking.css";
 import CustomToolbar from "../doctor/CustomToolbar";
+import { useApi } from "../../context/ApiContext";
 
 const localizer = momentLocalizer(moment);
 
@@ -39,7 +40,7 @@ export default function AppointmentBooking() {
   const [isBooking, setIsBooking] = useState(false);
   const [view, setView] = useState("month");
   const [selectedEvent, setSelectedEvent] = useState(null);
-
+  const apiBaseUrl = useApi();
   const token = localStorage.getItem("token");
 
   useEffect(() => {
@@ -60,7 +61,7 @@ export default function AppointmentBooking() {
   const fetchAvailableSlots = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/doctors/available"
+        `${apiBaseUrl}/api/doctors/available`
       );
       setDoctors(res.data || []);
     } catch (err) {
@@ -71,7 +72,7 @@ export default function AppointmentBooking() {
   const fetchEvents = async () => {
     try {
       const res = await axios.get(
-        "http://localhost:5000/api/appointments/my-appointments",
+        `${apiBaseUrl}/api/appointments/my-appointments`,
         {
           params: { token },
         }
@@ -117,7 +118,7 @@ export default function AppointmentBooking() {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/appointments/book",
+        `${apiBaseUrl}/api/appointments/book`,
         {
           token,
           doctorId: selectedDoctorId,
@@ -155,7 +156,7 @@ export default function AppointmentBooking() {
     if (!window.confirm("Are you sure you want to cancel?")) return;
     try {
       await axios.delete(
-        `http://localhost:5000/api/appointments/${ev.id}/cancel`,
+        `${apiBaseUrl}/api/appointments/${ev.id}/cancel`,
         {
           data: { token },
         }

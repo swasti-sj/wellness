@@ -2,8 +2,8 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 const getDaysToExpiry = (date) =>
   Math.max(0, Math.ceil((new Date(date) - new Date()) / (1000 * 60 * 60 * 24)));
@@ -30,17 +30,18 @@ export default function PharmacistDashboard() {
   const navigate = useNavigate();
   const token = localStorage.getItem('token');
   const authHeader = { headers: { Authorization: `Bearer ${token}` } };
-
+  const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   const loadAll = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const [statsRes, summaryRes, medsRes, issRes, usageRes] = await Promise.all([
-        axios.get(`${API}/medicines/stats`, authHeader),
-        axios.get(`${API}/issuances/stats/summary`, authHeader),
-        axios.get(`${API}/medicines`, authHeader),
-        axios.get(`${API}/issuances?limit=8`, authHeader),
-        axios.get(`${API}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
+        axios.get(`${API_BASE}/medicines/stats`, authHeader),
+        axios.get(`${API_BASE}/issuances/stats/summary`, authHeader),
+        axios.get(`${API_BASE}/medicines`, authHeader),
+        axios.get(`${API_BASE}/issuances?limit=8`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/usage?period=${usagePeriod}`, authHeader),
       ]);
 
       setStats(statsRes.data);

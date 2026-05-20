@@ -181,29 +181,33 @@ function LoginRedirect() {
 
 function App() {
   console.log("🚀 App component rendering");
+  const env_api = process.env.REACT_APP_BACKEND_URL;
   const [apiBaseUrl, setApiBaseUrl] = useState("");
 
   useEffect(() => {
     // Try to fetch runtime config from backend. If it fails or the
     // backend doesn't return a usable apiBaseUrl, fall back to a
     // sensible default so the app can render.
-    fetch("http://localhost:5000/config")
+    fetch(`${env_api}/config`)
       .then((res) => res.json())
       .then((cfg) => {
         console.log("Config from backend:", cfg);
         const base =
-          cfg && cfg.apiBaseUrl ? cfg.apiBaseUrl : "http://localhost:5000";
+          cfg && cfg.apiBaseUrl ? cfg.apiBaseUrl :`${env_api}`;
         if (!cfg || !cfg.apiBaseUrl) {
           console.warn("Config missing apiBaseUrl; using fallback", base);
         }
         setApiBaseUrl(base);
+        
       })
       .catch((err) => {
         console.error(
-          "Failed to load config, using fallback http://localhost:5000",
+          `Failed to load config, using fallback ${env_api}`,
           err
         );
-        setApiBaseUrl("http://localhost:5000");
+        setApiBaseUrl(env_api);
+
+       
       });
   }, []);
 

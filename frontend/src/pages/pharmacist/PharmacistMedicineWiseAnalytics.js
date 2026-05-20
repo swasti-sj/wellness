@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import '../../styles/pharmacist/PharmacistDashboard.css';
+import { useApi } from '../../context/ApiContext';
 
-const API = 'http://localhost:5000/api';
 
 // ─── date helper ──────────────────────────────────────────────────────────
 function getDateRange(period, customFrom, customTo) {
@@ -26,7 +26,8 @@ export default function PharmacistMedicineWiseAnalytics() {
   const [sortBy, setSortBy] = useState('totalIssued');
   const [sortDir, setSortDir] = useState('desc');
   const [search, setSearch] = useState('');
-
+  const apiBaseUrl = useApi();
+const API_BASE = `${apiBaseUrl}/api`;
   const [medicineSummary, setMedicineSummary] = useState([]);
   const [selectedMedicineDetails, setSelectedMedicineDetails] = useState(null);
   const [dailyBreakdown, setDailyBreakdown] = useState([]);
@@ -41,8 +42,8 @@ export default function PharmacistMedicineWiseAnalytics() {
     try {
       const { from, to } = getDateRange(period, customFrom, customTo);
       const [movementRes, summaryRes] = await Promise.all([
-        axios.get(`${API}/medicines/analytics/complete-medicine-movement`, { ...authHeader, params: { from, to } }),
-        axios.get(`${API}/issuances/stats/summary`, authHeader),
+        axios.get(`${API_BASE}/medicines/analytics/complete-medicine-movement`, { ...authHeader, params: { from, to } }),
+        axios.get(`${API_BASE}/issuances/stats/summary`, authHeader),
       ]);
       setMedicineSummary(movementRes.data.medicineSummary || []);
       setTotalStats({
@@ -61,7 +62,7 @@ export default function PharmacistMedicineWiseAnalytics() {
     setDetailLoading(true);
     try {
       const { from, to } = getDateRange(period, customFrom, customTo);
-      const res = await axios.get(`${API}/medicines/analytics/medicine-daily-breakdown`, {
+      const res = await axios.get(`${API_BASE}/medicines/analytics/medicine-daily-breakdown`, {
         ...authHeader,
         params: { medicineId, from, to }
       });

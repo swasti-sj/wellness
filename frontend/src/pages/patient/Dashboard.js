@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/Dashboard.css";
-
+import { useApi } from "../../context/ApiContext";
 export default function Dashboard() {
   const [doctors, setDoctors] = useState([]);
   const [upcomingAppointment, setUpcomingAppointment] = useState(null);
@@ -11,7 +11,7 @@ export default function Dashboard() {
   const [error, setError] = useState("");
   const [expandedDoctorId, setExpandedDoctorId] = useState(null);
   const containerRefs = useRef({});
-
+  const apiBaseUrl = useApi();
   const toggleExpand = (doctorId) => {
     setExpandedDoctorId(expandedDoctorId === doctorId ? null : doctorId);
   };
@@ -25,7 +25,7 @@ export default function Dashboard() {
 
     const fetchDoctors = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/doctors/available");
+        const res = await axios.get(`${apiBaseUrl}/api/doctors/available`);
         setDoctors(res.data || []);
       } catch (err) {
         console.error("Error fetching doctors:", err);
@@ -35,7 +35,7 @@ export default function Dashboard() {
 
     const fetchAppointments = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/appointments/my-appointments", {
+        const res = await axios.get(`${apiBaseUrl}/api/appointments/my-appointments`, {
           params: { token },
         });
         const appointments = res.data.appointments || [];
@@ -55,7 +55,7 @@ export default function Dashboard() {
         // Fetch prescription for last visit if it exists
         if (past) {
           try {
-            const prescriptionRes = await axios.get(`http://localhost:5000/api/prescriptions/${past._id}`, {
+            const prescriptionRes = await axios.get(`${apiBaseUrl}/api/prescriptions/${past._id}`, {
               params: { token },
             });
             setLastVisitPrescription(prescriptionRes.data);

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/DoctorTests.css';
-
+import { useApi } from '../../context/ApiContext';
 const TEST_CATEGORIES = [
   {
     icon: '🩸',
@@ -84,7 +84,7 @@ function DoctorTests({ appointmentId, patientId }) {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState('');
-
+  const apiBaseUrl = useApi();
   const token = localStorage.getItem('token');
 
   useEffect(() => {
@@ -93,7 +93,7 @@ function DoctorTests({ appointmentId, patientId }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`http://localhost:5000/api/tests/${appointmentId}`, {
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
           params: { token }
         });
         if (res.data.tests && res.data.tests.length > 0) {
@@ -167,7 +167,7 @@ function DoctorTests({ appointmentId, patientId }) {
           }
         });
       });
-      const response = await axios.post('http://localhost:5000/api/tests/save', {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, {
         token, appointmentId, tests: selectedTests
       });
       if (response.data.success) {

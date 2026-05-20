@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer,
   BarChart, Bar
 } from "recharts";
-
+import { useApi } from "../../context/ApiContext";
 export default function DoctorDashboard() {
   const [sexData, setSexData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
@@ -14,6 +14,7 @@ export default function DoctorDashboard() {
   const [ageData, setAgeData] = useState([]);
   const [statusData, setStatusData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const apiBaseUrl = useApi();
   useEffect(() => {
     // 🧪 MOCK DATA — Use this until your backend is ready
     const mockData = {
@@ -58,7 +59,7 @@ export default function DoctorDashboard() {
 
   // useEffect(() => {
   //   axios
-  //     .get("http://localhost:5000/api/dashboard/doctor-dashboard")
+  //     .get(`${apiBaseUrl}/api/dashboard/doctor-dashboard`)
   //     .then((res) => {
   //       const data = res.data;
 
