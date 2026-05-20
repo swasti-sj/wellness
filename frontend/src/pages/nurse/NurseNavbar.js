@@ -84,7 +84,12 @@ export default function NurseNavbar() {
         </div>
 
         {/* Profile avatar button + dropdown (desktop) */}
-        <div className="relative" ref={profileRef}>
+        <div
+          className="relative"
+          ref={profileRef}
+          onMouseEnter={() => setShowProfileMenu(true)}
+          onMouseLeave={() => setShowProfileMenu(false)}
+        >
           <button
             onClick={() => setShowProfileMenu((prev) => !prev)}
             aria-label="Nurse profile"
@@ -109,45 +114,18 @@ export default function NurseNavbar() {
             {initials}
           </button>
 
-          {showProfileMenu && (
-            <div style={{ 
-              position: 'absolute', 
-              top: '70px', 
-              right: '10px', 
-              background: '#fff', 
-              borderRadius: '12px', 
-              boxShadow: '0 8px 25px rgba(0,0,0,0.2)', 
-              minWidth: '200px', 
-              border: '2px solid #ffad4a', 
-              zIndex: 99999,
-              display: 'flex',
-              flexDirection: 'column',
-              overflow: 'hidden'
-            }}>
-              {/* Name + email header */}
-              <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #eee", background: "#fcfcfc" }}>
-                <div style={{ fontWeight: 700, color: "purple", fontSize: "0.85rem", lineHeight: 1.2 }}>
-                  {nurse?.name || "Nurse"}
-                </div>
-                <div style={{ fontSize: "0.7rem", color: "#888", marginTop: "4px" }}>
-                  {nurse?.email || "Logged In"}
-                </div>
-              </div>
-              <Link 
-                to="/nurse-dashboard/nurse-profile"
-                onClick={() => setShowProfileMenu(false)}
-                style={{ display: 'block', textDecoration: 'none', width: '100%', padding: '0.9rem 1.25rem', background: 'transparent', border: 'none', borderBottom: '1px solid #eee', textAlign: 'left', cursor: 'pointer', fontWeight: 600, color: '#333', fontSize: '0.95rem' }}
-              >
-                View Profile
-              </Link>
-              <button
-                onClick={handleLogout}
-                style={{ width: '100%', padding: '0.9rem 1.25rem', background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer', fontWeight: 600, color: '#e53935', fontSize: '0.95rem' }}
-              >
-                Logout
-              </button>
-            </div>
-          )}
+          <div
+            className={`profile-menu${showProfileMenu ? " show" : ""}`}
+            style={{ minWidth: '180px', right: '0' }}
+            aria-hidden={!showProfileMenu}
+          >
+            <button className="profile-menu-btn" onClick={handleProfile}>
+              Profile
+            </button>
+            <button className="profile-menu-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>

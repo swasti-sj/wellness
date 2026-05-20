@@ -58,7 +58,11 @@ export default function Navbar({ onNavSelect }) {
         </div>
 
         {/* Right: Student icon with dropdown */}
-        <div className="relative">
+        <div
+          className="relative"
+          onMouseEnter={() => setShowProfileMenu(true)}
+          onMouseLeave={() => setShowProfileMenu(false)}
+        >
           <button
             onClick={() => setShowProfileMenu((prev) => !prev)}
             aria-label="Student profile"
@@ -67,16 +71,14 @@ export default function Navbar({ onNavSelect }) {
           >
             <FaUserCircle className="profile-icon" />
           </button>
-          {showProfileMenu && (
-            <div className="profile-menu">
-              <button className="profile-menu-btn" onClick={handleProfile}>
-                Profile
-              </button>
-              <button className="profile-menu-btn" onClick={handleLogout}>
-                Logout
-              </button>
-            </div>
-          )}
+          <div className={`profile-menu${showProfileMenu ? " show" : ""}`} aria-hidden={!showProfileMenu}>
+            <button className="profile-menu-btn" onClick={handleProfile}>
+              Profile
+            </button>
+            <button className="profile-menu-btn" onClick={handleLogout}>
+              Logout
+            </button>
+          </div>
         </div>
       </div>
     </nav>

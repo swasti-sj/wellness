@@ -154,38 +154,55 @@
 /* ============================================
    PROFILE DROPDOWN
    ============================================ */
-.profile-menu {
+.navbar .profile-menu {
   position: absolute;
-  top: 70px;
+  top: calc(100% + 0.15rem);
   right: 0;
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  min-width: 200px;
-  border: 2px solid #ffad4a;
-  animation: slideDown 0.25s ease-out;
+  background: rgba(10, 14, 22, 0.96);
+  border-radius: 16px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+  min-width: 180px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
   overflow: hidden;
   z-index: 1001;
+  padding: 0.3rem 0;
+  pointer-events: none;
+  backdrop-filter: blur(12px);
 }
 
-.profile-menu-btn {
+.navbar .profile-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.navbar .profile-menu-btn {
   width: 100%;
-  padding: 0.9rem 1.3rem;
+  padding: 0.85rem 1.25rem;
   background: transparent;
   border: none;
   text-align: left;
   cursor: pointer;
   font-size: 0.95rem;
-  color: #333;
+  color: #f4f6fb;
   font-weight: 600;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.2s ease;
 }
 
-.profile-menu-btn:hover {
-  background: rgba(255, 173, 74, 0.1);
-  color: #6a1b6f;
-  padding-left: 1.6rem;
+.navbar .profile-menu-btn:last-child {
+  border-bottom: none;
+}
+
+.navbar .profile-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffad4a;
+  padding-left: 1.55rem;
 }
 
 

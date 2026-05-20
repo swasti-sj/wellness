@@ -105,7 +105,11 @@ export default function DoctorNavbar() {
 
         {/* Profile icon (desktop view only) */}
         {!isMobile && (
-          <div className="relative">
+          <div
+            className="relative"
+            onMouseEnter={() => setShowProfileMenu(true)}
+            onMouseLeave={() => setShowProfileMenu(false)}
+          >
             <button
               onClick={() => setShowProfileMenu((prev) => !prev)}
               aria-label="Doctor profile"
@@ -115,16 +119,14 @@ export default function DoctorNavbar() {
               <FaUserMd className="profile-icon" />
             </button>
 
-            {showProfileMenu && (
-              <div className="profile-menu">
-                <button className="profile-menu-btn" onClick={handleProfile}>
-                  Profile
-                </button>
-                <button className="profile-menu-btn" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-            )}
+            <div className={`profile-menu${showProfileMenu ? " show" : ""}`} aria-hidden={!showProfileMenu}>
+              <button className="profile-menu-btn" onClick={handleProfile}>
+                Profile
+              </button>
+              <button className="profile-menu-btn" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
           </div>
         )}
       </div>

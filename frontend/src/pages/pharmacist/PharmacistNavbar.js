@@ -105,34 +105,30 @@ const API_BASE = `${apiBaseUrl}/api`;
         </div>
 
         <div className="pharm-navbar-right-section">
-          <div className="relative" ref={profileRef}>
+          <div
+            className="relative"
+            ref={profileRef}
+            onMouseEnter={() => setMenuOpen(true)}
+            onMouseLeave={() => setMenuOpen(false)}
+          >
             <button 
               className="profile-btn" 
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((prev) => !prev)}
               title={pharmacist?.name || 'Profile'}
             >
               <div className="profile-icon">{initials}</div>
             </button>
             
             <div className={`profile-menu ${menuOpen ? 'show' : ''}`}>
-              <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border)' }}>
-                <div style={{ fontWeight: 700, color: 'var(--plum)', fontSize: '0.85rem', lineHeight: 1.2 }}>
-                  {pharmacist?.name || 'Pharmacist'}
-                </div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                  {pharmacist?.email || 'Logged In'}
-                </div>
-              </div>
-              
-              <Link 
-                to="/pharmacist-dashboard/profile" 
+              <button 
                 className="profile-menu-btn" 
-                style={{ textDecoration: 'none' }}
-                onClick={() => setMenuOpen(false)}
+                onClick={() => {
+                  setMenuOpen(false);
+                  navigate('/pharmacist-dashboard/profile');
+                }}
               >
-                View Profile
-              </Link>
-              
+                Profile
+              </button>
               <button 
                 className="profile-menu-btn" 
                 onClick={() => {
