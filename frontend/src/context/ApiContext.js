@@ -9,7 +9,7 @@ export const ApiProvider = ({ children }) => {
     const fetchConfig = async () => {
       try {
         const backendUrl = process.env.REACT_APP_BACKEND_URL || window.location.origin;
-        const response = await fetch(`${backendUrl}/config`);
+        const response = await fetch(`${backendUrl}/api/config`);
         const cfg = await response.json();
         const base = cfg?.apiBaseUrl || backendUrl;
         setApiBaseUrl(base);

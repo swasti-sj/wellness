@@ -44,25 +44,25 @@ export default function OthersLoginPage() {
       <div className="login-right">
         {error && <div className="login-error-message">{error}</div>}
         <a
-          href={`${apiBaseUrl}/auth/google?role=receptionist`}
+          href={`${apiBaseUrl}/api/auth/google?role=receptionist`}
           className="google-btn pat"
         >
           Login as Receptionist
         </a>
         <a
-          href={`${apiBaseUrl}/auth/google?role=nurse`}
+          href={`${apiBaseUrl}/api/auth/google?role=nurse`}
           className="google-btn doc"
         >
           Login as Nurse
         </a>
         <a
-          href={`${apiBaseUrl}/auth/google?role=pharmacist`}
+          href={`${apiBaseUrl}/api/auth/google?role=pharmacist`}
           className="google-btn others"
         >
           Login as Pharmacist
         </a>
         <a
-          href={`${apiBaseUrl}/auth/google?role=admin`}
+          href={`${apiBaseUrl}/api/auth/google?role=admin`}
           className="google-btn others"
           style={{ backgroundColor: '#4A90E2' }}
         >

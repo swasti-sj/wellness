@@ -112,13 +112,13 @@ export default function LoginPage() {
 
         <div className="login-right">
           <a
-            href={`${apiBaseUrl}/auth/google?role=patient`}
+            href={`${apiBaseUrl}/api/auth/google?role=patient`}
             className="google-btn pat"
           >
             Login as Patient
           </a>
           <a
-            href={`${apiBaseUrl}/auth/google?role=doctor`}
+            href={`${apiBaseUrl}/api/auth/google?role=doctor`}
             className="google-btn doc"
           >
             Login as Doctor

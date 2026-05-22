@@ -137,9 +137,9 @@ passport.deserializeUser((user, done) => {
 });
 
 // Google OAuth login entry
-app.get("/auth/google", (req, res, next) => {
+app.get("/api/auth/google", (req, res, next) => {
   const role = req.query.role || "patient";
-  console.log(`🌐 /auth/google hit. Role requested: ${role}`);
+  console.log(`🌐 /api/auth/google hit. Role requested: ${role}`);
   passport.authenticate("google", {
     state: role,
     accessType: "offline",
@@ -149,7 +149,7 @@ app.get("/auth/google", (req, res, next) => {
 
 // Google OAuth callback
 app.get(
-  "/auth/google/callback",
+  "/api/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/" }),
   async (req, res) => {
     console.log("✅ Successful Google login callback");
@@ -464,7 +464,7 @@ app.use("/api/referrals", referralRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/tests", testRoutes);
 
-app.get('/config', (req, res) => {
+app.get('/api/config', (req, res) => {
   const apiBaseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ apiBaseUrl });
 });
