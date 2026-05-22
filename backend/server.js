@@ -468,6 +468,7 @@ app.get('/api/config', (req, res) => {
   const apiBaseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
   res.json({ apiBaseUrl });
 });
+app.use("/api/users", userRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/issuances", require("./routes/issuances"));
 app.use("/api/nurse", require("./routes/nurses"));
