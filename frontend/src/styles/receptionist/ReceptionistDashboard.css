@@ -693,3 +693,291 @@
     padding: 1rem;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   DOCTOR FILTER STYLES
+══════════════════════════════════════════════════════ */
+.rd-doctor-filter {
+  padding: 12px 16px;
+  borderRadius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--plum);
+  cursor: pointer;
+  outline: none;
+  min-width: 200px;
+  height: 48px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+}
+
+.rd-doctor-filter:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.rd-doctor-filter:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.15);
+}
+
+/* ══════════════════════════════════════════════════════
+   EXTRA MOBILE ENHANCEMENTS (≤ 500px)
+══════════════════════════════════════════════════════ */
+@media (max-width: 500px) {
+  .receptionist-dashboard {
+    padding: 0.75rem 0.6rem 1.5rem;
+    margin-top: 60px;
+    gap: 1.25rem;
+  }
+
+  .rd-page-title {
+    font-size: 1.25rem;
+    padding-bottom: 0.5rem;
+  }
+
+  .rd-page-title::after {
+    width: 50px;
+    height: 2px;
+  }
+
+  /* Filter controls - stack vertically on very small screens */
+  .rd-search-bar,
+  .rd-doctor-filter,
+  .rd-sort-select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .rd-form-card,
+  .rd-table-card {
+    padding: 1rem;
+    border-radius: 10px;
+  }
+
+  .rd-form-header {
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    gap: 6px;
+  }
+
+  .rd-form-header h2 {
+    font-size: 1rem;
+  }
+
+  .rd-form-header svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .rd-form-grid {
+    gap: 0.75rem;
+  }
+
+  .rd-form-group label {
+    font-size: 11px;
+  }
+
+  .rd-form-group input,
+  .rd-form-group select {
+    padding: 10px 12px;
+    font-size: 13px;
+  }
+
+  .rd-btn-add {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+
+  .rd-table-header {
+    padding: 0.75rem;
+  }
+
+  .rd-table th {
+    padding: 10px 12px;
+    font-size: 10px;
+  }
+
+  .rd-table td {
+    padding: 8px 12px;
+    padding-left: 40%;
+    font-size: 12px;
+  }
+
+  .rd-table td::before {
+    font-size: 9px;
+  }
+
+  .rd-table tr {
+    margin: 0.5rem 0.75rem;
+    border-radius: 8px;
+  }
+
+  .rd-btn-edit,
+  .rd-btn-save,
+  .rd-btn-cancel {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .rd-actions-cell {
+    gap: 4px;
+  }
+
+  .rd-status-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+  }
+
+  .rd-empty {
+    padding: 40px 10px;
+    font-size: 13px;
+  }
+
+  .rd-empty svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .rd-loading {
+    padding: 40px 10px;
+    font-size: 13px;
+  }
+
+  .rd-spinner {
+    width: 28px;
+    height: 28px;
+  }
+
+  .rd-message {
+    padding: 10px 12px;
+    margin-top: 0.75rem;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .rd-message svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+
+  .rd-total-count {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+
+  .rd-search-count {
+    font-size: 11px;
+    right: 36px;
+  }
+
+  .rd-edit-input {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .rd-status-select {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   FILTER CONTAINER - MOBILE RESPONSIVE
+══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .receptionist-dashboard > div:nth-child(2) {
+    flex-direction: column;
+  }
+
+  .rd-doctor-filter,
+  .rd-sort-select {
+    width: 100%;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   LANDSCAPE MOBILE - Optimize for landscape mode
+══════════════════════════════════════════════════════ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .receptionist-dashboard {
+    padding: 0.5rem 0.6rem 1rem;
+    margin-top: 50px;
+    gap: 0.75rem;
+  }
+
+  .rd-page-title {
+    font-size: 1rem;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0;
+  }
+
+  .rd-page-title::after {
+    width: 40px;
+    height: 2px;
+  }
+
+  .rd-form-card,
+  .rd-table-card {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+
+  .rd-table td {
+    padding: 6px 10px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   TOUCH-FRIENDLY IMPROVEMENTS
+══════════════════════════════════════════════════════ */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets for buttons */
+  .rd-btn-add,
+  .rd-btn-edit,
+  .rd-btn-save,
+  .rd-btn-cancel {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  .rd-btn-edit,
+  .rd-btn-save,
+  .rd-btn-cancel {
+    padding: 10px 16px;
+  }
+
+  /* Remove hover effects on touch devices */
+  .rd-btn-add:hover,
+  .rd-btn-edit:hover,
+  .rd-btn-save:hover,
+  .rd-btn-cancel:hover {
+    transform: none;
+  }
+
+  /* Better touch targets for form inputs */
+  .rd-form-group input,
+  .rd-form-group select {
+    min-height: 44px;
+    padding: 14px 13px;
+  }
+
+  .rd-search-input {
+    min-height: 44px;
+  }
+
+  .rd-doctor-filter,
+  .rd-sort-select {
+    min-height: 44px;
+  }
+
+  /* Increase table row clickable area */
+  .rd-table td {
+    padding: 16px 14px;
+  }
+}

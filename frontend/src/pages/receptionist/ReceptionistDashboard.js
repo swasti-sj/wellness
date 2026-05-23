@@ -15,7 +15,8 @@ export default function ReceptionistDashboard() {
     role: 'Student',
     doctorId: '',
     doctorName: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    time: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -24,6 +25,7 @@ export default function ReceptionistDashboard() {
   const [editingRowId, setEditingRowId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
+  const [filterDoctor, setFilterDoctor] = useState(''); // Filter by doctor
 
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
@@ -144,7 +146,8 @@ export default function ReceptionistDashboard() {
       patientName: item.patientName,
       roll: item.roll,
       doctorName: item.doctorName,
-      date: item.date ? new Date(item.date).toISOString().split('T')[0] : ''
+      date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
+      time: item.time || ''
     });
   };
 
@@ -159,11 +162,12 @@ export default function ReceptionistDashboard() {
     try {
       if (manualEntry) {
         await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}`, {
-          patientName: editedValues.patientName,
-          roll: editedValues.roll,
-          doctorName: editedValues.doctorName,
-          appointmentDate: editedValues.date || null
-        });
+        patientName: editedValues.patientName,
+        roll: editedValues.roll,
+        doctorName: editedValues.doctorName,
+        appointmentDate: editedValues.date || null,
+        appointmentTime: editedValues.time || null
+      });
 
         // Update status if changed during edit
         if (editedValues.status && editedValues.status !== manualEntry.status) {
@@ -209,6 +213,9 @@ export default function ReceptionistDashboard() {
       const appointmentDateTime = formData.date
         ? new Date(`${formData.date}T00:00:00`).toISOString()
         : null;
+      // If receptionist didn't enter time, set it to current time.
+      const timeToSend = formData.time || new Date().toTimeString().slice(0, 5);
+
       const response = await axios.post(`${apiBaseUrl}/api/receptionist/entries`, {
         patientName: formData.name,
         roll: formData.rollNo,
@@ -216,7 +223,7 @@ export default function ReceptionistDashboard() {
         doctorId: formData.doctorId,
         doctorName: formData.doctorName,
         appointmentDate: appointmentDateTime,
-        appointmentTime: null,
+        appointmentTime: timeToSend || null,
         email: '-',
         phone: '-'
       });
@@ -248,9 +255,15 @@ export default function ReceptionistDashboard() {
 
   const filteredData = useMemo(() => {
     let result = allData;
+    
+    // Filter by doctor if selected
+    if (filterDoctor) {
+      result = result.filter(item => item.doctorId === filterDoctor);
+    }
+    
     if (searchQuery.trim()) {
-      const fuse = new Fuse(allData, {
-        keys: ['patientName', 'roll', 'doctorName', 'date', 'status', 'email'],
+      const fuse = new Fuse(result, {
+        keys: ['patientName', 'roll', 'doctorName', 'date', 'time', 'status', 'email'],
         threshold: 0.3,
         includeScore: true
       });
@@ -268,7 +281,7 @@ export default function ReceptionistDashboard() {
       }
       return 0;
     });
-  }, [allData, searchQuery, sortBy]);
+  }, [allData, searchQuery, sortBy, filterDoctor]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -296,8 +309,8 @@ export default function ReceptionistDashboard() {
         <h1 className="rd-page-title">Receptionist Dashboard</h1>
 
         {/* Search Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px' }}>
-          <div className="rd-search-bar" style={{ flex: 1, marginBottom: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
+          <div className="rd-search-bar" style={{ flex: 1, marginBottom: 0, minWidth: '250px' }}>
           <svg className="rd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
             <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
           </svg>
@@ -319,6 +332,33 @@ export default function ReceptionistDashboard() {
             <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
           )}
         </div>
+          <select 
+            value={filterDoctor} 
+            onChange={(e) => setFilterDoctor(e.target.value)}
+            className="rd-doctor-filter"
+            style={{
+              padding: '12px 16px',
+              borderRadius: '12px',
+              border: '1px solid #ddd',
+              background: '#fff',
+              fontSize: '0.95rem',
+              fontWeight: '600',
+              color: '#4A1060',
+              cursor: 'pointer',
+              outline: 'none',
+              minWidth: '200px',
+              height: '48px',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+              transition: 'all 0.2s'
+            }}
+          >
+            <option value="">All Doctors</option>
+            {doctors.map(d => (
+              <option key={d._id} value={d._id}>
+                {d.name}{d.specialization ? ` (${d.specialization})` : ''}
+              </option>
+            ))}
+          </select>
           <select 
             value={sortBy} 
             onChange={(e) => setSortBy(e.target.value)}
@@ -402,6 +442,15 @@ export default function ReceptionistDashboard() {
                 onChange={handleFormChange}
               />
             </div>
+            <div className="rd-form-group">
+              <label>Appointment Time</label>
+              <input
+                type="time"
+                name="time"
+                value={formData.time}
+                onChange={handleFormChange}
+              />
+            </div>
             <div className="rd-form-group rd-form-submit-col">
               <label>&nbsp;</label>
               <button type="submit" className="rd-btn-add">Add Entry</button>
@@ -449,6 +498,7 @@ export default function ReceptionistDashboard() {
                   <tr>
                     <th>S.No</th>
                     <th>Date</th>
+                    <th>Time</th>
                     <th>Patient Name</th>
                     <th>Roll No / Emp ID</th>
                     <th>Doctor</th>
@@ -472,6 +522,16 @@ export default function ReceptionistDashboard() {
                               onChange={(e) => handleEditFieldChange('date', e.target.value)}
                             />
                           ) : formatDate(item.date)}
+                        </td>
+                        <td data-label="Time">
+                          {isEditing ? (
+                            <input
+                              type="time"
+                              className="rd-edit-input"
+                              value={editedValues.time || ''}
+                              onChange={(e) => handleEditFieldChange('time', e.target.value)}
+                            />
+                          ) : (item.time || '-')}
                         </td>
                         <td data-label="Patient Name">
                           {isEditing ? (

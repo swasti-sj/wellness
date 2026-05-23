@@ -52,6 +52,7 @@ router.post("/entries", async (req, res) => {
 
     const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, email, phone } = req.body;
 
+
     // Validate required fields
     if (!patientName || !roll || !doctorId || !doctorName) {
       return res.status(400).json({ error: "Missing required fields" });
@@ -63,25 +64,102 @@ router.post("/entries", async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
+    // Create (or reuse) a real User + real Appointment so doctors/nurses/patient can see it.
+    // ReceptionistEntry remains for receptionist UI/history.
+
+    const appointmentDateObj = appointmentDate ? new Date(appointmentDate) : new Date();
+    // receptionist UI stores only time string, so we try to use it to build startDateTime.
+    // If no time provided or parsing fails, default to 10:00.
+    let startDateTime = new Date(appointmentDateObj);
+    let endDateTime = new Date(appointmentDateObj);
+
+    const defaultStart = { h: 10, m: 0 };
+
+    if (appointmentTime && typeof appointmentTime === 'string' && appointmentTime.trim()) {
+      // Expected formats might be: "14:30" or "2:30 PM".
+      const t = appointmentTime.trim();
+      const parsed = new Date(`${appointmentDateObj.toISOString().slice(0, 10)}T00:00:00`);
+      // Try HH:MM (24h)
+      const hhmm = t.match(/^(\d{1,2}):(\d{2})$/);
+      if (hhmm) {
+        parsed.setHours(parseInt(hhmm[1], 10), parseInt(hhmm[2], 10), 0, 0);
+        startDateTime = parsed;
+      } else {
+        // Try Date-parsing for things like "2:30 PM" by setting time on a Date.
+        const timeTry = new Date(`${appointmentDateObj.toISOString().slice(0, 10)} ${t}`);
+        if (!isNaN(timeTry.getTime())) {
+          startDateTime = timeTry;
+        } else {
+          startDateTime.setHours(defaultStart.h, defaultStart.m, 0, 0);
+        }
+      }
+    } else {
+      startDateTime.setHours(defaultStart.h, defaultStart.m, 0, 0);
+    }
+
+    // Appointment duration: default 30 mins (since receptionist UI doesn't send duration)
+    endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
+
+    // Find patient user by roll or (email if provided)
+    // Your User model is not shown here, so we keep it flexible.
+    const patientQuery = { $or: [{ roll }, { email: email && email !== '-' ? email : undefined }] };
+    // Remove undefined email query to avoid matching everything.
+    if (patientQuery.$or) {
+      patientQuery.$or = patientQuery.$or.filter(Boolean);
+    }
+
+    const User = require('../models/User');
+    let patientUser = await User.findOne(patientQuery);
+    if (!patientUser) {
+      // Create minimal user so appointment foreign keys work.
+      patientUser = new User({
+        name: patientName,
+        roll,
+        email: email && email !== '-' ? email : undefined,
+        phone: phone && phone !== '-' ? phone : undefined,
+        role: 'user'
+      });
+      await patientUser.save();
+    }
+
+
+    const Appointment = require('../models/Appointment');
+    const appointment = new Appointment({
+      doctor: doctor._id,
+      user: patientUser._id,
+      startDateTime,
+      endDateTime,
+      slotDay: undefined,
+      slotTime: appointmentTime || undefined,
+      status: 'booked',
+      bookedBy: 'receptionist'
+    });
+    await appointment.save();
+
     const newEntry = new ReceptionistEntry({
       patientName,
       roll,
       role: role || 'Student',
       doctorId,
       doctorName,
-      appointmentDate: appointmentDate ? new Date(appointmentDate) : null,
+      appointmentDate: appointmentDateObj,
       appointmentTime: appointmentTime || null,
       email: email || "-",
       phone: phone || "-",
-      status: 'Added'
+      status: 'booked'
     });
+
+    // NOTE: receptionist entries here create a real Appointment (so doctor/nurse/patient UIs see it).
+    // This receptionist entry record is kept only for receptionist dashboard history UI.
+
 
     await newEntry.save();
 
     res.json({
       success: true,
       message: "Entry added successfully",
-      entry: newEntry
+      entry: newEntry,
+      appointmentId: appointment._id
     });
 
   } catch (err) {
