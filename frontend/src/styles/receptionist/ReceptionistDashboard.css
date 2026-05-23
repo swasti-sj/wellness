@@ -145,6 +145,128 @@
 }
 
 /* ══════════════════════════════════════════════════════
+   CALENDAR RANGE PICKER (ICON → EXPANDS)
+══════════════════════════════════════════════════════ */
+.rd-calendar-range-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rd-calendar-range-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 12px;
+  cursor: pointer;
+  height: 48px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 700;
+  color: var(--plum);
+}
+
+.rd-calendar-range-btn svg {
+  color: var(--gold);
+}
+
+.rd-calendar-range-btn:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.rd-calendar-range-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 50;
+  width: 320px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-md);
+  padding: 14px;
+}
+
+.rd-calendar-range-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.rd-calendar-range-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rd-calendar-range-field label {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--plum);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.rd-calendar-range-field input {
+  padding: 10px 10px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-body);
+  outline: none;
+}
+
+.rd-calendar-range-field input:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 134, 10, 0.12);
+}
+
+.rd-calendar-range-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.rd-calendar-range-apply {
+  padding: 9px 14px;
+  border: none;
+  border-radius: 10px;
+  background: var(--success);
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+}
+
+.rd-calendar-range-apply:hover {
+  background: #157844;
+  transform: translateY(-1px);
+}
+
+.rd-calendar-range-reset {
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.rd-calendar-range-reset:hover {
+  background: #F4EFFA;
+}
+
+/* ══════════════════════════════════════════════════════
    ADD ENTRY FORM CARD  (horizontal grid)
 ══════════════════════════════════════════════════════ */
 .rd-form-card {
@@ -571,6 +693,10 @@
     width: auto;
     padding: 11px 32px;
   }
+
+  .rd-calendar-range-panel {
+    width: 280px;
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -622,6 +748,11 @@
 
   .rd-btn-add {
     width: 100%;
+  }
+
+  .rd-calendar-range-panel {
+    width: calc(100vw - 2.1rem);
+    left: -0.6rem;
   }
 
   /* Mobile card-style table */
@@ -885,6 +1016,10 @@
     padding: 6px 8px;
     font-size: 11px;
   }
+
+  .rd-calendar-range-panel {
+    width: calc(100vw - 2.1rem);
+  }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -903,7 +1038,7 @@
 
 /* ══════════════════════════════════════════════════════
    LANDSCAPE MOBILE - Optimize for landscape mode
-══════════════════════════════════════════════════════ */
+══════════════════════════════════════════════════════════════ */
 @media (max-height: 500px) and (orientation: landscape) {
   .receptionist-dashboard {
     padding: 0.5rem 0.6rem 1rem;
@@ -981,3 +1116,4 @@
     padding: 16px 14px;
   }
 }
+

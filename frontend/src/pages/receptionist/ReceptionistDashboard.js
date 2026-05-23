@@ -27,6 +27,18 @@ export default function ReceptionistDashboard() {
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
   const [filterDoctor, setFilterDoctor] = useState(''); // Filter by doctor
 
+  // Date range filter (default: today → today + 7 days)
+  const today = new Date();
+  const todayStr = today.toISOString().split('T')[0];
+  const plus7 = new Date(today);
+  plus7.setDate(plus7.getDate() + 7);
+  const plus7Str = plus7.toISOString().split('T')[0];
+
+  const [fromDate, setFromDate] = useState(todayStr);
+  const [toDate, setToDate] = useState(plus7Str);
+  const [showCalendarRange, setShowCalendarRange] = useState(false);
+
+
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
 
@@ -270,6 +282,17 @@ export default function ReceptionistDashboard() {
       result = fuse.search(searchQuery).map(r => r.item);
     }
 
+    // Apply date range filter (default today)
+    const from = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : null;
+    const to = toDate ? new Date(`${toDate}T23:59:59.999`).getTime() : null;
+    if (from && to) {
+      result = result.filter(item => {
+        const t = item.date ? new Date(item.date).getTime() : null;
+        if (!t) return false;
+        return t >= from && t <= to;
+      });
+    }
+
     // Apply Sorting
     return [...result].sort((a, b) => {
       if (sortBy === 'name') {
@@ -281,7 +304,8 @@ export default function ReceptionistDashboard() {
       }
       return 0;
     });
-  }, [allData, searchQuery, sortBy, filterDoctor]);
+  }, [allData, searchQuery, sortBy, filterDoctor, fromDate, toDate]);
+
 
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -308,19 +332,22 @@ export default function ReceptionistDashboard() {
 
         <h1 className="rd-page-title">Receptionist Dashboard</h1>
 
-        {/* Search Bar */}
+        {/* Search Bar + Calendar Range Filter (single icon) */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', flexWrap: 'wrap' }}>
           <div className="rd-search-bar" style={{ flex: 1, marginBottom: 0, minWidth: '250px' }}>
-          <svg className="rd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-            <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
-          </svg>
-          <input
-            type="text"
-            className="rd-search-input"
-            placeholder="Search by name, roll no, doctor, date, status..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+
+
+            <svg className="rd-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+              <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+            </svg>
+            <input
+              type="text"
+              className="rd-search-input"
+              placeholder="Search by name, roll no, doctor, date, status..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+
           {searchQuery && (
             <button className="rd-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
@@ -332,6 +359,66 @@ export default function ReceptionistDashboard() {
             <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
           )}
         </div>
+          {/* Calendar Range Picker (icon → expands) */}
+          <div className="rd-calendar-range-wrap">
+            <button
+              type="button"
+              className="rd-calendar-range-btn"
+              onClick={() => setShowCalendarRange(v => !v)}
+              title="Filter by appointment date range"
+              aria-expanded={showCalendarRange}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <path d="M16 2v4M8 2v4M3 10h18" />
+              </svg>
+              <span>Range</span>
+            </button>
+
+            {showCalendarRange && (
+              <div className="rd-calendar-range-panel">
+                <div className="rd-calendar-range-row">
+                  <div className="rd-calendar-range-field">
+                    <label>From</label>
+                    <input
+                      type="date"
+                      value={fromDate}
+                      onChange={(e) => setFromDate(e.target.value)}
+                    />
+                  </div>
+                  <div className="rd-calendar-range-field">
+                    <label>To</label>
+                    <input
+                      type="date"
+                      value={toDate}
+                      onChange={(e) => setToDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="rd-calendar-range-actions">
+                  <button
+                    type="button"
+                    className="rd-calendar-range-apply"
+                    onClick={() => setShowCalendarRange(false)}
+                  >
+                    Apply
+                  </button>
+                  <button
+                    type="button"
+                    className="rd-calendar-range-reset"
+                    onClick={() => {
+                      setFromDate(todayStr);
+                      setToDate(plus7Str);
+                    }}
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <select 
             value={filterDoctor} 
             onChange={(e) => setFilterDoctor(e.target.value)}
@@ -352,6 +439,7 @@ export default function ReceptionistDashboard() {
               transition: 'all 0.2s'
             }}
           >
+
             <option value="">All Doctors</option>
             {doctors.map(d => (
               <option key={d._id} value={d._id}>
