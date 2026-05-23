@@ -9,6 +9,7 @@ const session = require("express-session");
 const passport = require("passport");
 const User = require("./models/User");
 const Doctor = require("./models/Doctor");
+const { isEmailAllowed } = require("./utils/googleSheetAuth");
 const app = express();
 
 const appointmentRoutes = require("./routes/appointments");
@@ -29,11 +30,28 @@ const Nurse = require("./models/Nurse");
 const Receptionist = require("./models/Receptionist");
 const Pharmacist = require("./models/Pharmacist");
 
-const ADMIN_EMAILS = new Set([
-  'cs23bt027@iitdh.ac.in',
-  'is23bm032@iitdh.ac.in'
-].map((email) => email.toLowerCase()));
+const SHEETS = {
+  doctor: {
+    sheetId: process.env.DOCTOR_SHEET_ID,
+  },
 
+  nurse: {
+    sheetId: process.env.NURSE_SHEET_ID,
+  },
+
+  receptionist: {
+    sheetId: process.env.RECEPTIONIST_SHEET_ID,
+
+  },
+
+  pharmacist: {
+    sheetId: process.env.PHARMACIST_SHEET_ID,
+  },
+
+  admin: {
+    sheetId: process.env.ADMIN_SHEET_ID,
+  },
+};
 // Middleware
 console.log("⚙️ Setting up middleware...");
 app.use(cors());
@@ -166,6 +184,16 @@ app.get(
 
     if (role === "doctor") {
       console.log("👨‍⚕️ Handling doctor login/signup...");
+      const allowed = await isEmailAllowed(
+  SHEETS.doctor.sheetId,
+  email
+);
+console.log("Doctor allowed =", allowed);
+if (!allowed) {
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/others-login?error=doctor_not_allowed`
+  );
+}
       let doctor = await Doctor.findOne({ email });
       if (!doctor) {
         console.log("🆕 New doctor detected. Creating record...");
@@ -209,6 +237,16 @@ app.get(
         `${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
       );
     } else if (role === "nurse") {
+      const allowed = await isEmailAllowed(
+  SHEETS.nurse.sheetId,
+  email
+);
+
+if (!allowed) {
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/others-login?error=nurse_not_allowed`
+  );
+}
       let nurse = await Nurse.findOne({ email });
 
       if (!nurse) {
@@ -252,6 +290,16 @@ app.get(
         `${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`
       );
     } else if (role === "receptionist") {
+      const allowed = await isEmailAllowed(
+  SHEETS.receptionist.sheetId,
+  email
+);
+
+if (!allowed) {
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/others-login?error=receptionist_not_allowed`
+  );
+}
       let receptionist = await Receptionist.findOne({ email });
 
       if (!receptionist) {
@@ -295,6 +343,16 @@ app.get(
         `${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`
       );
     } else if (role === "pharmacist") {
+      const allowed = await isEmailAllowed(
+  SHEETS.pharmacist.sheetId,
+  email
+);
+
+if (!allowed) {
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/others-login?error=pharmacist_not_allowed`
+  );
+}
       let pharmacist = await Pharmacist.findOne({ email });
 
       if (!pharmacist) {
@@ -337,62 +395,81 @@ app.get(
       return res.redirect(
         `${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`
       );
-    } else if (role === 'admin') {
-      const normalizedEmail = email?.toLowerCase();
-      if (!ADMIN_EMAILS.has(normalizedEmail)) {
-        console.log('Unauthorized admin login attempt:', email);
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/others-login?error=admin_not_authorized`
-        );
-      }
+    } else if (role === "admin") {
 
-      let admin = await User.findOne({ email });
-      if (!admin) {
-        admin = new User({
-          googleId,
-          email,
-          name,
-          picture,
-          role: 'admin',
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await admin.save();
-        firstLogin = true;
-      } else {
-        if (admin.role !== 'admin') {
-          admin.role = 'admin';
-        }
-        admin.googleAccessToken = accessToken;
-        if (refreshToken) {
-          admin.googleRefreshToken = refreshToken;
-        }
-        await admin.save();
-      }
+  const allowed = await isEmailAllowed(
+    SHEETS.admin.sheetId,
+    email
+  );
 
-      await createSession({
-        userId: admin._id,
-        userName: admin.name,
-        userEmail: admin.email,
-        role: 'admin',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
+  if (!allowed) {
+    return res.redirect(
+      `${process.env.FRONTEND_URL}/others-login?error=admin_not_allowed`
+    );
+  }
 
-      const token = jwt.sign(
-        { id: admin._id, email: admin.email, role: 'admin', sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: '1d' }
-      );
+  let admin = await User.findOne({ email });
 
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=admin&firstLogin=${firstLogin}`
-      );
-    } else {
+  if (!admin) {
+    admin = new User({
+      googleId,
+      email,
+      name,
+      picture,
+      role: "admin",
+      googleAccessToken: accessToken,
+      googleRefreshToken: refreshToken,
+    });
+
+    await admin.save();
+    firstLogin = true;
+
+  } else {
+
+    admin.role = "admin";
+
+    admin.googleAccessToken = accessToken;
+
+    if (refreshToken) {
+      admin.googleRefreshToken = refreshToken;
+    }
+
+    await admin.save();
+  }
+
+  await createSession({
+    userId: admin._id,
+    userName: admin.name,
+    userEmail: admin.email,
+    role: "admin",
+    sessionId,
+    loginTime: new Date(),
+    ipAddress: clientIp,
+    deviceInfo,
+    browserInfo
+  });
+
+  const token = jwt.sign(
+    {
+      id: admin._id,
+      email: admin.email,
+      role: "admin",
+      sessionId
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/login?token=${token}&role=admin&firstLogin=${firstLogin}`
+  );
+} else {
       console.log("🙋 Handling patient login/signup...");
+      if (!email.endsWith("@iitdh.ac.in")) {
+  return res.redirect(
+    `${process.env.FRONTEND_URL}/?error=only_iitdh_allowed`
+  );
+}
       let user = await User.findOne({ email });
 
       if (!user) {
@@ -438,7 +515,7 @@ app.get(
 
       console.log("🔑 Issuing JWT for patient...");
       const token = jwt.sign(
-        { id: user._id, email: user.email, role: "user", sessionId },
+        { id: user._id, email: user.email, role: "patient", sessionId },
         process.env.JWT_SECRET,
         { expiresIn: "1d" }
       );

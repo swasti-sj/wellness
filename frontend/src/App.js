@@ -146,7 +146,7 @@ function LoginRedirect() {
     const firstLogin = params.get("firstLogin");
     const queryRole = params.get("role");
     const jwtRole = token ? decodeJwtRole(token) : null;
-    const role = jwtRole || queryRole;
+    const role = queryRole || jwtRole;
 
     console.log("🔑 Extracted login data →", { token, firstLogin, queryRole, jwtRole, role });
 

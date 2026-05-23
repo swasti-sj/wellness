@@ -14,9 +14,18 @@ export default function OthersLoginPage() {
 
     const query = new URLSearchParams(window.location.search);
     const authError = query.get('error');
-    if (authError === 'admin_not_authorized') {
-      setError('Admin login is restricted to authorized email accounts only.');
-    }
+
+if (authError === 'doctor_not_allowed') {
+  setError('You are not authorized to login as Doctor.');
+} else if (authError === 'nurse_not_allowed') {
+  setError('You are not authorized to login as Nurse.');
+} else if (authError === 'pharmacist_not_allowed') {
+  setError('You are not authorized to login as Pharmacist.');
+} else if (authError === 'receptionist_not_allowed') {
+  setError('You are not authorized to login as Receptionist.');
+} else if (authError === 'admin_not_allowed') {
+  setError('You are not authorized to login as Admin.');
+}
 
     // Clean up when component unmounts
     return () => {
