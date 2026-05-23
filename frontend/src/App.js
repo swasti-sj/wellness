@@ -7,15 +7,17 @@ import {
   useNavigate,
   useLocation,
 } from "react-router-dom";
-
+import AdminInitialProfile from "./pages/admin/AdminInitialProfile";
 import LoginPage from "./pages/LoginPage";
+import AdminDashboardLayout from "./pages/admin/AdminDashboardLayout";
 import OthersLoginPage from "./pages/OthersLoginPage";
 import Dashboard from "./pages/patient/Dashboard";
 import Navbar from "./pages/patient/Navbar";
 import PharmacistAnalytics from './pages/pharmacist/PharmacistAnalytics';
 import PharmacistAdvancedAnalytics from './pages/pharmacist/PharmacistAdvancedAnalytics';
 import PharmacistMedicineWiseAnalytics from './pages/pharmacist/PharmacistMedicineWiseAnalytics';
-
+// import InitialAdminProfileForm from "./pages/admin/InitialAdminProfileForm";
+import AdminNavbar from "./pages/admin/AdminNavbar";
 import "./App.css";
 import AppointmentBooking from "./pages/patient/AppointmentBooking";
 import InitialProfile from "./pages/patient/InitialProfileForm";
@@ -47,7 +49,9 @@ import PharmacistNavbar from "./pages/pharmacist/PharmacistNavbar";
 import PharmacistProfile from "./pages/pharmacist/PharmacistProfile";
 import PharmacistStockHistory from './pages/pharmacist/PharmacistStockHistory';
 import AdminAuditPage from './pages/admin/AdminAuditPage';
+import AdminProfilePage from "./pages/admin/AdminProfilePage";
 import { useApi } from './context/ApiContext';
+
 
 
 // Layout wrapper with Navbar
@@ -177,7 +181,7 @@ function LoginRedirect() {
         navigate("/pharmacist/initial-profile", { replace: true });
       } else if (role === "admin") {
         console.log("🛡️ Redirecting admin to audit page...");
-        navigate("/admin/audit", { replace: true });
+        navigate("/admin/initial-profile", { replace: true });
       } else {
         console.log("🙋 Redirecting patient to initial profile setup...");
         navigate("/patdashboard/initial-profile", { replace: true });
@@ -193,7 +197,7 @@ function LoginRedirect() {
       } else if (role === "pharmacist") {
         navigate("/pharmacist-dashboard", { replace: true });
       } else if (role === "admin") {
-        navigate("/admin/audit", { replace: true });
+        navigate("/admin-dashboard/audit", { replace: true });
       } else {
         navigate("/patdashboard", { replace: true });
       }
@@ -220,7 +224,16 @@ function App() {
         <Route path="/others-login" element={<OthersLoginPage />} />
         <Route path="/login" element={<LoginRedirect />} />
         {/* Admin routes */}
-        <Route path="/admin/audit" element={<AdminAuditPage />} />
+        {/* <Route path="/admin/audit" element={<AdminAuditPage />} /> */}
+        <Route
+  path="/admin/initial-profile"
+  element={<AdminInitialProfile />}
+/>
+        <Route path="/admin-dashboard" element={<AdminDashboardLayout />}>
+          <Route path="audit" element={<AdminAuditPage />} />
+          <Route path="profile" element={<AdminProfilePage apiBaseUrl={apiBaseUrl} />} />
+        </Route>
+
         {/* Patient routes */}
         <Route path="/dashboard" element={<PatientDashboardLayout />}>
           <Route index element={<Dashboard />} />{" "}

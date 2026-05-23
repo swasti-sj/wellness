@@ -11,7 +11,7 @@ function escapeCsvCell(value) {
   return `"${text}"`;
 }
 
-router.get('/admin/audit', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const {
       user,
@@ -94,7 +94,7 @@ router.get('/admin/audit', authMiddleware, requireAdmin, async (req, res) => {
   }
 });
 
-router.get('/admin/audit/export/csv', authMiddleware, requireAdmin, async (req, res) => {
+router.get('/export/csv', authMiddleware, requireAdmin, async (req, res) => {
   try {
     const { user, role, module: moduleFilter, action, severity, startDate, endDate, search, loginActivity, criticalOnly, sortField = 'createdAt', sortOrder = 'desc' } = req.query;
     const filters = {};

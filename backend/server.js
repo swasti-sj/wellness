@@ -7,11 +7,22 @@ require("dotenv").config();
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
 const passport = require("passport");
+
+const Admin = require("./models/Admin");
 const User = require("./models/User");
 const Doctor = require("./models/Doctor");
+const Nurse = require("./models/Nurse");
+const Receptionist = require("./models/Receptionist");
+const Pharmacist = require("./models/Pharmacist");
+
 const { isEmailAllowed } = require("./utils/googleSheetAuth");
+const { createSession, getClientIp, parseUserAgent, uuidv4 } = require('./utils/audit');
+
 const app = express();
 
+// ================= ROUTES =================
+const adminRoutes = require('./routes/admin');
+const adminAuditRoutes = require('./routes/adminAudit');
 const appointmentRoutes = require("./routes/appointments");
 const doctorRoutes = require("./routes/doctors");
 const userRoutes = require("./routes/users");
@@ -24,140 +35,83 @@ const testRoutes = require("./routes/tests");
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const medicineRoutes = require('./routes/medicines');
 const authRoutes = require('./routes/auth');
-const adminAuditRoutes = require('./routes/adminAudit');
-const { createSession, getClientIp, parseUserAgent, uuidv4 } = require('./utils/audit');
-const Nurse = require("./models/Nurse");
-const Receptionist = require("./models/Receptionist");
-const Pharmacist = require("./models/Pharmacist");
 
+// ================= SHEETS =================
 const SHEETS = {
-  doctor: {
-    sheetId: process.env.DOCTOR_SHEET_ID,
-  },
-
-  nurse: {
-    sheetId: process.env.NURSE_SHEET_ID,
-  },
-
-  receptionist: {
-    sheetId: process.env.RECEPTIONIST_SHEET_ID,
-
-  },
-
-  pharmacist: {
-    sheetId: process.env.PHARMACIST_SHEET_ID,
-  },
-
-  admin: {
-    sheetId: process.env.ADMIN_SHEET_ID,
-  },
+  doctor: { sheetId: process.env.DOCTOR_SHEET_ID },
+  nurse: { sheetId: process.env.NURSE_SHEET_ID },
+  receptionist: { sheetId: process.env.RECEPTIONIST_SHEET_ID },
+  pharmacist: { sheetId: process.env.PHARMACIST_SHEET_ID },
+  admin: { sheetId: process.env.ADMIN_SHEET_ID },
 };
-// Middleware
+
+// ================= MIDDLEWARE =================
 console.log("⚙️ Setting up middleware...");
 app.use(cors());
 app.use(express.json());
-
-// Serve uploaded files statically
-app.use('/uploads', express.static('backend/uploads'));
-
-// Enable JSON parsing for form data
 app.use(express.urlencoded({ extended: true }));
 
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "my_secret_key",
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false },
-  })
-);
+app.use('/uploads', express.static('backend/uploads'));
 
-// Connect to MongoDB
+app.use(session({
+  secret: process.env.SESSION_SECRET || "my_secret_key",
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false },
+}));
+
+// ================= DB CONNECTION =================
 console.log("🔗 Connecting to MongoDB...");
-// Enable helpful mongoose debugging in development
+
 mongoose.set("strictQuery", false);
-// Enable mongoose query debug only when explicitly requested.
-// Set environment variable MONGOOSE_DEBUG=true to enable detailed query logs.
+
 if (process.env.MONGOOSE_DEBUG === 'true') {
   mongoose.set('debug', true);
-} else {
-  mongoose.set('debug', false);
 }
 
-const mongoUri = process.env.MONGO_URI;
-mongoose
-  .connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000, // fail fast if cannot connect
-    socketTimeoutMS: 45000,
-    // family: 4, // uncomment to force IPv4 if your environment needs it
-  })
-  .then(() => {
-    console.log("✅ Connected to MongoDB at", mongoUri);
-  })
-  .catch((err) => {
-    console.error(
-      "❌ MongoDB connection error (initial):",
-      err && err.message ? err.message : err
-    );
-    // Fail fast during development so the issue is visible immediately
-    if (process.env.NODE_ENV !== "production") {
-      console.error("Exiting process due to MongoDB connection failure.");
-      process.exit(1);
-    }
-  });
-
-mongoose.connection.on("error", (err) => {
-  console.error("❌ Mongoose connection error event:", err);
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000,
+  socketTimeoutMS: 45000,
+})
+.then(() => console.log("✅ Connected to MongoDB"))
+.catch(err => {
+  console.error("❌ MongoDB error:", err.message);
+  if (process.env.NODE_ENV !== "production") process.exit(1);
 });
 
+mongoose.connection.on("error", (err) => {
+  console.error("❌ Mongoose error:", err);
+});
+
+// ================= PASSPORT =================
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Passport Google OAuth
-console.log("🔑 Configuring Google OAuth Strategy...");
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-      scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
-    },
-    (accessToken, refreshToken, profile, done) => {
-      console.log("📡 Google OAuth callback triggered");
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: process.env.GOOGLE_CALLBACK_URL,
+  scope: ["profile", "email", "https://www.googleapis.com/auth/calendar"],
+},
+(accessToken, refreshToken, profile, done) => {
+  return done(null, {
+    googleId: profile.id,
+    email: profile.emails?.[0]?.value,
+    name: profile.displayName,
+    picture: profile.photos?.[0]?.value,
+    accessToken,
+    refreshToken,
+  });
+}));
 
-      const userData = {
-        googleId: profile.id,
-        email: profile.emails?.[0]?.value,
-        name: profile.displayName,
-        picture: profile.photos?.[0]?.value,
-        accessToken,
-        refreshToken,
-      };
-      return done(null, userData);
-    }
-  )
-);
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
 
-passport.serializeUser((user, done) => {
-  console.log("💾 Serializing user into session:", user.email || user.googleId);
-  done(null, user);
-});
-
-passport.deserializeUser((user, done) => {
-  console.log(
-    "📦 Deserializing user from session:",
-    user.email || user.googleId
-  );
-  done(null, user);
-});
-
-// Google OAuth login entry
+// ================= GOOGLE LOGIN =================
 app.get("/api/auth/google", (req, res, next) => {
   const role = req.query.role || "patient";
-  console.log(`🌐 /api/auth/google hit. Role requested: ${role}`);
   passport.authenticate("google", {
     state: role,
     accessType: "offline",
@@ -165,297 +119,129 @@ app.get("/api/auth/google", (req, res, next) => {
   })(req, res, next);
 });
 
-// Google OAuth callback
-app.get(
-  "/api/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/" }),
-  async (req, res) => {
-    console.log("✅ Successful Google login callback");
-    const { email, name, googleId, picture, accessToken, refreshToken } =
-      req.user;
-    console.log("🔓 User details:", { email, name, googleId });
-    const role = req.query.state || "patient"; // <-- FIXED: get role from OAuth state param
-    console.log("👥 Role from state param:", role);
-    let firstLogin = false;
+// ================= CALLBACK =================
+app.get("/api/auth/google/callback",
+passport.authenticate("google", { failureRedirect: "/" }),
+async (req, res) => {
 
-    const sessionId = uuidv4();
-    const clientIp = getClientIp(req);
-    const { browserInfo, deviceInfo } = parseUserAgent(req.headers['user-agent']);
+  const { email, name, googleId, picture, accessToken, refreshToken } = req.user;
+  const role = req.query.state || "patient";
 
-    if (role === "doctor") {
-      console.log("👨‍⚕️ Handling doctor login/signup...");
-      const allowed = await isEmailAllowed(
-  SHEETS.doctor.sheetId,
-  email
-);
-console.log("Doctor allowed =", allowed);
-if (!allowed) {
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/others-login?error=doctor_not_allowed`
-  );
-}
-      let doctor = await Doctor.findOne({ email });
-      if (!doctor) {
-        console.log("🆕 New doctor detected. Creating record...");
-        doctor = new Doctor({
-          name,
-          email,
-          googleId,
-          picture,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await doctor.save();
-        firstLogin = true;
-      } else {
-        console.log("🔄 Existing doctor found. Updating tokens...");
-        doctor.googleAccessToken = accessToken;
-        if (refreshToken) doctor.googleRefreshToken = refreshToken;
-        await doctor.save();
-      }
+  let firstLogin = false;
 
-      await createSession({
-        userId: doctor._id,
-        userName: doctor.name,
-        userEmail: doctor.email,
-        role: 'doctor',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
+  const sessionId = uuidv4();
+  const clientIp = getClientIp(req);
+  const { browserInfo, deviceInfo } = parseUserAgent(req.headers['user-agent']);
 
-      console.log("🔑 Issuing JWT for doctor...");
-      const token = jwt.sign(
-        { id: doctor._id, email: doctor.email, role: "doctor", sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
-      console.log("📤 Redirecting doctor to frontend with token...");
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`
-      );
-    } else if (role === "nurse") {
-      const allowed = await isEmailAllowed(
-  SHEETS.nurse.sheetId,
-  email
-);
+  let token;
 
-if (!allowed) {
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/others-login?error=nurse_not_allowed`
-  );
-}
-      let nurse = await Nurse.findOne({ email });
+  // ================= DOCTOR =================
+  if (role === "doctor") {
 
-      if (!nurse) {
-        nurse = new Nurse({
-          email,
-          name,
-          googleId,
-          picture,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await nurse.save();
-        firstLogin = true;
-      } else {
-        nurse.googleAccessToken = accessToken;
-        if (refreshToken) nurse.googleRefreshToken = refreshToken;
-        await nurse.save();
+    const allowed = await isEmailAllowed(SHEETS.doctor.sheetId, email);
+    if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
 
-        if (!nurse.phone) firstLogin = true;
-      }
+    let doctor = await Doctor.findOne({ email });
 
-      await createSession({
-        userId: nurse._id,
-        userName: nurse.name,
-        userEmail: nurse.email,
-        role: 'nurse',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
-
-      const token = jwt.sign(
-        { id: nurse._id, email: nurse.email, role: "nurse", sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`
-      );
-    } else if (role === "receptionist") {
-      const allowed = await isEmailAllowed(
-  SHEETS.receptionist.sheetId,
-  email
-);
-
-if (!allowed) {
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/others-login?error=receptionist_not_allowed`
-  );
-}
-      let receptionist = await Receptionist.findOne({ email });
-
-      if (!receptionist) {
-        receptionist = new Receptionist({
-          email,
-          name,
-          googleId,
-          picture,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await receptionist.save();
-        firstLogin = true;
-      } else {
-        receptionist.googleAccessToken = accessToken;
-        if (refreshToken) receptionist.googleRefreshToken = refreshToken;
-        await receptionist.save();
-
-        if (!receptionist.phone) firstLogin = true;
-      }
-
-      await createSession({
-        userId: receptionist._id,
-        userName: receptionist.name,
-        userEmail: receptionist.email,
-        role: 'receptionist',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
-
-      const token = jwt.sign(
-        { id: receptionist._id, email: receptionist.email, role: "receptionist", sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`
-      );
-    } else if (role === "pharmacist") {
-      const allowed = await isEmailAllowed(
-  SHEETS.pharmacist.sheetId,
-  email
-);
-
-if (!allowed) {
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/others-login?error=pharmacist_not_allowed`
-  );
-}
-      let pharmacist = await Pharmacist.findOne({ email });
-
-      if (!pharmacist) {
-        pharmacist = new Pharmacist({
-          email,
-          name,
-          googleId,
-          picture,
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await pharmacist.save();
-        firstLogin = true;
-      } else {
-        pharmacist.googleAccessToken = accessToken;
-        if (refreshToken) pharmacist.googleRefreshToken = refreshToken;
-        await pharmacist.save();
-
-        if (!pharmacist.phone) firstLogin = true;
-      }
-
-      await createSession({
-        userId: pharmacist._id,
-        userName: pharmacist.name,
-        userEmail: pharmacist.email,
-        role: 'pharmacist',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
-
-      const token = jwt.sign(
-        { id: pharmacist._id, email: pharmacist.email, role: "pharmacist", sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
-
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`
-      );
-    } else if (role === "admin") {
-
-  const allowed = await isEmailAllowed(
-    SHEETS.admin.sheetId,
-    email
-  );
-
-  if (!allowed) {
-    return res.redirect(
-      `${process.env.FRONTEND_URL}/others-login?error=admin_not_allowed`
-    );
-  }
-
-  let admin = await User.findOne({ email });
-
-  if (!admin) {
-    admin = new User({
-      googleId,
-      email,
-      name,
-      picture,
-      role: "admin",
-      googleAccessToken: accessToken,
-      googleRefreshToken: refreshToken,
-    });
-
-    await admin.save();
-    firstLogin = true;
-
-  } else {
-
-    admin.role = "admin";
-
-    admin.googleAccessToken = accessToken;
-
-    if (refreshToken) {
-      admin.googleRefreshToken = refreshToken;
+    if (!doctor) {
+      doctor = new Doctor({ name, email, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
+      await doctor.save();
+      firstLogin = true;
     }
 
-    await admin.save();
+    await createSession({ userId: doctor._id, userName: doctor.name, userEmail: doctor.email, role: "doctor", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
+    token = jwt.sign({ id: doctor._id, email, role: "doctor", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`);
   }
 
-  await createSession({
-    userId: admin._id,
-    userName: admin.name,
-    userEmail: admin.email,
-    role: "admin",
-    sessionId,
-    loginTime: new Date(),
-    ipAddress: clientIp,
-    deviceInfo,
-    browserInfo
-  });
+  // ================= NURSE =================
+  else if (role === "nurse") {
 
-  const token = jwt.sign(
-    {
-      id: admin._id,
-      email: admin.email,
-      role: "admin",
-      sessionId
-    },
+    const allowed = await isEmailAllowed(SHEETS.nurse.sheetId, email);
+    if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
+
+    let nurse = await Nurse.findOne({ email });
+
+    if (!nurse) {
+      nurse = new Nurse({ email, name, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
+      await nurse.save();
+      firstLogin = true;
+    }
+
+    token = jwt.sign({ id: nurse._id, email, role: "nurse", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`);
+  }
+
+  // ================= RECEPTIONIST =================
+  else if (role === "receptionist") {
+
+    const allowed = await isEmailAllowed(SHEETS.receptionist.sheetId, email);
+    if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
+
+    let r = await Receptionist.findOne({ email });
+
+    if (!r) {
+      r = new Receptionist({ email, name, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
+      await r.save();
+      firstLogin = true;
+    }
+
+    token = jwt.sign({ id: r._id, email, role: "receptionist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`);
+  }
+
+  // ================= PHARMACIST =================
+  else if (role === "pharmacist") {
+
+    const allowed = await isEmailAllowed(SHEETS.pharmacist.sheetId, email);
+    if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
+
+    let p = await Pharmacist.findOne({ email });
+
+    if (!p) {
+      p = new Pharmacist({ email, name, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
+      await p.save();
+      firstLogin = true;
+    }
+
+    token = jwt.sign({ id: p._id, email, role: "pharmacist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`);
+  }
+
+  // ================= ADMIN =================
+  // ================= ADMIN =================
+else if (role === "admin") {
+
+  const allowed = await isEmailAllowed(SHEETS.admin.sheetId, email);
+  if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
+
+  let admin = await Admin.findOne({ email });
+
+  if (!admin) {
+    admin = new Admin({
+      email,
+      name,
+      googleId,
+      picture,
+      googleAccessToken: accessToken,
+      googleRefreshToken: refreshToken
+    });
+    await admin.save();
+    firstLogin = true;
+  } else {
+    // 🔥 FIX: check profile completeness
+    if (!admin.name || !admin.phone || !admin.department) {
+      firstLogin = true;
+    }
+  }
+
+  token = jwt.sign(
+    { id: admin._id, email, role: "admin", sessionId },
     process.env.JWT_SECRET,
     { expiresIn: "1d" }
   );
@@ -463,94 +249,59 @@ if (!allowed) {
   return res.redirect(
     `${process.env.FRONTEND_URL}/login?token=${token}&role=admin&firstLogin=${firstLogin}`
   );
-} else {
-      console.log("🙋 Handling patient login/signup...");
-      if (!email.endsWith("@iitdh.ac.in")) {
-  return res.redirect(
-    `${process.env.FRONTEND_URL}/?error=only_iitdh_allowed`
-  );
 }
-      let user = await User.findOne({ email });
+  // ================= PATIENT =================
+  else {
 
-      if (!user) {
-        console.log("🆕 New patient detected. Creating record...");
-        user = new User({
-          googleId,
-          email,
-          name,
-          picture,
-          role: "patient",
-          googleAccessToken: accessToken,
-          googleRefreshToken: refreshToken,
-        });
-        await user.save();
-        firstLogin = true;
-      } else {
-        console.log("🔄 Existing patient found. Updating tokens...");
-        user.googleAccessToken = accessToken;
-        if (refreshToken) {
-          user.googleRefreshToken = refreshToken;
-        }
-        await user.save();
-
-        if (!user.age || !user.phone || !user.sex) {
-          console.log(
-            "📋 Patient profile incomplete. Marking as firstLogin..."
-          );
-          firstLogin = true;
-        }
-      }
-
-      await createSession({
-        userId: user._id,
-        userName: user.name,
-        userEmail: user.email,
-        role: 'patient',
-        sessionId,
-        loginTime: new Date(),
-        ipAddress: clientIp,
-        deviceInfo,
-        browserInfo
-      });
-
-      console.log("🔑 Issuing JWT for patient...");
-      const token = jwt.sign(
-        { id: user._id, email: user.email, role: "patient", sessionId },
-        process.env.JWT_SECRET,
-        { expiresIn: "1d" }
-      );
-      console.log("📤 Redirecting patient to frontend with token...");
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=patient&firstLogin=${firstLogin}`
-      );
+    if (!email.endsWith("@iitdh.ac.in")) {
+      return res.redirect(`${process.env.FRONTEND_URL}/`);
     }
-  }
-);
 
-// Routes
-console.log("🛣️ Mounting API routes...");
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({ googleId, email, name, picture, role: "patient" });
+      await user.save();
+      firstLogin = true;
+    }
+
+    token = jwt.sign({ id: user._id, email, role: "patient", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
+
+    return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=patient&firstLogin=${firstLogin}`);
+  }
+});
+
+// ================= ROUTE MOUNTING =================
+console.log("🛣️ Mounting routes...");
+
 app.use('/api', dashboardRoutes);
-app.use('/api', adminAuditRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/admin/audit', adminAuditRoutes); // ✅ FIXED (was collision risk)
 app.use('/api/auth', authRoutes);
+
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/trialread", trialreadRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/referrals", referralRoutes);
 app.use("/api/vitals", vitalsRoutes);
 app.use("/api/tests", testRoutes);
-
-app.get('/api/config', (req, res) => {
-  const apiBaseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
-  res.json({ apiBaseUrl });
-});
-app.use("/api/users", userRoutes);
 app.use("/api/medicines", medicineRoutes);
+
 app.use("/api/issuances", require("./routes/issuances"));
 app.use("/api/nurse", require("./routes/nurses"));
 app.use("/api/receptionist", require("./routes/receptionists"));
 app.use("/api/pharmacist", require("./routes/pharmacists"));
+
+// ================= CONFIG =================
+app.get('/api/config', (req, res) => {
+  const apiBaseUrl = process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`;
+  res.json({ apiBaseUrl });
+});
+
+// ================= START =================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Backend server running on port ${PORT}`);

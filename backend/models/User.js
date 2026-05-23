@@ -12,7 +12,7 @@ const userSchema = new mongoose.Schema({
   uhid: String,
   allergies: String,
   consentAccepted: { type: Boolean, default: false },
-  role: { type: String, default: 'user' }, // Add role field
+  role: { type: String, default: 'patient' }, // Add role field
   isVerified: { type: Boolean, default: false }, // Add verification status
 
   googleAccessToken: { type: String },
