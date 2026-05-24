@@ -55,7 +55,7 @@ function ReceptionistProfilePage() {
 
   if (!profile) {
     return (
-      <div style={{ paddingTop: '80px' }}>
+      <div style={{ paddingTop: '100px' }}>
         <ReceptionistNavbar />
         <div className="patient-container">
           <div className="patient-card">Loading profile...</div>
@@ -65,7 +65,7 @@ function ReceptionistProfilePage() {
   }
 
   return (
-    <div style={{ paddingTop: '80px' }}>
+    <div style={{ paddingTop: '100px' }}>
       <ReceptionistNavbar />
       <div className="patient-container">
         <div className="patient-card">

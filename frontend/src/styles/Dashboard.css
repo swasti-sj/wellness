@@ -19,14 +19,14 @@
   --p-300: #C084FC;
   --p-200: #DDD6FE;
   --p-100: #F3E8FF;
-  --p-50:  #FAF5FF;
+  --p-50: #FAF5FF;
 
   --a-600: #B45309;
   --a-500: #D97706;
   --a-400: #F59E0B;
   --a-300: #FCD34D;
   --a-100: #FEF3C7;
-  --a-50:  #FFFBEB;
+  --a-50: #FFFBEB;
 
   --n-900: #111827;
   --n-800: #1F2937;
@@ -37,20 +37,20 @@
   --n-300: #D1D5DB;
   --n-200: #E5E7EB;
   --n-100: #F3F4F6;
-  --n-50:  #F9FAFB;
+  --n-50: #F9FAFB;
 
-  --page-bg:  #F2EEF8;
-  --card-bg:  #FFFFFF;
-  --border:   #E5E7EB;
+  --page-bg: #F2EEF8;
+  --card-bg: #FFFFFF;
+  --border: #E5E7EB;
 
   --radius-xl: 18px;
   --radius-lg: 13px;
   --radius-md: 9px;
   --radius-sm: 6px;
 
-  --shadow-sm:  0 1px 3px rgba(74,18,117,0.07), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md:  0 4px 14px rgba(74,18,117,0.11), 0 2px 4px rgba(0,0,0,0.05);
-  --shadow-lg:  0 10px 30px rgba(74,18,117,0.15), 0 4px 8px rgba(0,0,0,0.05);
+  --shadow-sm: 0 1px 3px rgba(74, 18, 117, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 14px rgba(74, 18, 117, 0.11), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 30px rgba(74, 18, 117, 0.15), 0 4px 8px rgba(0, 0, 0, 0.05);
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -58,7 +58,13 @@
 /* ============================================================
    GLOBAL RESET
    ============================================================ */
-*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 body {
   font-family: 'Nunito', 'Segoe UI', sans-serif;
@@ -77,12 +83,60 @@ body {
   max-width: 1160px;
   margin: 0 auto;
   padding: 2rem 1.75rem 4rem;
+  min-height: calc(100vh - 88px);
   animation: fadeUp 0.4s ease both;
 }
 
+.dashboard-hero {
+  background: linear-gradient(135deg, #6a1b85 0%, #8c2d8f 45%, #ffad4a 100%);
+  border-radius: 24px;
+  padding: 2rem 2.2rem;
+  margin-bottom: 2rem;
+  color: white;
+  box-shadow: 0 18px 40px rgba(106, 27, 111, 0.18);
+}
+
+.dashboard-hero-content {
+  max-width: 780px;
+}
+
+.dashboard-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.85rem;
+  background: rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.9rem;
+}
+
+.dashboard-hero h1 {
+  font-size: clamp(2rem, 3.2vw, 2.8rem);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.dashboard-hero p {
+  margin-top: 1rem;
+  max-width: 740px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ============================================================
@@ -104,7 +158,9 @@ body {
 /* ============================================================
    STATS ROW
    ============================================================ */
-.stats-section { margin-bottom: 2.5rem; }
+.stats-section {
+  margin-bottom: 2.5rem;
+}
 
 .stats-grid {
   display: grid;
@@ -127,16 +183,29 @@ body {
 .stat-card::before {
   content: '';
   position: absolute;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 5px;
   border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 
-.stat-card.info::before    { background: linear-gradient(180deg, var(--p-500), var(--p-300)); }
-.stat-card.success::before { background: linear-gradient(180deg, var(--a-500), var(--a-300)); }
-.stat-card.warning::before { background: linear-gradient(180deg, var(--a-400), var(--a-300)); }
+.stat-card.info::before {
+  background: linear-gradient(180deg, var(--p-500), var(--p-300));
+}
 
-.stat-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.stat-card.success::before {
+  background: linear-gradient(180deg, var(--a-500), var(--a-300));
+}
+
+.stat-card.warning::before {
+  background: linear-gradient(180deg, var(--a-400), var(--a-300));
+}
+
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
 
 .stat-label {
   font-size: 0.72rem;
@@ -153,27 +222,35 @@ body {
   line-height: 1;
 }
 
-.stat-card.info .stat-value    { color: var(--p-600); }
-.stat-card.success .stat-value { color: var(--a-600); }
-.stat-card.warning .stat-value { color: var(--a-500); }
+.stat-card.info .stat-value {
+  color: var(--p-600);
+}
+
+.stat-card.success .stat-value {
+  color: var(--a-600);
+}
+
+.stat-card.warning .stat-value {
+  color: var(--a-500);
+}
 
 /* ============================================================
    SECTION HEADERS
    ============================================================ */
 .section-header {
-  margin-bottom: 1.4rem;
+  margin-bottom: 1.6rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.28rem;
 }
 
 .visiting-doctors-title,
 .upcoming-title,
 .lastvisit-title,
 .faculty-title {
-  font-size: 1.2rem;
+  font-size: 1.24rem;
   font-weight: 800;
-  color: var(--p-800);
+  color: #2f0e5f;
   letter-spacing: -0.01em;
   position: relative;
   padding-bottom: 0.6rem;
@@ -185,31 +262,34 @@ body {
 .faculty-title::after {
   content: '';
   position: absolute;
-  bottom: 0; left: 0;
-  width: 36px; height: 3px;
-  background: var(--a-400);
-  border-radius: 2px;
+  bottom: 0;
+  left: 0;
+  width: 42px;
+  height: 4px;
+  background: linear-gradient(90deg, #ffb347, #d976ff);
+  border-radius: 999px;
 }
 
 .section-subtitle {
-  font-size: 0.84rem;
-  color: var(--n-500);
-  font-weight: 400;
-  margin-top: 0.15rem;
+  font-size: 0.88rem;
+  color: #5a3d7d;
+  font-weight: 500;
+  margin-top: 0.2rem;
 }
 
 /* ============================================================
    ERROR MESSAGE
    ============================================================ */
 .error-message {
-  background: #FEF2F2;
-  border: 1px solid #FCA5A5;
-  color: #991B1B;
-  padding: 0.8rem 1.1rem;
-  border-radius: var(--radius-md);
-  font-size: 0.855rem;
-  font-weight: 600;
-  margin-bottom: 1.2rem;
+  background: #fff4f2;
+  border: 1px solid #f1c1ba;
+  color: #7c1f2e;
+  padding: 0.95rem 1.15rem;
+  border-radius: 18px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-bottom: 1.4rem;
+  box-shadow: 0 8px 20px rgba(153, 27, 27, 0.08);
 }
 
 /* ============================================================
@@ -226,16 +306,15 @@ body {
 /* The JS sets maxHeight and adds .expanded class via state —
    we override those to keep cards fully static in appearance */
 .doctor-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 0;                    /* padding handled by inner sections */
-  cursor: default;               /* not a clickable element visually */
+  background: linear-gradient(180deg, #ffffff, #faf4ff);
+  border: 1px solid rgba(137, 40, 143, 0.18);
+  border-radius: 1.5rem;
+  padding: 0;
+  cursor: default;
   position: relative;
   overflow: hidden;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
-  box-shadow: var(--shadow-sm);
-  /* JS inline maxHeight — we override it */
+  transition: box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 16px 40px rgba(121, 70, 160, 0.09);
   max-height: none !important;
   display: flex;
   flex-direction: column;
@@ -245,7 +324,9 @@ body {
 .doctor-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--p-600), var(--p-400));
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -260,31 +341,31 @@ body {
 
 /* Doctor card main body */
 .doctor-card-body {
-  padding: 1.5rem 1.4rem 1rem;
+  padding: 1.6rem 1.5rem 1.1rem;
   flex: 1;
 }
 
 /* Name */
 .doctor-card-title {
-  font-size: 1rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  color: var(--n-900);
-  margin-bottom: 0.4rem;
-  line-height: 1.3;
-  margin-top: 0.15rem;   /* clear the top border */
+  color: #321d58;
+  margin-bottom: 0.45rem;
+  line-height: 1.25;
+  margin-top: 0.15rem;
 }
 
 /* Specialty pill */
 .doctor-card-specialty {
   display: inline-block;
-  font-size: 0.69rem;
+  font-size: 0.72rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--p-700);
-  background: var(--p-100);
-  padding: 0.18rem 0.65rem;
-  border-radius: 20px;
+  color: #551f76;
+  background: rgba(165, 80, 197, 0.12);
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
   margin-bottom: 1rem;
 }
 
@@ -292,14 +373,14 @@ body {
 .doctor-card-availability {
   display: flex;
   align-items: flex-start;
-  gap: 0.4rem;
-  font-size: 0.81rem;
-  color: var(--n-500);
-  line-height: 1.5;
-  padding: 0.6rem 0.75rem;
-  background: var(--n-50);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--n-100);
+  gap: 0.45rem;
+  font-size: 0.9rem;
+  color: #5f497b;
+  line-height: 1.6;
+  padding: 0.7rem 0.8rem;
+  background: rgba(106, 27, 111, 0.07);
+  border-radius: 1rem;
+  border: 1px dashed rgba(137, 40, 143, 0.16);
 }
 
 .doctor-card-availability strong {
@@ -312,13 +393,12 @@ body {
 /* The doctorHover panel — JS shows this on hover/expand.
    We make it always show cleanly as a footer inside the card */
 .doctorHover {
-  padding: 0.85rem 1.4rem 1.3rem;
-  border-top: 1px solid var(--n-100);
-  background: var(--n-50);
+  padding: 1rem 1.45rem 1.4rem;
+  border-top: 1px solid rgba(165, 85, 194, 0.15);
+  background: #faf2ff;
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  /* Remove the JS-driven animation — keep it static */
+  gap: 0.5rem;
   animation: none;
 }
 
@@ -344,26 +424,26 @@ body {
   display: block;
   width: 100%;
   text-align: center;
-  margin-top: 0.7rem;
-  padding: 0.6rem 1.2rem;
-  border-radius: var(--radius-sm);
-  background: var(--p-700);
+  margin-top: 0.8rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, #6a1b8a, #ffb347);
   color: #fff;
   font-family: 'Nunito', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-decoration: none;
   border: none;
   cursor: pointer;
   transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
-  box-shadow: 0 2px 8px rgba(74,18,117,0.20);
+  box-shadow: 0 10px 24px rgba(106, 27, 111, 0.16);
 }
 
 .doctor-card-btn:hover {
-  background: var(--p-600);
-  transform: translateY(-1px);
-  box-shadow: 0 5px 14px rgba(74,18,117,0.28);
+  background: linear-gradient(135deg, #7f2694, #ffcc6f);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 22px rgba(106, 27, 111, 0.22);
   color: #fff;
   text-decoration: none;
 }
@@ -392,7 +472,9 @@ body {
 .upcoming-section::before {
   content: '';
   position: absolute;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 5px;
   background: linear-gradient(180deg, var(--p-500), var(--p-300));
   border-radius: var(--radius-xl) 0 0 var(--radius-xl);
@@ -401,38 +483,42 @@ body {
 .lastvisit-section::before {
   content: '';
   position: absolute;
-  left: 0; top: 0; bottom: 0;
+  left: 0;
+  top: 0;
+  bottom: 0;
   width: 5px;
   background: linear-gradient(180deg, var(--a-500), var(--a-300));
   border-radius: var(--radius-xl) 0 0 var(--radius-xl);
 }
 
 .upcoming-section:hover,
-.lastvisit-section:hover { box-shadow: var(--shadow-md); }
+.lastvisit-section:hover {
+  box-shadow: var(--shadow-md);
+}
 
 /* ============================================================
    APPOINTMENT INFO — 2-column info grid
    ============================================================ */
 .appointment-card {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
 }
 
-.appointment-card > p {
+.appointment-card>p {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-  background: var(--n-50);
-  border: 1px solid var(--n-200);
-  border-radius: var(--radius-md);
-  padding: 0.8rem 1rem;
-  font-size: 0.885rem;
-  color: var(--n-800);
-  line-height: 1.45;
+  gap: 0.26rem;
+  background: #fff;
+  border: 1px solid rgba(165, 85, 194, 0.12);
+  border-radius: 1rem;
+  padding: 0.95rem 1.1rem;
+  font-size: 0.92rem;
+  color: #3b2a5a;
+  line-height: 1.55;
 }
 
-.appointment-card > p > strong {
+.appointment-card>p>strong {
   font-size: 0.67rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -454,7 +540,7 @@ body {
 }
 
 /* The "Prescription:" <p> label */
-.prescription-section > p {
+.prescription-section>p {
   background: none !important;
   border: none !important;
   padding: 0 !important;
@@ -504,7 +590,9 @@ body {
   width: 100%;
 }
 
-.prescription-document { margin-top: 0.8rem; }
+.prescription-document {
+  margin-top: 0.8rem;
+}
 
 .document-link {
   display: inline-flex;
@@ -525,7 +613,7 @@ body {
   background: var(--p-100);
   color: var(--p-800);
   transform: translateY(-1px);
-  box-shadow: 0 4px 10px rgba(74,18,117,0.12);
+  box-shadow: 0 4px 10px rgba(74, 18, 117, 0.12);
   text-decoration: none;
 }
 
@@ -554,8 +642,17 @@ body {
   margin-top: 1.2rem;
 }
 
-@media (min-width: 640px)  { .faculty-list { grid-template-columns: repeat(2, 1fr); } }
-@media (min-width: 900px)  { .faculty-list { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px) {
+  .faculty-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 900px) {
+  .faculty-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
 
 .faculty-card {
   background: var(--card-bg);
@@ -571,12 +668,17 @@ body {
 .faculty-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 4px;
   background: linear-gradient(90deg, var(--a-500), var(--a-400));
 }
 
-.faculty-card:hover { box-shadow: var(--shadow-lg); transform: translateY(-3px); }
+.faculty-card:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-3px);
+}
 
 .faculty-card-title {
   font-size: 0.98rem;
@@ -585,7 +687,11 @@ body {
   margin-bottom: 0.35rem;
 }
 
-.faculty-card p { color: var(--n-600); font-size: 0.86rem; margin-bottom: 0.3rem; }
+.faculty-card p {
+  color: var(--n-600);
+  font-size: 0.86rem;
+  margin-bottom: 0.3rem;
+}
 
 .faculty-card-email {
   color: var(--p-600);
@@ -606,25 +712,58 @@ body {
    RESPONSIVE
    ============================================================ */
 @media (max-width: 900px) {
-  .stats-grid { grid-template-columns: 1fr 1fr; }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 768px) {
-  .dashboard-container { padding: 1.25rem 1rem 3rem; }
-  .stats-grid { grid-template-columns: 1fr; gap: 0.75rem; }
-  .stat-value { font-size: 2rem; }
-  .visiting-doctors-list { grid-template-columns: 1fr; gap: 0.9rem; }
-  .appointment-card { grid-template-columns: 1fr; }
+  .dashboard-container {
+    padding: 1.25rem 1rem 3rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+  }
+
+  .visiting-doctors-list {
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+  }
+
+  .appointment-card {
+    grid-template-columns: 1fr;
+  }
+
   .upcoming-section,
-  .lastvisit-section { padding: 1.4rem 1.4rem 1.4rem 1.8rem; }
+  .lastvisit-section {
+    padding: 1.4rem 1.4rem 1.4rem 1.8rem;
+  }
 }
 
 @media (max-width: 480px) {
+
   .visiting-doctors-title,
   .upcoming-title,
-  .lastvisit-title { font-size: 1.05rem; }
-  .doctor-card-body { padding: 1.2rem 1.2rem 0.9rem; }
-  .doctorHover { padding: 0.75rem 1.2rem 1.1rem; }
+  .lastvisit-title {
+    font-size: 1.05rem;
+  }
+
+  .doctor-card-body {
+    padding: 1.2rem 1.2rem 0.9rem;
+  }
+
+  .doctorHover {
+    padding: 0.75rem 1.2rem 1.1rem;
+  }
+
   .upcoming-section,
-  .lastvisit-section { padding: 1.2rem 1.2rem 1.2rem 1.5rem; }
+  .lastvisit-section {
+    padding: 1.2rem 1.2rem 1.2rem 1.5rem;
+  }
 }

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApi } from '../../context/ApiContext';
-import '../../styles/AdminAudit.css';
+import '../../styles/admin/AdminAudit.css';
 
 export default function AdminAuditPage() {
   const apiBaseUrl = useApi();
@@ -19,6 +19,8 @@ export default function AdminAuditPage() {
     limit: 25,
   });
   const [pagination, setPagination] = useState({ total: 0, page: 1, pages: 1 });
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [expandedLogIds, setExpandedLogIds] = useState(new Set());
   const token = localStorage.getItem('token');
   const role = localStorage.getItem('role');
   const navigate = useNavigate();
@@ -29,16 +31,13 @@ export default function AdminAuditPage() {
     }
   }, [role, navigate]);
 
-  useEffect(() => {
+  const fetchAuditLogs = useCallback(async () => {
     if (!apiBaseUrl) return;
     if (!token) {
       setError('Not authenticated. Please log in as admin.');
       return;
     }
-    fetchAuditLogs();
-  }, [apiBaseUrl, filters]);
 
-  const fetchAuditLogs = async () => {
     setLoading(true);
     setError('');
 
@@ -68,7 +67,13 @@ export default function AdminAuditPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiBaseUrl, filters, token]);
+
+  useEffect(() => {
+    fetchAuditLogs();
+  }, [fetchAuditLogs]);
+
+
 
   const exportCsv = async () => {
     if (!token) {
@@ -118,6 +123,22 @@ export default function AdminAuditPage() {
     setFilters((prev) => ({ ...prev, page: newPage }));
   };
 
+  const toggleMobileFilters = () => {
+    setShowMobileFilters((prev) => !prev);
+  };
+
+  const toggleLogExpand = (logId) => {
+    setExpandedLogIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(logId)) {
+        next.delete(logId);
+      } else {
+        next.add(logId);
+      }
+      return next;
+    });
+  };
+
   return (
     <div className="admin-audit-page">
       <header className="admin-audit-header">
@@ -126,7 +147,11 @@ export default function AdminAuditPage() {
       </header>
 
       <section className="admin-audit-controls">
-        <div className="admin-filter-row">
+        <button className="admin-filter-toggle" onClick={toggleMobileFilters} type="button">
+          {showMobileFilters ? 'Hide Filters' : 'Show Filters'}
+        </button>
+
+        <div className={`admin-filter-row${showMobileFilters ? ' open' : ''}`}>
           <input
             name="search"
             value={filters.search}
@@ -182,39 +207,106 @@ export default function AdminAuditPage() {
         ) : logs.length === 0 ? (
           <div className="admin-audit-empty">No audit logs found.</div>
         ) : (
-          <table className="admin-audit-table">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>User</th>
-                <th>Session ID</th>
-                <th>Role</th>
-                <th>Module</th>
-                <th>Action</th>
-                <th>Description</th>
-                <th>Severity</th>
-                <th>IP</th>
-              </tr>
-            </thead>
-            <tbody>
-              {logs.map((log) => (
-                <tr key={log._id}>
-                  <td>
-                    <div>{log.createdAt ? new Date(log.createdAt).toLocaleDateString('en-GB') : ''}</div>
-                    <div style={{ fontSize: '0.9em', color: '#666' }}>{log.createdAt ? new Date(log.createdAt).toLocaleTimeString('en-GB') : ''}</div>
-                  </td>
-                  <td>{log.userName || log.userEmail || 'Unknown'}</td>
-                  <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>{log.sessionId || '-'}</td>
-                  <td>{log.role || 'Unknown'}</td>
-                  <td>{log.module || '-'}</td>
-                  <td>{log.action || '-'}</td>
-                  <td>{log.description || '-'}</td>
-                  <td>{log.severity || 'INFO'}</td>
-                  <td>{log.ipAddress || '-'}</td>
+          <>
+            <table className="admin-audit-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th>Session ID</th>
+                  <th>Role</th>
+                  <th>Module</th>
+                  <th>Action</th>
+                  <th>Description</th>
+                  <th>Severity</th>
+                  <th>IP</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {logs.map((log) => (
+                  <tr key={log._id}>
+                    <td>
+                      <div>{log.createdAt ? new Date(log.createdAt).toLocaleDateString('en-GB') : ''}</div>
+                      <div style={{ fontSize: '0.9em', color: '#666' }}>{log.createdAt ? new Date(log.createdAt).toLocaleTimeString('en-GB') : ''}</div>
+                    </td>
+                    <td>{log.userName || log.userEmail || 'Unknown'}</td>
+                    <td style={{ fontFamily: 'monospace', fontSize: '0.85em' }}>{log.sessionId || '-'}</td>
+                    <td>{log.role || 'Unknown'}</td>
+                    <td>{log.module || '-'}</td>
+                    <td>{log.action || '-'}</td>
+                    <td>{log.description || '-'}</td>
+                    <td>{log.severity || 'INFO'}</td>
+                    <td>{log.ipAddress || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="admin-audit-card-list">
+              {logs.map((log) => {
+                const isOpen = expandedLogIds.has(log._id);
+                return (
+                  <div key={log._id} className={`admin-audit-card${isOpen ? ' open' : ''}`}>
+                    <button
+                      type="button"
+                      className="admin-audit-card-header"
+                      onClick={() => toggleLogExpand(log._id)}
+                    >
+                      <div>
+                        <div className="admin-audit-card-title">
+                          {log.createdAt ? new Date(log.createdAt).toLocaleDateString('en-GB') : '-'}
+                          {' • '}
+                          {log.role || 'Unknown'}
+                        </div>
+                        <div className="admin-audit-card-meta">
+                          {log.userName || log.userEmail || 'Unknown'}
+                          {' · '}
+                          {log.severity || 'INFO'}
+                        </div>
+                      </div>
+                      <span className={`admin-audit-card-chevron${isOpen ? ' open' : ''}`}>›</span>
+                    </button>
+                    {isOpen && (
+                      <div className="admin-audit-card-body">
+                        <div className="admin-audit-card-field">
+                          <span>Date</span>
+                          <strong>{log.createdAt ? new Date(log.createdAt).toLocaleString('en-GB') : '-'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>User</span>
+                          <strong>{log.userName || log.userEmail || 'Unknown'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>Session</span>
+                          <strong>{log.sessionId || '-'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>Role</span>
+                          <strong>{log.role || 'Unknown'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>Module</span>
+                          <strong>{log.module || '-'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>Action</span>
+                          <strong>{log.action || '-'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>Description</span>
+                          <strong>{log.description || '-'}</strong>
+                        </div>
+                        <div className="admin-audit-card-field">
+                          <span>IP</span>
+                          <strong>{log.ipAddress || '-'}</strong>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </section>
 

@@ -6,6 +6,7 @@ const Doctor = require('../models/Doctor');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { logActivity, getClientIp } = require('../utils/audit');
 
 const createStorage = (folder) => multer.diskStorage({
   destination: function (req, file, cb) {
@@ -132,6 +133,27 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
     }
 
     await vital.save();
+
+    // Audit: Vitals saved/updated (only if vital data was provided)
+    if (Object.keys(caseData).length > 0) {
+      try {
+        await logActivity({
+          userId: decoded.id,
+          userName: decoded.name || decoded.email || '',
+          userEmail: decoded.email || '',
+          role: decoded.role,
+          sessionId: decoded.sessionId || null,
+          module: 'Vitals',
+          action: 'SAVE_VITALS',
+          description: `Saved/Updated vitals for appointment ${appointmentId}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { appointmentId, vitalId: vital._id }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write vitals audit log:', auditErr.message);
+      }
+    }
 
     res.json({ success: true, vital });
   } catch (err) {

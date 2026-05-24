@@ -67,8 +67,9 @@ export default function Dashboard() {
           setLastVisitPrescription(null);
         }
       } catch (err) {
-        console.error("Error fetching appointments:", err);
-        setError("Unable to load appointment details right now.");
+        const message = err.response?.data?.error || err.message || "Unknown error";
+        console.error("Error fetching appointments:", message, err);
+        setError(`Unable to load appointment details right now. ${message}`);
       }
     };
 
@@ -112,6 +113,14 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-container">
+      <section className="dashboard-hero">
+        <div className="dashboard-hero-content">
+          <span className="dashboard-tag">Patient Portal</span>
+          <h1>Welcome back to IIT Dharwad Wellness</h1>
+          <p>Track appointments, review recent visits, and manage your health profile from one smart dashboard.</p>
+        </div>
+      </section>
+
       {/* Stats Grid */}
       {/* <section className="stats-section">
         <div className="stats-grid">

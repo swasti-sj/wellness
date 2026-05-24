@@ -94,44 +94,44 @@ router.get('/stats', verifyUser, async (req, res) => {
     const startOfWeek = new Date(today - 7 * 24 * 60 * 60 * 1000);
     const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
-    const [totalMeds, outOfStock, expiring30, expiring90, totalStock, lowStock, 
-           addedThisMonth, addedThisWeek, addedToday, 
-           issuedThisMonth, issuedThisWeek, issuedToday] = await Promise.all([
-      Medicine.countDocuments({ isActive: { $ne: false } }),
-      Medicine.countDocuments({ stockCount: 0, isActive: { $ne: false } }),
-      Medicine.countDocuments({ expiryDate: { $lte: in30Days, $gte: today }, isActive: { $ne: false } }),
-      Medicine.countDocuments({ expiryDate: { $lte: in90Days, $gte: today }, isActive: { $ne: false } }),
-      Medicine.aggregate([{ $group: { _id: null, total: { $sum: '$stockCount' } } }]),
-      Medicine.countDocuments({
-        $expr: { $lt: ['$stockCount', '$reorderLevel'] },
-        stockCount: { $gt: 0 },
-        isActive: { $ne: false }
-      }),
-      StockTransaction.aggregate([
-        { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfMonth } } },
-        { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
-      ]),
-      StockTransaction.aggregate([
-        { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfWeek } } },
-        { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
-      ]),
-      StockTransaction.aggregate([
-        { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfDay } } },
-        { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
-      ]),
-      MedicineIssuance.aggregate([
-        { $match: { issuedDate: { $gte: startOfMonth } } },
-        { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
-      ]),
-      MedicineIssuance.aggregate([
-        { $match: { issuedDate: { $gte: startOfWeek } } },
-        { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
-      ]),
-      MedicineIssuance.aggregate([
-        { $match: { issuedDate: { $gte: startOfDay } } },
-        { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
-      ])
-    ]);
+    const [totalMeds, outOfStock, expiring30, expiring90, totalStock, lowStock,
+      addedThisMonth, addedThisWeek, addedToday,
+      issuedThisMonth, issuedThisWeek, issuedToday] = await Promise.all([
+        Medicine.countDocuments({ isActive: { $ne: false } }),
+        Medicine.countDocuments({ stockCount: 0, isActive: { $ne: false } }),
+        Medicine.countDocuments({ expiryDate: { $lte: in30Days, $gte: today }, isActive: { $ne: false } }),
+        Medicine.countDocuments({ expiryDate: { $lte: in90Days, $gte: today }, isActive: { $ne: false } }),
+        Medicine.aggregate([{ $group: { _id: null, total: { $sum: '$stockCount' } } }]),
+        Medicine.countDocuments({
+          $expr: { $lt: ['$stockCount', '$reorderLevel'] },
+          stockCount: { $gt: 0 },
+          isActive: { $ne: false }
+        }),
+        StockTransaction.aggregate([
+          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfMonth } } },
+          { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
+        ]),
+        StockTransaction.aggregate([
+          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfWeek } } },
+          { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
+        ]),
+        StockTransaction.aggregate([
+          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfDay } } },
+          { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
+        ]),
+        MedicineIssuance.aggregate([
+          { $match: { issuedDate: { $gte: startOfMonth } } },
+          { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
+        ]),
+        MedicineIssuance.aggregate([
+          { $match: { issuedDate: { $gte: startOfWeek } } },
+          { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
+        ]),
+        MedicineIssuance.aggregate([
+          { $match: { issuedDate: { $gte: startOfDay } } },
+          { $group: { _id: null, total: { $sum: '$quantityIssued' } } }
+        ])
+      ]);
 
     res.json({
       totalMedicines: totalMeds,
@@ -162,7 +162,7 @@ router.get('/stats', verifyUser, async (req, res) => {
 // POST /api/medicines — add new medicine
 router.post('/', verifyPharmacist, async (req, res) => {
   try {
-    const { 
+    const {
       name, brandName, stockCount, expiryDate, oldStockExpiryDate, batchNumber, manufacturer,
       category, reorderLevel, unit, pricePerUnit, notes, oldBalance, oldBalanceDate,
       supplier, invoiceNumber, receivedDate
@@ -243,11 +243,11 @@ router.post('/', verifyPharmacist, async (req, res) => {
 router.put('/:id', verifyPharmacist, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Log the incoming request for debugging
     console.log('Updating medicine:', id);
     console.log('Request body:', JSON.stringify(req.body, null, 2));
-    
+
     const medicine = await Medicine.findById(id);
     if (!medicine) {
       console.log('Medicine not found:', id);
@@ -266,7 +266,7 @@ router.put('/:id', verifyPharmacist, async (req, res) => {
       if (added < 0) {
         return res.status(400).json({ error: 'addStock cannot be negative' });
       }
-      
+
       if (added > 0) {
         updates.stockCount = prevStock + added;
 
@@ -333,37 +333,39 @@ router.put('/:id', verifyPharmacist, async (req, res) => {
     console.log('Updates to apply:', updates);
 
     const updated = await Medicine.findByIdAndUpdate(id, updates, { new: true, runValidators: true });
-    
-    // Audit: Stock or medicine updated (record old/new for meaningful fields)
-    try {
-      const changedFields = {};
-      if (updates.stockCount !== undefined) changedFields.stockCount = { before: prevStock, after: updates.stockCount };
-      if (updates.expiryDate !== undefined) changedFields.expiryDate = { before: medicine.expiryDate, after: updates.expiryDate };
-      await logActivity({
-        userId: req.pharmacist._id,
-        userName: req.pharmacist.name || req.pharmacist.email,
-        userEmail: req.pharmacist.email || '',
-        role: 'pharmacist',
-        sessionId: req.pharmacist.sessionId || null,
-        module: 'Medicine',
-        action: 'UPDATE_MEDICINE',
-        description: `Updated medicine ${medicine.name}` + (changedFields.stockCount ? `: stock ${changedFields.stockCount.before} → ${changedFields.stockCount.after}` : ''),
-        severity: 'AUDIT',
-        ipAddress: getClientIp(req),
-        details: { medicineId: updated._id, changes: changedFields }
-      });
-    } catch (auditErr) {
-      console.warn('Failed to write medicine update audit log:', auditErr.message);
+
+    // Audit: Stock or medicine updated (only if changes were actually applied)
+    if (Object.keys(updates).length > 0) {
+      try {
+        const changedFields = {};
+        if (updates.stockCount !== undefined) changedFields.stockCount = { before: prevStock, after: updates.stockCount };
+        if (updates.expiryDate !== undefined) changedFields.expiryDate = { before: medicine.expiryDate, after: updates.expiryDate };
+        await logActivity({
+          userId: req.pharmacist._id,
+          userName: req.pharmacist.name || req.pharmacist.email,
+          userEmail: req.pharmacist.email || '',
+          role: 'pharmacist',
+          sessionId: req.pharmacist.sessionId || null,
+          module: 'Medicine',
+          action: 'UPDATE_MEDICINE',
+          description: `Updated medicine ${medicine.name}` + (changedFields.stockCount ? `: stock ${changedFields.stockCount.before} → ${changedFields.stockCount.after}` : ''),
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { medicineId: updated._id, changes: changedFields }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write medicine update audit log:', auditErr.message);
+      }
     }
 
     console.log('Medicine updated successfully:', updated._id);
     res.json({ success: true, medicine: updated });
-    
+
   } catch (err) {
     console.error('Error in PUT /medicines/:id:', err);
     console.error('Error stack:', err.stack);
-    res.status(500).json({ 
-      error: 'Server error updating medicine', 
+    res.status(500).json({
+      error: 'Server error updating medicine',
       details: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
@@ -455,11 +457,11 @@ router.get('/:id/transactions', verifyUser, async (req, res) => {
 router.get('/analytics/usage', verifyUser, async (req, res) => {
   try {
     const { period, from, to, limit = 20 } = req.query;
-    
+
     let startDate;
     let endDate;
     const now = new Date();
-    
+
     if (from && to) {
       startDate = new Date(from);
       endDate = new Date(to);
@@ -522,7 +524,7 @@ router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
     const { days = 30, from, to } = req.query;
     let startDate;
     let endDate;
-    
+
     if (from && to) {
       startDate = new Date(from);
       endDate = new Date(to);
@@ -560,9 +562,9 @@ router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
     // Combine both datasets
     const movementMap = {};
     dailyIssuances.forEach(d => {
-      movementMap[d._id] = { 
-        date: d._id, 
-        issued: d.totalIssued, 
+      movementMap[d._id] = {
+        date: d._id,
+        issued: d.totalIssued,
         issuedTx: d.transactionCount,
         added: 0,
         addedTx: 0,
@@ -588,8 +590,8 @@ router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
 
     const movementData = Object.values(movementMap).sort((a, b) => a.date.localeCompare(b.date));
 
-    res.json({ 
-      dailyIssuances, 
+    res.json({
+      dailyIssuances,
       dailyAdditions,
       movementData,
       summary: {
@@ -610,7 +612,7 @@ router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
 router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
-    
+
     let matchStage = {};
     if (from || to) {
       matchStage.issuedDate = {};
@@ -618,7 +620,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
       if (to) matchStage.issuedDate.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
     }
     if (medicineId) matchStage.medicine = new mongoose.Types.ObjectId(medicineId);
-    
+
     // Daily movements per medicine
     const dailyMovements = await MedicineIssuance.aggregate([
       { $match: matchStage },
@@ -653,7 +655,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
       },
       { $sort: { date: 1, medicineName: 1 } }
     ]);
-    
+
     // Summary per medicine
     const medicineSummary = await MedicineIssuance.aggregate([
       { $match: matchStage },
@@ -687,7 +689,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
       },
       { $sort: { totalIssued: -1 } }
     ]);
-    
+
     // Get addition data for each medicine to show net change
     let additionMatchStage = { transactionType: { $in: ['ADDITION', 'OPENING_BALANCE'] } };
     if (from || to) {
@@ -696,7 +698,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
       if (to) additionMatchStage.createdAt.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
     }
     if (medicineId) additionMatchStage.medicine = new mongoose.Types.ObjectId(medicineId);
-    
+
     const additionData = await StockTransaction.aggregate([
       { $match: additionMatchStage },
       {
@@ -707,7 +709,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
         }
       }
     ]);
-    
+
     // Merge addition data into medicine summary
     const additionMap = new Map();
     additionData.forEach(ad => {
@@ -716,14 +718,14 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
         additionCount: ad.additionCount
       });
     });
-    
+
     const enhancedSummary = medicineSummary.map(med => ({
       ...med,
       totalAdded: additionMap.get(med._id?.toString())?.totalAdded || 0,
       additionCount: additionMap.get(med._id?.toString())?.additionCount || 0,
       netChange: (additionMap.get(med._id?.toString())?.totalAdded || 0) - (med.totalIssued || 0)
     }));
-    
+
     let selectedMedicine = null;
     if (medicineId) {
       const med = await Medicine.findById(medicineId);
@@ -744,7 +746,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
         };
       }
     }
-    
+
     res.json({ dailyMovements, medicineSummary: enhancedSummary, selectedMedicine });
   } catch (err) {
     console.error('Error in GET /analytics/medicine-wise-issuance:', err);
@@ -756,7 +758,7 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
 router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
-    
+
     let matchStage = { transactionType: { $in: ['ADDITION', 'OPENING_BALANCE'] } };
     if (from || to) {
       matchStage.createdAt = {};
@@ -764,7 +766,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
       if (to) matchStage.createdAt.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
     }
     if (medicineId) matchStage.medicine = new mongoose.Types.ObjectId(medicineId);
-    
+
     // Daily movements per medicine
     const dailyMovements = await StockTransaction.aggregate([
       { $match: matchStage },
@@ -799,7 +801,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
       },
       { $sort: { date: 1, medicineName: 1 } }
     ]);
-    
+
     // Summary per medicine
     const medicineSummary = await StockTransaction.aggregate([
       { $match: matchStage },
@@ -833,7 +835,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
       },
       { $sort: { totalAdded: -1 } }
     ]);
-    
+
     // Get issuance data for each medicine to show net change
     let issuanceMatchStage = {};
     if (from || to) {
@@ -842,7 +844,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
       if (to) issuanceMatchStage.issuedDate.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
     }
     if (medicineId) issuanceMatchStage.medicine = new mongoose.Types.ObjectId(medicineId);
-    
+
     const issuanceData = await MedicineIssuance.aggregate([
       { $match: issuanceMatchStage },
       {
@@ -853,7 +855,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
         }
       }
     ]);
-    
+
     // Merge issuance data into medicine summary
     const issuanceMap = new Map();
     issuanceData.forEach(iss => {
@@ -862,14 +864,14 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
         issuanceCount: iss.issuanceCount
       });
     });
-    
+
     const enhancedSummary = medicineSummary.map(med => ({
       ...med,
       totalIssued: issuanceMap.get(med._id?.toString())?.totalIssued || 0,
       issuanceCount: issuanceMap.get(med._id?.toString())?.issuanceCount || 0,
       netChange: (med.totalAdded || 0) - (issuanceMap.get(med._id?.toString())?.totalIssued || 0)
     }));
-    
+
     let selectedMedicine = null;
     if (medicineId) {
       const med = await Medicine.findById(medicineId);
@@ -890,7 +892,7 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
         };
       }
     }
-    
+
     res.json({ dailyMovements, medicineSummary: enhancedSummary, selectedMedicine });
   } catch (err) {
     console.error('Error in GET /analytics/medicine-wise-additions:', err);
@@ -902,15 +904,15 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
 router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
-    
+
     // Build date filters
     let issuanceMatch = {};
     let additionMatch = { transactionType: { $in: ['ADDITION', 'OPENING_BALANCE'] } };
-    
+
     if (from || to) {
       issuanceMatch.issuedDate = {};
       additionMatch.createdAt = {};
-      
+
       if (from) {
         issuanceMatch.issuedDate.$gte = new Date(from);
         additionMatch.createdAt.$gte = new Date(from);
@@ -920,12 +922,12 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
         additionMatch.createdAt.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
       }
     }
-    
+
     if (medicineId) {
       issuanceMatch.medicine = new mongoose.Types.ObjectId(medicineId);
       additionMatch.medicine = new mongoose.Types.ObjectId(medicineId);
     }
-    
+
     // Get issuance data
     const issuanceData = await MedicineIssuance.aggregate([
       { $match: issuanceMatch },
@@ -939,7 +941,7 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
         }
       }
     ]);
-    
+
     // Get addition data
     const additionData = await StockTransaction.aggregate([
       { $match: additionMatch },
@@ -953,29 +955,29 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
         }
       }
     ]);
-    
+
     // Combine data
     const issuanceMap = new Map();
     issuanceData.forEach(i => issuanceMap.set(i._id.toString(), i));
     const additionMap = new Map();
     additionData.forEach(a => additionMap.set(a._id.toString(), a));
-    
+
     const allMedicineIds = new Set([...issuanceMap.keys(), ...additionMap.keys()]);
-    
-    const medicines = await Medicine.find({ 
-      _id: { $in: [...allMedicineIds] }, 
-      isActive: { $ne: false } 
+
+    const medicines = await Medicine.find({
+      _id: { $in: [...allMedicineIds] },
+      isActive: { $ne: false }
     });
-    
+
     const combinedSummary = medicines.map(med => {
-      const issuance = issuanceMap.get(med._id.toString()) || { 
-        totalIssued: 0, 
+      const issuance = issuanceMap.get(med._id.toString()) || {
+        totalIssued: 0,
         issuanceCount: 0,
         firstIssuance: null,
         lastIssuance: null
       };
-      const addition = additionMap.get(med._id.toString()) || { 
-        totalAdded: 0, 
+      const addition = additionMap.get(med._id.toString()) || {
+        totalAdded: 0,
         additionCount: 0,
         firstAddition: null,
         lastAddition: null
@@ -998,8 +1000,8 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
         lastAddition: addition.lastAddition
       };
     }).sort((a, b) => Math.abs(b.netChange) - Math.abs(a.netChange));
-    
-    res.json({ 
+
+    res.json({
       medicineSummary: combinedSummary,
       totalMedicines: combinedSummary.length,
       totalIssuedOverall: combinedSummary.reduce((sum, m) => sum + m.totalIssued, 0),
@@ -1015,19 +1017,19 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
 router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) => {
   try {
     const { medicineId, from, to } = req.query;
-    
+
     if (!medicineId) {
       return res.status(400).json({ error: 'medicineId is required' });
     }
-    
+
     // Get daily issuance breakdown
     let issuanceMatch = { medicine: new mongoose.Types.ObjectId(medicineId) };
     let additionMatch = { medicine: new mongoose.Types.ObjectId(medicineId), transactionType: { $in: ['ADDITION', 'OPENING_BALANCE'] } };
-    
+
     if (from || to) {
       issuanceMatch.issuedDate = {};
       additionMatch.createdAt = {};
-      
+
       if (from) {
         issuanceMatch.issuedDate.$gte = new Date(from);
         additionMatch.createdAt.$gte = new Date(from);
@@ -1037,7 +1039,7 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
         additionMatch.createdAt.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
       }
     }
-    
+
     const [dailyIssuance, dailyAddition, medicineInfo] = await Promise.all([
       MedicineIssuance.aggregate([
         { $match: issuanceMatch },
@@ -1066,7 +1068,7 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
       ]),
       Medicine.findById(medicineId).select('name brandName category stockCount unit reorderLevel')
     ]);
-    
+
     // Combine daily data
     const issuanceMap = new Map();
     dailyIssuance.forEach(d => {
@@ -1075,7 +1077,7 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
         issuanceCount: d.transactionCount
       });
     });
-    
+
     const additionMap = new Map();
     dailyAddition.forEach(d => {
       additionMap.set(d._id, {
@@ -1083,7 +1085,7 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
         additionCount: d.additionCount
       });
     });
-    
+
     const allDates = new Set([...issuanceMap.keys(), ...additionMap.keys()]);
     const dailyBreakdown = Array.from(allDates).sort().map(date => ({
       date,
@@ -1093,14 +1095,14 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
       additionCount: additionMap.get(date)?.additionCount || 0,
       netChange: (additionMap.get(date)?.added || 0) - (issuanceMap.get(date)?.issued || 0)
     }));
-    
+
     // Calculate cumulative
     let cumulative = 0;
     const dailyWithCumulative = dailyBreakdown.map(day => {
       cumulative += day.netChange;
       return { ...day, cumulativeChange: cumulative };
     });
-    
+
     res.json({
       medicine: medicineInfo,
       dailyBreakdown: dailyWithCumulative,
@@ -1150,12 +1152,12 @@ router.get('/analytics/expiry-summary', verifyUser, async (req, res) => {
 
 
 
-    
+
   } catch (err) {
     console.error('Error in GET /analytics/expiry-summary:', err);
     res.status(500).json({ error: 'Server error fetching expiry summary', details: err.message });
   }
-  
+
 });
 
 module.exports = router;

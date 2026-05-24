@@ -1,0 +1,393 @@
+/* ============================================
+   ADMIN AUDIT TRAIL - IIT Dharwad Theme
+   ============================================ */
+
+.admin-audit-page {
+  padding: 26px;
+  max-width: 1200px;
+  margin: 0 auto;
+  color: #1e1e1e;
+}
+
+.admin-audit-header {
+  margin-bottom: 22px;
+}
+
+.admin-audit-header h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  color: #6a1b6f;
+  font-weight: 700;
+}
+
+.admin-audit-header p {
+  margin: 0;
+  color: #666;
+}
+
+/* ============================================
+   CONTROLS & FILTERS
+   ============================================ */
+.admin-audit-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.admin-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  flex: 1;
+}
+
+.admin-filter-row input,
+.admin-filter-row select {
+  min-width: 150px;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease;
+}
+
+.admin-filter-row input:focus,
+.admin-filter-row select:focus {
+  outline: none;
+  border-color: #ffad4a;
+  box-shadow: 0 0 8px rgba(255, 173, 74, 0.2);
+}
+
+/* ============================================
+   ACTION BUTTONS
+   ============================================ */
+.admin-audit-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-audit-actions button {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #6a1b6f 0%, #83298c 100%);
+  border: 2px solid transparent;
+  color: #fff;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.admin-audit-actions button:hover:not(:disabled) {
+  border-color: #ffad4a;
+  box-shadow: 0 6px 16px rgba(255, 173, 74, 0.25);
+  transform: translateY(-2px);
+}
+
+.admin-filter-toggle {
+  display: none;
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #6a1b6f;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.admin-filter-toggle:hover {
+  border-color: #6a1b6f;
+  background: #f8f8ff;
+}
+
+.admin-audit-card-list {
+  display: none;
+}
+
+.admin-audit-card {
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+}
+
+.admin-audit-card.open {
+  border-color: #6a1b6f;
+}
+
+.admin-audit-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.admin-audit-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #32163d;
+}
+
+.admin-audit-card-meta {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #666;
+}
+
+.admin-audit-card-chevron {
+  font-size: 1.4rem;
+  line-height: 1;
+  color: #6a1b6f;
+  transition: transform 0.25s ease;
+}
+
+.admin-audit-card-chevron.open {
+  transform: rotate(90deg);
+}
+
+.admin-audit-card-body {
+  padding: 0 16px 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.admin-audit-card-field {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-audit-card-field span {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #6a1b6f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.admin-audit-card-field strong {
+  font-size: 0.92rem;
+  color: #272727;
+  word-break: break-word;
+}
+
+.admin-audit-actions button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.admin-audit-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   TABLE WRAPPER
+   ============================================ */
+.admin-audit-table-wrapper {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e6e6e6;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 18px 0;
+}
+
+.admin-audit-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.admin-audit-table th,
+.admin-audit-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid #f0f0f0;
+  text-align: left;
+  font-size: 0.95rem;
+}
+
+.admin-audit-table th {
+  background: #f8f9ff;
+  font-weight: 700;
+  color: #6a1b6f;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+.admin-audit-table tbody tr:hover {
+  background: #faf9ff;
+}
+
+.admin-audit-table td {
+  color: #333;
+}
+
+/* ============================================
+   STATUS & MESSAGES
+   ============================================ */
+.admin-audit-error {
+  padding: 14px 16px;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: #fff3f3;
+  color: #b3261e;
+  border-left: 4px solid #b3261e;
+}
+
+.admin-audit-loading,
+.admin-audit-empty {
+  padding: 20px 16px;
+  margin: 10px 0;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #666;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* ============================================
+   PAGINATION
+   ============================================ */
+.admin-audit-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+.admin-audit-pagination button {
+  padding: 10px 20px;
+  border: 2px solid #6a1b6f;
+  background: transparent;
+  color: #6a1b6f;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.admin-audit-pagination button:hover:not(:disabled) {
+  background: #6a1b6f;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(106, 27, 111, 0.25);
+}
+
+.admin-audit-pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-audit-pagination span {
+  font-weight: 600;
+  color: #6a1b6f;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .admin-audit-page {
+    padding: 16px;
+  }
+
+  .admin-audit-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .admin-filter-row {
+    flex-direction: column;
+  }
+
+  .admin-filter-row input,
+  .admin-filter-row select {
+    width: 100%;
+    min-width: unset;
+  }
+
+  .admin-audit-controls {
+    flex-direction: column;
+  }
+
+  .admin-audit-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .admin-audit-actions button {
+    width: 100%;
+  }
+
+  .admin-audit-table th,
+  .admin-audit-table td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+
+  .admin-audit-pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-filter-toggle {
+    display: inline-flex;
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+
+  .admin-filter-row {
+    flex-direction: column;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+
+  .admin-filter-row.open {
+    max-height: 1000px;
+  }
+
+  .admin-audit-table-wrapper {
+    padding: 0;
+    border: none;
+    background: transparent;
+  }
+
+  .admin-audit-table {
+    display: none;
+  }
+
+  .admin-audit-card-list {
+    display: block;
+  }
+
+  .admin-audit-card {
+    margin-bottom: 14px;
+  }
+
+  .admin-audit-card-header {
+    padding: 14px 14px;
+  }
+
+  .admin-audit-card-body {
+    padding: 0 14px 14px;
+  }
+}

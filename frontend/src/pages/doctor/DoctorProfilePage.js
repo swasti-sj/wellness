@@ -163,7 +163,7 @@ function DoctorProfilePage({ apiBaseUrl }) {
           <div className="profile-buttons">
             {!editMode ? (
               <button className="edit-btn" onClick={() => setEditMode(true)}>
-                ✏️ Edit Profile
+                Edit Profile
               </button>
             ) : (
               <button
@@ -171,11 +171,11 @@ function DoctorProfilePage({ apiBaseUrl }) {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? 'Saving...' : '💾 Save Changes'}
+                {saving ? 'Saving...' : 'Save Changes'}
               </button>
             )}
             <button className="signout-btn" onClick={handleSignOut}>
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         </div>

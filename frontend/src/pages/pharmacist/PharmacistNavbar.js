@@ -7,13 +7,13 @@ import { useApi } from '../../context/ApiContext';
 
 
 const NAV_LINKS = [
-  { to: '/pharmacist-dashboard',                    label: 'Dashboard' },
-  { to: '/pharmacist-dashboard/stock',              label: 'Stock' },
-  { to: '/pharmacist-dashboard/records',            label: 'Records' },
-  { to: '/pharmacist-dashboard/analytics',          label: 'Analytics' },
+  { to: '/pharmacist-dashboard', label: 'Dashboard' },
+  { to: '/pharmacist-dashboard/stock', label: 'Stock' },
+  { to: '/pharmacist-dashboard/records', label: 'Records' },
+  { to: '/pharmacist-dashboard/analytics', label: 'Analytics' },
   { to: '/pharmacist-dashboard/medicine-analytics', label: 'Med. Analytics' },
   { to: '/pharmacist-dashboard/advanced-analytics', label: 'Adv. Analytics' },
-  { to: '/pharmacist-dashboard/stock-history',      label: 'History' },
+  { to: '/pharmacist-dashboard/stock-history', label: 'History' },
 ];
 
 export default function PharmacistNavbar() {
@@ -26,15 +26,15 @@ export default function PharmacistNavbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
-const API_BASE = `${apiBaseUrl}/api`;
+  const API_BASE = `${apiBaseUrl}/api`;
   useEffect(() => {
     if (!token) return;
     axios.get(`${API_BASE}/pharmacist/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     })
       .then(r => setPharmacist(r.data))
-      .catch(() => {});
-  }, [token]);
+      .catch(() => { });
+  }, [token, apiBaseUrl, API_BASE]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -111,17 +111,17 @@ const API_BASE = `${apiBaseUrl}/api`;
             onMouseEnter={() => setMenuOpen(true)}
             onMouseLeave={() => setMenuOpen(false)}
           >
-            <button 
-              className="profile-btn" 
+            <button
+              className="profile-btn"
               onClick={() => setMenuOpen((prev) => !prev)}
               title={pharmacist?.name || 'Profile'}
             >
               <div className="profile-icon">{initials}</div>
             </button>
-            
+
             <div className={`profile-menu ${menuOpen ? 'show' : ''}`}>
-              <button 
-                className="profile-menu-btn" 
+              <button
+                className="profile-menu-btn"
                 onClick={() => {
                   setMenuOpen(false);
                   navigate('/pharmacist-dashboard/profile');
@@ -129,8 +129,8 @@ const API_BASE = `${apiBaseUrl}/api`;
               >
                 Profile
               </button>
-              <button 
-                className="profile-menu-btn" 
+              <button
+                className="profile-menu-btn"
                 onClick={() => {
                   setMenuOpen(false);
                   handleLogout();
@@ -141,8 +141,8 @@ const API_BASE = `${apiBaseUrl}/api`;
             </div>
           </div>
           {/* Mobile Toggle */}
-          <button 
-            className="pharm-hamburger-btn" 
+          <button
+            className="pharm-hamburger-btn"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
             {isMobileMenuOpen ? '✕' : '☰'}

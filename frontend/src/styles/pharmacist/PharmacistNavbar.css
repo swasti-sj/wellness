@@ -304,7 +304,7 @@
     right: 0;
     background: linear-gradient(to right, #4A1060, #6C1B85);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
     flex-direction: column;
     gap: 0;
     padding: 0;
@@ -393,6 +393,7 @@
   .pharm-mobile-divider {
     display: block;
   }
+
   .pharm-mobile-logout {
     display: block;
   }

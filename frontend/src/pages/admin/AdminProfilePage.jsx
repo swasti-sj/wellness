@@ -152,7 +152,7 @@ export default function AdminProfilePage() {
           <div className="profile-buttons">
             {!editMode ? (
               <button className="edit-btn" onClick={() => setEditMode(true)}>
-                ✏️ Edit Profile
+                Edit Profile
               </button>
             ) : (
               <button
@@ -160,11 +160,11 @@ export default function AdminProfilePage() {
                 onClick={handleSave}
                 disabled={saving}
               >
-                {saving ? "Saving..." : "💾 Save Changes"}
+                {saving ? "Saving..." : "Save Changes"}
               </button>
             )}
             <button className="signout-btn" onClick={handleLogout}>
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         </div>
@@ -182,4 +182,3 @@ export default function AdminProfilePage() {
     </div>
   );
 }
-

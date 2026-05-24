@@ -34,7 +34,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  align-self:center;
+  align-self: center;
   height: 100%;
 }
 
@@ -46,9 +46,18 @@
   align-items: center;
   gap: 1rem;
   flex-shrink: 0;
-  /* background-color: white; */
   height: 100%;
   width: auto;
+}
+
+.navbar-logo img {
+  width: auto;
+  max-height: 48px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 .login-logo {
@@ -309,7 +318,6 @@
   .navbar-btn {
     font-size: 0.75rem;
     padding: 0.3rem 0.6rem;
-    display: none;
   }
 
   .navbar-links {
@@ -325,11 +333,13 @@
     opacity: 0;
     transform: translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
 /* ====== Hamburger Toggle (Responsive Addition) ====== */
 .hamburger-btn {
   display: none;
@@ -346,7 +356,7 @@
 }
 
 /* Show hamburger and hide links on small screens */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .hamburger-btn {
     display: block;
   }
@@ -354,21 +364,38 @@
   .navbar-links {
     display: none;
     flex-direction: column;
-    background: purple;
+    background: rgba(106, 27, 111, 0.98);
     width: 100%;
     position: absolute;
     top: 78px;
     left: 0;
-    padding: 1rem 0;
+    padding: 1rem 0 1rem 0;
     border-bottom: 3px solid #ffad4a;
+    z-index: 999;
   }
 
   .navbar-links.show {
     display: flex;
   }
+
+  .navbar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 12, 35, 0.55);
+    z-index: 998;
+    cursor: default;
+  }
+
+  .navbar-mobile-divider {
+    width: calc(100% - 2rem);
+    height: 1px;
+    margin: 0.75rem auto;
+    background: rgba(255, 255, 255, 0.18);
+  }
 }
+
 /* === Responsive fix: Profile inside hamburger === */
-@media (max-width: 768px) {
+@media (max-width: 992px) {
   .navbar-links button .fa-user-md {
     margin-right: 6px;
   }

@@ -26,6 +26,9 @@ export default function ReceptionistDashboard() {
   const [editedValues, setEditedValues] = useState({});
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
   const [filterDoctor, setFilterDoctor] = useState(''); // Filter by doctor
+  const [showAddEntryMobile, setShowAddEntryMobile] = useState(true);
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState(null);
+  const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 760);
 
   // Date range filter (default: today → today + 7 days)
   const today = new Date();
@@ -43,12 +46,19 @@ export default function ReceptionistDashboard() {
   const apiBaseUrl = useApi();
 
   useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth <= 760);
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     const loadData = () => {
       fetchAppointments();
       fetchManualEntries();
       fetchDoctors();
     };
-    
+
     loadData();
     const intervalId = setInterval(loadData, 60000); // Auto-refresh every 60s
     return () => clearInterval(intervalId);
@@ -174,12 +184,12 @@ export default function ReceptionistDashboard() {
     try {
       if (manualEntry) {
         await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}`, {
-        patientName: editedValues.patientName,
-        roll: editedValues.roll,
-        doctorName: editedValues.doctorName,
-        appointmentDate: editedValues.date || null,
-        appointmentTime: editedValues.time || null
-      });
+          patientName: editedValues.patientName,
+          roll: editedValues.roll,
+          doctorName: editedValues.doctorName,
+          appointmentDate: editedValues.date || null,
+          appointmentTime: editedValues.time || null
+        });
 
         // Update status if changed during edit
         if (editedValues.status && editedValues.status !== manualEntry.status) {
@@ -267,12 +277,12 @@ export default function ReceptionistDashboard() {
 
   const filteredData = useMemo(() => {
     let result = allData;
-    
+
     // Filter by doctor if selected
     if (filterDoctor) {
       result = result.filter(item => item.doctorId === filterDoctor);
     }
-    
+
     if (searchQuery.trim()) {
       const fuse = new Fuse(result, {
         keys: ['patientName', 'roll', 'doctorName', 'date', 'time', 'status', 'email'],
@@ -348,17 +358,17 @@ export default function ReceptionistDashboard() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-          {searchQuery && (
-            <button className="rd-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
-                <path d="M18 6 6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-          {searchQuery && (
-            <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
-          )}
-        </div>
+            {searchQuery && (
+              <button className="rd-search-clear" onClick={() => setSearchQuery('')} title="Clear search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="14" height="14">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+            {searchQuery && (
+              <span className="rd-search-count">{filteredData.length} result{filteredData.length !== 1 ? 's' : ''}</span>
+            )}
+          </div>
           {/* Calendar Range Picker (icon → expands) */}
           <div className="rd-calendar-range-wrap">
             <button
@@ -419,8 +429,8 @@ export default function ReceptionistDashboard() {
             )}
           </div>
 
-          <select 
-            value={filterDoctor} 
+          <select
+            value={filterDoctor}
             onChange={(e) => setFilterDoctor(e.target.value)}
             className="rd-doctor-filter"
             style={{
@@ -447,8 +457,8 @@ export default function ReceptionistDashboard() {
               </option>
             ))}
           </select>
-          <select 
-            value={sortBy} 
+          <select
+            value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
             className="rd-sort-select"
             style={{
@@ -479,79 +489,93 @@ export default function ReceptionistDashboard() {
               <path d="M12 5v14M5 12h14" />
             </svg>
             <h2>Add Entry</h2>
+            {isMobileView && (
+              <button
+                type="button"
+                className="rd-section-toggle"
+                onClick={() => setShowAddEntryMobile((prev) => !prev)}
+                aria-expanded={showAddEntryMobile}
+              >
+                {showAddEntryMobile ? 'Hide form' : 'Show form'}
+              </button>
+            )}
           </div>
-          <form onSubmit={handleAddEntry} className="rd-form-grid">
-            <div className="rd-form-group">
-              <label>Patient Name <span className="rd-required">*</span></label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-                placeholder="Enter full name"
-                required
-              />
-            </div>
-            <div className="rd-form-group">
-              <label>Roll No / Emp ID</label>
-              <input
-                type="text"
-                name="rollNo"
-                value={formData.rollNo}
-                onChange={handleFormChange}
-                placeholder="e.g., 23001 or EMP-001"
-              />
-            </div>
-            <div className="rd-form-group">
-              <label>Category</label>
-              <select name="role" value={formData.role} onChange={handleFormChange}>
-                <option value="Student">Student</option>
-                <option value="Staff">Staff</option>
-                <option value="Faculty">Faculty</option>
-              </select>
-            </div>
-            <div className="rd-form-group">
-              <label>Doctor <span className="rd-required">*</span></label>
-              <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
-                <option value="">— Select Doctor —</option>
-                {doctors.map(d => (
-                  <option key={d._id} value={d._id}>
-                    {d.name}{d.specialization ? ` (${d.specialization})` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="rd-form-group">
-              <label>Appointment Date</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleFormChange}
-              />
-            </div>
-            <div className="rd-form-group">
-              <label>Appointment Time</label>
-              <input
-                type="time"
-                name="time"
-                value={formData.time}
-                onChange={handleFormChange}
-              />
-            </div>
-            <div className="rd-form-group rd-form-submit-col">
-              <label>&nbsp;</label>
-              <button type="submit" className="rd-btn-add">Add Entry</button>
-            </div>
-          </form>
-          {message && (
-            <div className={`rd-message rd-message--${messageType}`}>
-              {messageType === 'success'
-                ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5" /></svg>
-                : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
-              }
-              {message}
-            </div>
+          {(!isMobileView || showAddEntryMobile) && (
+            <>
+              <form onSubmit={handleAddEntry} className="rd-form-grid">
+                <div className="rd-form-group">
+                  <label>Patient Name <span className="rd-required">*</span></label>
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleFormChange}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </div>
+                <div className="rd-form-group">
+                  <label>Roll No / Emp ID</label>
+                  <input
+                    type="text"
+                    name="rollNo"
+                    value={formData.rollNo}
+                    onChange={handleFormChange}
+                    placeholder="e.g., 23001 or EMP-001"
+                  />
+                </div>
+                <div className="rd-form-group">
+                  <label>Category</label>
+                  <select name="role" value={formData.role} onChange={handleFormChange}>
+                    <option value="Student">Student</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Faculty">Faculty</option>
+                  </select>
+                </div>
+                <div className="rd-form-group">
+                  <label>Doctor <span className="rd-required">*</span></label>
+                  <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
+                    <option value="">— Select Doctor —</option>
+                    {doctors.map(d => (
+                      <option key={d._id} value={d._id}>
+                        {d.name}{d.specialization ? ` (${d.specialization})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="rd-form-group">
+                  <label>Appointment Date</label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div className="rd-form-group">
+                  <label>Appointment Time</label>
+                  <input
+                    type="time"
+                    name="time"
+                    value={formData.time}
+                    onChange={handleFormChange}
+                  />
+                </div>
+                <div className="rd-form-group rd-form-submit-col">
+                  <label>&nbsp;</label>
+                  <button type="submit" className="rd-btn-add">Add Entry</button>
+                </div>
+              </form>
+              {message && (
+                <div className={`rd-message rd-message--${messageType}`}>
+                  {messageType === 'success'
+                    ? <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><path d="M20 6 9 17l-5-5" /></svg>
+                    : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" width="16" height="16"><circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" /></svg>
+                  }
+                  {message}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -578,6 +602,102 @@ export default function ReceptionistDashboard() {
                 <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01" />
               </svg>
               <p>{searchQuery ? `No results found for "${searchQuery}"` : 'No appointments yet. Add a new entry to get started.'}</p>
+            </div>
+          ) : isMobileView ? (
+            <div className="rd-mobile-appointments">
+              {filteredData.map((item, index) => {
+                const statusMeta = getStatusMeta(item.status);
+                const isEditing = editingRowId === item._id;
+                const isExpanded = expandedAppointmentId === item._id;
+                return (
+                  <article key={item._id} className={`rd-mobile-card${isExpanded ? ' open' : ''}`}>
+                    <div className="rd-mobile-card-header">
+                      <div>
+                        <div className="rd-mobile-card-title">{item.patientName}</div>
+                        <div className="rd-mobile-card-meta">{formatDate(item.date)} · {item.time || '-'}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className="rd-mobile-toggle-btn"
+                        onClick={() => setExpandedAppointmentId((prev) => prev === item._id ? null : item._id)}
+                        aria-expanded={isExpanded}
+                      >
+                        {isExpanded ? 'Hide' : 'Details'}
+                      </button>
+                    </div>
+                    <div className="rd-mobile-card-badge" style={{ background: statusMeta.bg, color: statusMeta.color }}>
+                      {statusMeta.label}
+                    </div>
+                    {isExpanded && (
+                      <div className="rd-mobile-card-body">
+                        <div className="rd-mobile-card-row"><span>Roll No / Emp ID</span><strong>{item.roll}</strong></div>
+                        <div className="rd-mobile-card-row"><span>Doctor</span><strong>{item.doctorName}</strong></div>
+                        <div className="rd-mobile-card-row"><span>Email</span><strong>{item.email}</strong></div>
+                        <div className="rd-mobile-card-row"><span>Source</span><strong>{item.source}</strong></div>
+                        {isEditing ? (
+                          <>
+                            <div className="rd-mobile-card-row">
+                              <span>Patient Name</span>
+                              <input
+                                type="text"
+                                className="rd-edit-input"
+                                value={editedValues.patientName}
+                                onChange={(e) => handleEditFieldChange('patientName', e.target.value)}
+                              />
+                            </div>
+                            <div className="rd-mobile-card-row">
+                              <span>Roll No / Emp ID</span>
+                              <input
+                                type="text"
+                                className="rd-edit-input"
+                                value={editedValues.roll}
+                                onChange={(e) => handleEditFieldChange('roll', e.target.value)}
+                              />
+                            </div>
+                            <div className="rd-mobile-card-row">
+                              <span>Doctor</span>
+                              <input
+                                type="text"
+                                className="rd-edit-input"
+                                value={editedValues.doctorName}
+                                onChange={(e) => handleEditFieldChange('doctorName', e.target.value)}
+                              />
+                            </div>
+                            <div className="rd-mobile-card-row">
+                              <span>Date</span>
+                              <input
+                                type="date"
+                                className="rd-edit-input"
+                                value={editedValues.date}
+                                onChange={(e) => handleEditFieldChange('date', e.target.value)}
+                              />
+                            </div>
+                            <div className="rd-mobile-card-row">
+                              <span>Time</span>
+                              <input
+                                type="time"
+                                className="rd-edit-input"
+                                value={editedValues.time || ''}
+                                onChange={(e) => handleEditFieldChange('time', e.target.value)}
+                              />
+                            </div>
+                            <div className="rd-mobile-card-actions">
+                              <button className="rd-btn-save" onClick={() => handleSaveChanges(item._id)}>Save</button>
+                              <button className="rd-btn-cancel" onClick={() => { setEditingRowId(null); setEditedValues({}); }}>Cancel</button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="rd-mobile-card-actions">
+                            <button className="rd-btn-edit" onClick={() => { handleEditRow(item); setExpandedAppointmentId(item._id); }}>
+                              Edit
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           ) : (
             <div className="rd-table-wrapper">
@@ -695,6 +815,6 @@ export default function ReceptionistDashboard() {
         </div>
 
       </div>
-    </div>
+    </div >
   );
 }

@@ -7,6 +7,7 @@ const Note = require("../models/Note");
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { logActivity, getClientIp } = require('../utils/audit');
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
@@ -22,7 +23,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
@@ -61,6 +62,25 @@ router.post("/add", async (req, res) => {
     });
     await note.save();
 
+    // Audit: Note created
+    try {
+      await logActivity({
+        userId: decoded.id,
+        userName: decoded.name || decoded.email || '',
+        userEmail: decoded.email || '',
+        role: decoded.role,
+        sessionId: decoded.sessionId || null,
+        module: 'Note',
+        action: 'CREATE_NOTE',
+        description: `Created clinical note for appointment ${appointment._id}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { noteId: note._id, appointmentId: appointment._id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write note creation audit log:', auditErr.message);
+    }
+
     res.json({ success: true, note });
   } catch (err) {
     console.error(err);
@@ -93,8 +113,30 @@ router.put("/:noteId", async (req, res) => {
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
     // Update the note
+    const beforeText = note.text;
     note.text = text;
     await note.save();
+
+    // Audit: Note updated (only if text actually changed)
+    if (beforeText !== text) {
+      try {
+        await logActivity({
+          userId: decoded.id,
+          userName: decoded.name || decoded.email || '',
+          userEmail: decoded.email || '',
+          role: decoded.role,
+          sessionId: decoded.sessionId || null,
+          module: 'Note',
+          action: 'UPDATE_NOTE',
+          description: `Updated clinical note for appointment ${appointment._id}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { noteId: note._id, appointmentId: appointment._id, beforeText: beforeText ? beforeText.substring(0, 200) : '', afterText: text ? text.substring(0, 200) : '' }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write note update audit log:', auditErr.message);
+      }
+    }
 
     res.json({ success: true, note });
   } catch (err) {
@@ -221,6 +263,25 @@ router.delete("/:noteId", async (req, res) => {
     }
 
     await Note.findByIdAndDelete(noteId);
+
+    // Audit: Note deleted
+    try {
+      await logActivity({
+        userId: decoded.id,
+        userName: decoded.name || decoded.email || '',
+        userEmail: decoded.email || '',
+        role: decoded.role,
+        sessionId: decoded.sessionId || null,
+        module: 'Note',
+        action: 'DELETE_NOTE',
+        description: `Deleted clinical note ${noteId} for appointment ${appointment._id}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { noteId, appointmentId: appointment._id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write note deletion audit log:', auditErr.message);
+    }
 
     res.json({ success: true, message: "Note deleted successfully" });
   } catch (err) {

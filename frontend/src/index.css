@@ -31,6 +31,27 @@ html {
   scroll-behavior: smooth;
 }
 
+img,
+picture,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+button,
+input,
+textarea,
+select {
+  max-width: 100%;
+}
+
+body,
+#root {
+  min-width: 0;
+}
+
 /* ==========================================
    MOBILE OPTIMIZATIONS
    ========================================== */
@@ -46,7 +67,9 @@ html {
   }
 
   /* Prevent text selection bounce on mobile */
-  input, textarea, select {
+  input,
+  textarea,
+  select {
     font-size: 16px;
   }
 }

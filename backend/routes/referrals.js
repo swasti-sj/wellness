@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const Referral = require('../models/Referral');
 const User = require('../models/User');
 const Doctor = require('../models/Doctor');
+const { logActivity, getClientIp } = require('../utils/audit');
 
 // ------------------------------
 // Middleware to verify doctor token
@@ -50,6 +51,27 @@ router.post('/', verifyDoctor, async (req, res) => {
     });
 
     await referral.save();
+
+    // Audit: Referral created
+    try {
+      const decodedAudit = jwt.verify(req.body.token || req.headers.authorization?.split(' ')[1] || '', process.env.JWT_SECRET);
+      await logActivity({
+        userId: decodedAudit.id,
+        userName: decodedAudit.name || decodedAudit.email || '',
+        userEmail: decodedAudit.email || '',
+        role: decodedAudit.role,
+        sessionId: decodedAudit.sessionId || null,
+        module: 'Referral',
+        action: 'CREATE_REFERRAL',
+        description: `Created referral for patient ${patient.name || patient.email}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { referralId: referral._id, patientId: patient._id, toDoctor: referredDoctorId }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write referral creation audit log:', auditErr.message);
+    }
+
     res.json({ success: true, referral });
   } catch (err) {
     console.error('Referral creation error:', err);
@@ -156,6 +178,26 @@ router.patch('/:id/read', verifyDoctor, async (req, res) => {
     referral.viewedAt = new Date();
     await referral.save();
 
+    // Audit: Referral viewed
+    try {
+      const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+      await logActivity({
+        userId: decodedAudit.id,
+        userName: decodedAudit.name || decodedAudit.email || '',
+        userEmail: decodedAudit.email || '',
+        role: decodedAudit.role,
+        sessionId: decodedAudit.sessionId || null,
+        module: 'Referral',
+        action: 'VIEW_REFERRAL',
+        description: `Viewed referral ${id}`,
+        severity: 'AUDIT',
+        ipAddress: getClientIp(req),
+        details: { referralId: id }
+      });
+    } catch (auditErr) {
+      console.warn('Failed to write referral view audit log:', auditErr.message);
+    }
+
     res.json({ success: true, message: 'Referral marked as read' });
   } catch (err) {
     console.error("Error marking referral as read:", err);
@@ -176,11 +218,34 @@ router.patch('/:id/accept', verifyDoctor, async (req, res) => {
     if (referral.toDoctor.toString() !== req.doctorId)
       return res.status(403).json({ error: 'Access denied' });
 
+    const beforeStatus = referral.status;
     referral.status = 'accepted';
     referral.read = true;
     referral.responseNote = responseNote || '';
     referral.respondedAt = new Date();
     await referral.save();
+
+    // Audit: Referral accepted (only if status actually changed)
+    if (beforeStatus !== 'accepted') {
+      try {
+        const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+        await logActivity({
+          userId: decodedAudit.id,
+          userName: decodedAudit.name || decodedAudit.email || '',
+          userEmail: decodedAudit.email || '',
+          role: decodedAudit.role,
+          sessionId: decodedAudit.sessionId || null,
+          module: 'Referral',
+          action: 'ACCEPT_REFERRAL',
+          description: `Accepted referral ${id}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { referralId: id, beforeStatus, afterStatus: 'accepted', responseNote: responseNote || '' }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write referral accept audit log:', auditErr.message);
+      }
+    }
 
     res.json({ success: true, message: 'Referral accepted' });
   } catch (err) {
@@ -202,11 +267,34 @@ router.patch('/:id/reject', verifyDoctor, async (req, res) => {
     if (referral.toDoctor.toString() !== req.doctorId)
       return res.status(403).json({ error: 'Access denied' });
 
+    const beforeStatus = referral.status;
     referral.status = 'rejected';
     referral.read = true;
     referral.responseNote = responseNote || '';
     referral.respondedAt = new Date();
     await referral.save();
+
+    // Audit: Referral rejected (only if status actually changed)
+    if (beforeStatus !== 'rejected') {
+      try {
+        const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+        await logActivity({
+          userId: decodedAudit.id,
+          userName: decodedAudit.name || decodedAudit.email || '',
+          userEmail: decodedAudit.email || '',
+          role: decodedAudit.role,
+          sessionId: decodedAudit.sessionId || null,
+          module: 'Referral',
+          action: 'REJECT_REFERRAL',
+          description: `Rejected referral ${id}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { referralId: id, beforeStatus, afterStatus: 'rejected', responseNote: responseNote || '' }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write referral reject audit log:', auditErr.message);
+      }
+    }
 
     res.json({ success: true, message: 'Referral rejected' });
   } catch (err) {

@@ -7,6 +7,7 @@ const Test = require('../models/Test');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const { logActivity, getClientIp } = require('../utils/audit');
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -35,7 +36,7 @@ const allowedMimeTypes = [
   'application/pdf'
 ];
 
-const upload = multer({ 
+const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
@@ -204,23 +205,23 @@ router.post('/save', upload.fields([
 ]), async (req, res) => {
   try {
     const { token, appointmentId } = req.body;
-    
+
     let tests = [];
     if (req.body.tests) {
       tests = typeof req.body.tests === 'string' ? JSON.parse(req.body.tests) : req.body.tests;
     }
-    
+
     let hospitalReferral = { refer: false };
     if (req.body.hospitalReferral) {
       hospitalReferral = typeof req.body.hospitalReferral === 'string' ? JSON.parse(req.body.hospitalReferral) : req.body.hospitalReferral;
     }
-    
+
     let certificate = { issued: false };
     if (req.body.certificate) {
       const parsedCert = typeof req.body.certificate === 'string' ? JSON.parse(req.body.certificate) : req.body.certificate;
       certificate = { ...certificate, ...parsedCert };
     }
-    
+
     const certificateImage = req.files?.certificateImage?.[0];
     const labTestDocument = req.files?.labTestDocument?.[0];
     const cashlessFormDocument = req.files?.cashlessFormDocument?.[0];
@@ -291,6 +292,27 @@ router.post('/save', upload.fields([
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
+
+    // Audit: Tests saved/updated (only if tests list has content)
+    if ((tests || []).length > 0) {
+      try {
+        await logActivity({
+          userId: decoded.id,
+          userName: decoded.name || decoded.email || '',
+          userEmail: decoded.email || '',
+          role: decoded.role,
+          sessionId: decoded.sessionId || null,
+          module: 'Tests',
+          action: 'SAVE_TESTS',
+          description: `Saved/Updated tests for appointment ${appointmentId}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { appointmentId, testId: updatedTest._id, testsCount: (tests || []).length }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write tests audit log:', auditErr.message);
+      }
+    }
 
     res.json({ success: true, test: updatedTest });
   } catch (err) {

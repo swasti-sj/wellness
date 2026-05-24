@@ -3,17 +3,17 @@ import axios from "axios";
 import "../../styles/doctor/DoctorReferral.css";
 
 const STATUS_CONFIG = {
-  pending:  { label: "Pending",  color: "#C8860A", bg: "#FFF4DC", icon: "⏳" },
-  viewed:   { label: "Viewed",   color: "#4A1060", bg: "#F0E4FA", icon: "👁" },
-  accepted: { label: "Accepted", color: "#1E8A55", bg: "#E8F8EF", icon: "✓" },
-  rejected: { label: "Rejected", color: "#B8243A", bg: "#FDE8EB", icon: "✕" },
+  pending: { label: "Pending", color: "#C8860A", bg: "#FFF4DC" },
+  viewed: { label: "Viewed", color: "#4A1060", bg: "#F0E4FA" },
+  accepted: { label: "Accepted", color: "#1E8A55", bg: "#E8F8EF" },
+  rejected: { label: "Rejected", color: "#B8243A", bg: "#FDE8EB" },
 };
 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.pending;
   return (
     <span className="ref-status-badge" style={{ color: cfg.color, background: cfg.bg }}>
-      {cfg.icon} {cfg.label}
+      {cfg.label}
     </span>
   );
 }
@@ -242,26 +242,26 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
           if (v.vitals.temperature) rows += `<tr style="background:#FAF4FF"><td style="${tdH}">Temp</td><td style="${td}">${v.vitals.temperature}°F</td><td style="${tdH}">SpO₂</td><td style="${td}">${v.vitals.spO2 || "N/A"}%</td></tr>`;
           if (v.vitals.weight) rows += `<tr><td style="${tdH}">Weight</td><td style="${td}">${v.vitals.weight} kg</td><td style="${tdH}">Height</td><td style="${td}">${v.vitals.height || "N/A"} cm</td></tr>`;
           if (v.vitals.followUpDate) rows += `<tr style="background:#FAF4FF"><td style="${tdH}">Follow-up</td><td style="${td}" colspan="3">${formatDate(v.vitals.followUpDate)}</td></tr>`;
-          inner += `<div style="margin-bottom:8px"><div style="${secHead}">📋 Case Sheet &amp; Vitals</div><table style="width:100%;border-collapse:collapse;font-size:11px"><tbody>${rows}</tbody></table></div>`;
+          inner += `<div style="margin-bottom:8px"><div style="${secHead}">Case Sheet &amp; Vitals</div><table style="width:100%;border-collapse:collapse;font-size:11px"><tbody>${rows}</tbody></table></div>`;
         }
 
         if (v.notes.length > 0) {
-          const noteRows = v.notes.map((n, ni) => `<div style="padding:5px 8px;background:${ni%2===0?"#fff":"#F9F6FF"};border:1px solid #E0D0EF;border-radius:4px;margin-bottom:3px;font-size:11px">${n.text}</div>`).join("");
-          inner += `<div style="margin-bottom:8px"><div style="${secHead}">📝 Doctor Notes</div>${noteRows}</div>`;
+          const noteRows = v.notes.map((n, ni) => `<div style="padding:5px 8px;background:${ni % 2 === 0 ? "#fff" : "#F9F6FF"};border:1px solid #E0D0EF;border-radius:4px;margin-bottom:3px;font-size:11px">${n.text}</div>`).join("");
+          inner += `<div style="margin-bottom:8px"><div style="${secHead}">Doctor Notes</div>${noteRows}</div>`;
         }
 
         if (v.prescriptions.length > 0) {
-          const rxRows = v.prescriptions.map((p, pi) => `<tr style="background:${pi%2===0?"#fff":"#FFFBF0"}"><td style="${td}">${pi+1}</td><td style="${td}">${p.medication}</td><td style="${td}">${p.dosage}</td><td style="${td}">${p.frequency}</td><td style="${td}">${p.notes || "—"}</td></tr>`).join("");
-          inner += `<div style="margin-bottom:8px"><div style="${secHead}">💊 Prescription</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#C8860A;color:#fff"><th style="${th}">#</th><th style="${th}">Medication</th><th style="${th}">Dosage</th><th style="${th}">Frequency</th><th style="${th}">Notes</th></tr></thead><tbody>${rxRows}</tbody></table></div>`;
+          const rxRows = v.prescriptions.map((p, pi) => `<tr style="background:${pi % 2 === 0 ? "#fff" : "#FFFBF0"}"><td style="${td}">${pi + 1}</td><td style="${td}">${p.medication}</td><td style="${td}">${p.dosage}</td><td style="${td}">${p.frequency}</td><td style="${td}">${p.notes || "—"}</td></tr>`).join("");
+          inner += `<div style="margin-bottom:8px"><div style="${secHead}">Prescription</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#C8860A;color:#fff"><th style="${th}">#</th><th style="${th}">Medication</th><th style="${th}">Dosage</th><th style="${th}">Frequency</th><th style="${th}">Notes</th></tr></thead><tbody>${rxRows}</tbody></table></div>`;
         }
 
         const selectedTests = v.tests.filter(t => t.selected);
         if (selectedTests.length > 0) {
-          const testRows = selectedTests.map((t, ti) => `<tr style="background:${ti%2===0?"#fff":"#F0FFF6"}"><td style="${td}">${ti+1}</td><td style="${td}">${t.testName}</td><td style="${td}">${t.category}</td></tr>`).join("");
-          inner += `<div style="margin-bottom:8px"><div style="${secHead}">🧪 Tests Ordered</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1E8A55;color:#fff"><th style="${th}">#</th><th style="${th}">Test Name</th><th style="${th}">Category</th></tr></thead><tbody>${testRows}</tbody></table></div>`;
+          const testRows = selectedTests.map((t, ti) => `<tr style="background:${ti % 2 === 0 ? "#fff" : "#F0FFF6"}"><td style="${td}">${ti + 1}</td><td style="${td}">${t.testName}</td><td style="${td}">${t.category}</td></tr>`).join("");
+          inner += `<div style="margin-bottom:8px"><div style="${secHead}">Tests Ordered</div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#1E8A55;color:#fff"><th style="${th}">#</th><th style="${th}">Test Name</th><th style="${th}">Category</th></tr></thead><tbody>${testRows}</tbody></table></div>`;
         }
 
-        if (!v.vitals && v.notes.length===0 && v.prescriptions.length===0 && selectedTests.length===0) {
+        if (!v.vitals && v.notes.length === 0 && v.prescriptions.length === 0 && selectedTests.length === 0) {
           inner += `<div style="font-size:11px;color:#999;font-style:italic;padding:4px 0">No clinical data recorded for this visit.</div>`;
         }
 
@@ -272,7 +272,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
       }).join("");
 
       const apptTableRows = patientAppts.map((a, i) =>
-        `<tr style="background:${i%2===0?"#fff":"#FAF4FF"}"><td style="${td}">${i+1}</td><td style="${td}">${formatDate(a.startDateTime)}</td><td style="${td}">${a.mode || "Walk-in"}</td></tr>`
+        `<tr style="background:${i % 2 === 0 ? "#fff" : "#FAF4FF"}"><td style="${td}">${i + 1}</td><td style="${td}">${formatDate(a.startDateTime)}</td><td style="${td}">${a.mode || "Walk-in"}</td></tr>`
       ).join("");
 
       const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/>
@@ -287,8 +287,8 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
         </style>
       </head><body>
         <div class="no-print" style="position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:9999">
-          <button onclick="window.print()" style="padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;background:#4A1060;color:#fff;cursor:pointer">⬇ Save as PDF</button>
-          <button onclick="window.close()" style="padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;background:#eee;color:#333;cursor:pointer">✕ Close</button>
+          <button onclick="window.print()" style="padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;background:#4A1060;color:#fff;cursor:pointer">Save as PDF</button>
+          <button onclick="window.close()" style="padding:8px 18px;border:none;border-radius:7px;font-size:13px;font-weight:700;background:#eee;color:#333;cursor:pointer">Close</button>
         </div>
 
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
@@ -377,10 +377,10 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
         <div className="ref-notification">
           {unreadCount > 0 ? (
             <span className="ref-notif-badge unread">
-              🔔 {unreadCount} New Referral{unreadCount > 1 ? "s" : ""}
+              {unreadCount} New Referral{unreadCount > 1 ? "s" : ""}
             </span>
           ) : (
-            <span className="ref-notif-badge">🔔 No new referrals</span>
+            <span className="ref-notif-badge">No new referrals</span>
           )}
         </div>
       </div>
@@ -457,13 +457,12 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
                         onClick={() => clearResolved(visible)}
                         style={{ padding: "0.3rem 0.9rem", fontSize: "0.78rem", fontWeight: 600, background: "#FDE8EB", color: "#B8243A", border: "1px solid #F5C6CB", borderRadius: "6px", cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}
                       >
-                        🗑 Clear Resolved
+                        Clear Resolved
                       </button>
                     </div>
                   )}
                   {visible.length === 0 ? (
                     <div className="ref-empty">
-                      <span>📭</span>
                       <p>No incoming referrals yet.</p>
                     </div>
                   ) : (
@@ -512,16 +511,16 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
                                 disabled={historyLoading === r._id}
                                 title="Download patient history PDF"
                               >
-                                {historyLoading === r._id ? "⏳" : "📋 History"}
+                                {historyLoading === r._id ? "Loading..." : "History"}
                               </button>
                               <button
                                 className={`ref-act-btn accept${activeDrawer?.id === r._id && activeDrawer?.action === "accept" ? " active" : ""}`}
                                 onClick={(e) => { e.stopPropagation(); openDrawer(r._id, "accept"); }}
-                              >✓ Accept</button>
+                              >Accept</button>
                               <button
                                 className={`ref-act-btn reject${activeDrawer?.id === r._id && activeDrawer?.action === "reject" ? " active" : ""}`}
                                 onClick={(e) => { e.stopPropagation(); openDrawer(r._id, "reject"); }}
-                              >✕ Decline</button>
+                              >Decline</button>
                             </div>
                           )}
                         </div>
@@ -530,7 +529,7 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
                         {activeDrawer?.id === r._id && (
                           <div className="ref-inline-drawer" onClick={e => e.stopPropagation()}>
                             <p className="ref-drawer-title">
-                              {activeDrawer.action === "accept" ? "✓ Accepting referral" : "✕ Declining referral"}
+                              {activeDrawer.action === "accept" ? "Accepting referral" : "Declining referral"}
                             </p>
                             <textarea
                               className="ref-drawer-ta"
@@ -570,13 +569,12 @@ function DoctorReferral({ apiBaseUrl, onClose }) {
                         onClick={() => clearOldSent(visibleSent)}
                         style={{ padding: "0.3rem 0.9rem", fontSize: "0.78rem", fontWeight: 600, background: "#F0E4FA", color: "#6C1B85", border: "1px solid #E0D0EF", borderRadius: "6px", cursor: "pointer", fontFamily: "DM Sans, sans-serif" }}
                       >
-                        🗑 Clear All Sent
+                        Clear All Sent
                       </button>
                     </div>
                   )}
                   {visibleSent.length === 0 ? (
                     <div className="ref-empty">
-                      <span>📤</span>
                       <p>No sent referrals yet.</p>
                     </div>
                   ) : (
