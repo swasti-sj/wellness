@@ -108,15 +108,15 @@ router.get('/stats', verifyUser, async (req, res) => {
           isActive: { $ne: false }
         }),
         StockTransaction.aggregate([
-          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfMonth } } },
+          { $match: { quantityChanged: { $gt: 0 }, createdAt: { $gte: startOfMonth } } },
           { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
         ]),
         StockTransaction.aggregate([
-          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfWeek } } },
+          { $match: { quantityChanged: { $gt: 0 }, createdAt: { $gte: startOfWeek } } },
           { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
         ]),
         StockTransaction.aggregate([
-          { $match: { transactionType: 'ADDITION', createdAt: { $gte: startOfDay } } },
+          { $match: { quantityChanged: { $gt: 0 }, createdAt: { $gte: startOfDay } } },
           { $group: { _id: null, total: { $sum: '$quantityChanged' } } }
         ]),
         MedicineIssuance.aggregate([

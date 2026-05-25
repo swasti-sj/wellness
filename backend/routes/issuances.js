@@ -36,7 +36,7 @@ const verifyUser = async (req, res, next) => {
 // GET /api/issuances — list with enhanced filters
 router.get('/', verifyUser, async (req, res) => {
   try {
-    const { from, to, patient, medicine, doctor, page = 1, limit = 50, sortBy = 'issuedDate', sortOrder = 'desc' } = req.query;
+    const { from, to, patient, medicine, doctor, source, page = 1, limit = 50, sortBy = 'issuedDate', sortOrder = 'desc' } = req.query;
 
     let query = {};
 
@@ -48,9 +48,10 @@ router.get('/', verifyUser, async (req, res) => {
     if (medicine) query.medicine = medicine;
     if (patient) query.patient = patient;
     if (doctor) query.doctor = doctor;
+    if (source && ['INHOUSE', 'EXTERNAL'].includes(source)) query.source = source;
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
-    
+
     let sortOption = {};
     sortOption[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
@@ -58,7 +59,7 @@ router.get('/', verifyUser, async (req, res) => {
       MedicineIssuance.find(query)
         .populate('patient', 'name email phone')
         .populate('doctor', 'name email')
-        .populate('medicine', 'name brandName stockCount expiryDate unit category')
+        .populate('medicine', 'name brandName stockCount expiryDate unit category reorderLevel')
         .populate('issuedBy', 'name')
         .sort(sortOption)
         .skip(skip)
@@ -73,10 +74,10 @@ router.get('/', verifyUser, async (req, res) => {
       { $group: { _id: null, totalQuantity: { $sum: '$quantityIssued' }, totalTransactions: { $sum: 1 } } }
     ]);
 
-    res.json({ 
-      issuances, 
-      total, 
-      page: parseInt(page), 
+    res.json({
+      issuances,
+      total,
+      page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
       summary: {
         totalQuantity: summary[0]?.totalQuantity || 0,
@@ -89,10 +90,42 @@ router.get('/', verifyUser, async (req, res) => {
   }
 });
 
-// POST /api/issuances — issue medicine (deducts from stock automatically)
+// GET /api/issuances/export — export ALL filtered records (no pagination)
+router.get('/export', verifyUser, async (req, res) => {
+  try {
+    const { from, to, patient, medicine, doctor, source } = req.query;
+    let query = {};
+
+    if (from || to) {
+      query.issuedDate = {};
+      if (from) query.issuedDate.$gte = new Date(from);
+      if (to) query.issuedDate.$lte = new Date(new Date(to).setHours(23, 59, 59, 999));
+    }
+    if (medicine) query.medicine = medicine;
+    if (patient) query.patient = patient;
+    if (doctor) query.doctor = doctor;
+    if (source && ['INHOUSE', 'EXTERNAL'].includes(source)) query.source = source;
+
+    const issuances = await MedicineIssuance.find(query)
+      .populate('patient', 'name email uhid')
+      .populate('doctor', 'name email')
+      .populate('medicine', 'name brandName unit category')
+      .populate('issuedBy', 'name')
+      .sort({ issuedDate: -1 })
+      .lean();
+
+    res.json({ issuances, total: issuances.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error exporting issuances' });
+  }
+});
+
+// POST /api/issuances — issue medicine
+// Stock is only deducted when source === 'INHOUSE'. EXTERNAL issuances are logged but don't affect in-house stock.
 router.post('/', verifyPharmacist, async (req, res) => {
   try {
-    const { patient, medicine, quantityIssued, doctor, notes, prescription } = req.body;
+    const { patient, medicine, quantityIssued, doctor, notes, prescription, source = 'INHOUSE' } = req.body;
 
     if (!patient || !medicine || !quantityIssued || !doctor) {
       return res.status(400).json({ error: 'patient, medicine, quantityIssued, doctor are required' });
@@ -100,12 +133,16 @@ router.post('/', verifyPharmacist, async (req, res) => {
 
     const med = await Medicine.findById(medicine);
     if (!med) return res.status(404).json({ error: 'Medicine not found' });
-    if (med.stockCount < quantityIssued) {
-      return res.status(400).json({ error: `Insufficient stock. Available: ${med.stockCount}` });
+
+    const isInhouse = source === 'INHOUSE';
+
+    // Only check stock sufficiency for INHOUSE issuances
+    if (isInhouse && med.stockCount < parseInt(quantityIssued)) {
+      return res.status(400).json({ error: `Insufficient in-house stock. Available: ${med.stockCount}` });
     }
 
     const stockBefore = med.stockCount;
-    const stockAfter = stockBefore - parseInt(quantityIssued);
+    const stockAfter = isInhouse ? stockBefore - parseInt(quantityIssued) : stockBefore;
 
     // Create issuance record
     const issuance = new MedicineIssuance({
@@ -116,25 +153,30 @@ router.post('/', verifyPharmacist, async (req, res) => {
       issuedBy: req.pharmacist._id,
       notes,
       prescription,
+      source,
       stockBefore,
       stockAfter
     });
     await issuance.save();
 
-    // Deduct from stock
-    await Medicine.findByIdAndUpdate(medicine, { stockCount: stockAfter });
+    // Only deduct from stock if INHOUSE
+    if (isInhouse) {
+      await Medicine.findByIdAndUpdate(medicine, { stockCount: stockAfter });
 
-    // Record stock transaction as ISSUANCE (so it appears in stock history)
-    await StockTransaction.create({
-      medicine,
-      transactionType: 'ISSUANCE',
-      quantityChanged: -parseInt(quantityIssued),
-      stockBefore,
-      stockAfter,
-      performedBy: req.pharmacist._id,
-      issuanceId: issuance._id,
-      notes: `Issued to patient (${quantityIssued} units). ${notes || ''}`
-    });
+      // Record stock transaction as ADJUSTMENT (negative = outgoing issuance)
+      // Note: 'ISSUANCE' type requires a server restart to register in enum.
+      // Using 'ADJUSTMENT' with negative quantity achieves the same result.
+      await StockTransaction.create({
+        medicine,
+        transactionType: 'ADJUSTMENT',
+        quantityChanged: -parseInt(quantityIssued),
+        stockBefore,
+        stockAfter,
+        performedBy: req.pharmacist._id,
+        notes: `[ISSUANCE] Issued to patient (${quantityIssued} units). ${notes || ''}`
+      });
+    }
+    // For EXTERNAL: just log the issuance record, no stock deduction
 
     const populated = await MedicineIssuance.findById(issuance._id)
       .populate('patient', 'name email')

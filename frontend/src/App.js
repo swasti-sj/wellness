@@ -14,8 +14,7 @@ import OthersLoginPage from "./pages/OthersLoginPage";
 import Dashboard from "./pages/patient/Dashboard";
 import Navbar from "./pages/patient/Navbar";
 import PharmacistAnalytics from './pages/pharmacist/PharmacistAnalytics';
-import PharmacistAdvancedAnalytics from './pages/pharmacist/PharmacistAdvancedAnalytics';
-import PharmacistMedicineWiseAnalytics from './pages/pharmacist/PharmacistMedicineWiseAnalytics';
+// PharmacistAdvancedAnalytics and PharmacistMedicineWiseAnalytics merged into PharmacistAnalytics
 // import InitialAdminProfileForm from "./pages/admin/InitialAdminProfileForm";
 import AdminNavbar from "./pages/admin/AdminNavbar";
 import "./App.css";
@@ -311,12 +310,11 @@ function App() {
 <Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/medicine-analytics" element={<LayoutWithPharmNavbar><PharmacistMedicineWiseAnalytics /></LayoutWithPharmNavbar>} />
+{/* Legacy routes redirect to unified analytics */}
+<Route path="/pharmacist-dashboard/medicine-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
+<Route path="/pharmacist-dashboard/advanced-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
-
-{/* // In your Routes section: */}
-<Route path="/pharmacist-dashboard/advanced-analytics" element={<LayoutWithPharmNavbar><PharmacistAdvancedAnalytics /></LayoutWithPharmNavbar>} />
 <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>

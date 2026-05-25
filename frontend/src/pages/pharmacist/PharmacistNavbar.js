@@ -11,8 +11,6 @@ const NAV_LINKS = [
   { to: '/pharmacist-dashboard/stock', label: 'Stock' },
   { to: '/pharmacist-dashboard/records', label: 'Records' },
   { to: '/pharmacist-dashboard/analytics', label: 'Analytics' },
-  { to: '/pharmacist-dashboard/medicine-analytics', label: 'Med. Analytics' },
-  { to: '/pharmacist-dashboard/advanced-analytics', label: 'Adv. Analytics' },
   { to: '/pharmacist-dashboard/stock-history', label: 'History' },
 ];
 

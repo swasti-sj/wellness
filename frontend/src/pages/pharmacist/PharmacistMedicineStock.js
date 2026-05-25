@@ -138,19 +138,19 @@ function parseImportFile(text) {
     return -1;
   };
 
-  const colName    = col(['name of the medicine', 'medicine name', 'name']);
-  const colBrand   = col(['brand name', 'brand']);
-  const colStock   = col(['new stock', 'stock', 'quantity', 'qty', 'balance till']);
-  const colExpiry  = col(['new stock exp', 'exp date', 'expiry', 'expiry date']);
-  const colOldExp  = col(['old stock exp', 'old exp']);
-  const colOldBal  = col(['old balance', 'old stock']);
-  const colBatch   = col(['batch']);
-  const colMfr     = col(['manufacturer', 'mfr']);
-  const colSupp    = col(['supplier']);
-  const colInv     = col(['invoice']);
-  const colPrice   = col(['price', 'rate', 'mrp']);
-  const colCat     = col(['category', 'cat']);
-  const colUnit    = col(['unit']);
+  const colName = col(['name of the medicine', 'medicine name', 'name']);
+  const colBrand = col(['brand name', 'brand']);
+  const colStock = col(['new stock', 'stock', 'quantity', 'qty', 'balance till']);
+  const colExpiry = col(['new stock exp', 'exp date', 'expiry', 'expiry date']);
+  const colOldExp = col(['old stock exp', 'old exp']);
+  const colOldBal = col(['old balance', 'old stock']);
+  const colBatch = col(['batch']);
+  const colMfr = col(['manufacturer', 'mfr']);
+  const colSupp = col(['supplier']);
+  const colInv = col(['invoice']);
+  const colPrice = col(['price', 'rate', 'mrp']);
+  const colCat = col(['category', 'cat']);
+  const colUnit = col(['unit']);
   const colReorder = col(['reorder', 'minimum']);
   const colRemarks = col(['remarks', 'notes', 'remark']);
 
@@ -176,18 +176,18 @@ function parseImportFile(text) {
         return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       }
       // MM/YY or Mon-YY (e.g. Aug-27)
-      const monthMap = { jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12 };
+      const monthMap = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
       const mMatch = raw.match(/^([a-zA-Z]{3})[\/\-](\d{2,4})$/);
       if (mMatch) {
         const m = monthMap[mMatch[1].toLowerCase()];
         const y = mMatch[2].length === 2 ? `20${mMatch[2]}` : mMatch[2];
-        return `${y}-${String(m).padStart(2,'0')}-28`; // last-ish day of month
+        return `${y}-${String(m).padStart(2, '0')}-28`; // last-ish day of month
       }
       // MM/YY numeric
       const nmMatch = raw.match(/^(\d{1,2})[\/\-](\d{2,4})$/);
       if (nmMatch) {
         const y = nmMatch[2].length === 2 ? `20${nmMatch[2]}` : nmMatch[2];
-        return `${y}-${nmMatch[1].padStart(2,'0')}-28`;
+        return `${y}-${nmMatch[1].padStart(2, '0')}-28`;
       }
       return '';
     };
@@ -197,20 +197,20 @@ function parseImportFile(text) {
 
     const row = {
       name,
-      brandName:        get(colBrand),
-      stockCount:       isNaN(stockNum) ? 0 : stockNum,
-      expiryDate:       parseExpiry(get(colExpiry)),
+      brandName: get(colBrand),
+      stockCount: isNaN(stockNum) ? 0 : stockNum,
+      expiryDate: parseExpiry(get(colExpiry)),
       oldStockExpiryDate: parseExpiry(get(colOldExp)),
-      oldBalance:       parseInt(get(colOldBal)) || 0,
-      batchNumber:      get(colBatch),
-      manufacturer:     get(colMfr),
-      supplier:         get(colSupp),
-      invoiceNumber:    get(colInv),
-      pricePerUnit:     parseFloat(get(colPrice)) || 0,
-      category:         get(colCat) || 'General',
-      unit:             get(colUnit) || 'tablets',
-      reorderLevel:     parseInt(get(colReorder)) || 20,
-      notes:            get(colRemarks),
+      oldBalance: parseInt(get(colOldBal)) || 0,
+      batchNumber: get(colBatch),
+      manufacturer: get(colMfr),
+      supplier: get(colSupp),
+      invoiceNumber: get(colInv),
+      pricePerUnit: parseFloat(get(colPrice)) || 0,
+      category: get(colCat) || 'General',
+      unit: get(colUnit) || 'tablets',
+      reorderLevel: parseInt(get(colReorder)) || 20,
+      notes: get(colRemarks),
     };
 
     if (!row.expiryDate) {
@@ -321,12 +321,12 @@ export default function PharmacistMedicineStock() {
     });
 
   const counts = {
-    all:        medicines.length,
-    out:        medicines.filter(m => m.stockCount === 0).length,
-    low:        medicines.filter(m => m.stockCount > 0 && m.stockCount < (m.reorderLevel || 20)).length,
+    all: medicines.length,
+    out: medicines.filter(m => m.stockCount === 0).length,
+    low: medicines.filter(m => m.stockCount > 0 && m.stockCount < (m.reorderLevel || 20)).length,
     expiring30: medicines.filter(m => getDaysToExpiry(m.expiryDate) <= 30 && getDaysToExpiry(m.expiryDate) > 0).length,
     expiring90: medicines.filter(m => getDaysToExpiry(m.expiryDate) <= 90 && getDaysToExpiry(m.expiryDate) > 30).length,
-    expired:    medicines.filter(m => getDaysToExpiry(m.expiryDate) === 0 && m.stockCount > 0).length,
+    expired: medicines.filter(m => getDaysToExpiry(m.expiryDate) === 0 && m.stockCount > 0).length,
   };
 
   // ── Add new medicine ──
@@ -577,17 +577,17 @@ export default function PharmacistMedicineStock() {
         {/* ── Quick Stats Row ── */}
         <div className="pharm-stats-grid" style={{ marginBottom: '1rem' }}>
           {[
-            { key: 'all',        label: 'Total',          color: 'var(--pharm-plum)', cls: 'info' },
-            { key: 'out',        label: 'Out of Stock',    color: 'var(--pharm-red)',  cls: 'danger' },
-            { key: 'low',        label: 'Low Stock',       color: 'var(--pharm-gold)', cls: 'warning' },
-            { key: 'expiring30', label: 'Exp ≤30d',        color: 'var(--pharm-red)',  cls: 'danger' },
-            { key: 'expiring90', label: 'Exp 31–90d',      color: 'var(--pharm-red)',  cls: 'danger' },
-            { key: 'expired',    label: 'Expired (in stock)',color:'var(--pharm-red)',  cls: 'danger' },
+            { key: 'all', label: 'Total', color: 'var(--pharm-plum)', cls: 'info' },
+            { key: 'out', label: 'Out of Stock', color: 'var(--pharm-red)', cls: 'danger' },
+            { key: 'low', label: 'Low Stock', color: 'var(--pharm-gold)', cls: 'warning' },
+            { key: 'expiring30', label: 'Exp ≤30d', color: 'var(--pharm-red)', cls: 'danger' },
+            { key: 'expiring90', label: 'Exp 31–90d', color: 'var(--pharm-red)', cls: 'danger' },
+            { key: 'expired', label: 'Expired (in stock)', color: 'var(--pharm-red)', cls: 'danger' },
           ].map(s => (
             <div key={s.key}
               className={`pharm-stat-card ${s.cls} ${filter === s.key ? 'active-filter' : ''}`}
-              style={{ 
-                cursor: 'pointer', 
+              style={{
+                cursor: 'pointer',
                 borderBottom: filter === s.key ? '4px solid var(--pharm-gold)' : '4px solid transparent',
                 transform: filter === s.key ? 'scale(1.02)' : 'none',
                 opacity: filter === s.key ? 1 : 0.85

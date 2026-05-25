@@ -55,10 +55,37 @@ router.post('/profile', authMiddleware, async (req, res) => {
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-
     res.json(user);
   } catch {
     res.status(500).send('Error fetching profile');
+  }
+});
+
+// GET /api/users/patients — list all registered patients (for pharmacist issue form)
+router.get('/patients', authMiddleware, async (req, res) => {
+  try {
+    const { search, limit = 100 } = req.query;
+    let query = {};
+    if (search && search.trim()) {
+      const s = search.trim();
+      query = {
+        $or: [
+          { name:  { $regex: s, $options: 'i' } },
+          { email: { $regex: s, $options: 'i' } },
+          { roll:  { $regex: s, $options: 'i' } },
+          { uhid:  { $regex: s, $options: 'i' } },
+        ]
+      };
+    }
+    const patients = await User.find(query)
+      .select('name email roll phone uhid sex age')
+      .sort({ name: 1 })
+      .limit(parseInt(limit))
+      .lean();
+    res.json(patients);
+  } catch (err) {
+    console.error('Error fetching patients:', err);
+    res.status(500).json({ error: 'Failed to fetch patients' });
   }
 });
 
