@@ -73,29 +73,41 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
       return res.status(403).json({ error: "You do not have permission to add prescription for this appointment." });
     }
 
-    // New stock management logic for medicines with medicine ID
+    // Stock management: only deduct if source === 'INHOUSE'. EXTERNAL = logged only.
     for (const p of prescriptions) {
       if (p.medicine) {
+        const source = p.source || 'INHOUSE'; // default to INHOUSE for backward compat
         const med = await Medicine.findById(p.medicine);
         if (!med) {
           return res.status(400).json({ error: `Medicine not found: ${p.medication}` });
         }
-        if (med.stockCount < p.quantity) {
-          return res.status(400).json({ error: `Insufficient stock for ${med.name}. Available: ${med.stockCount}, required: ${p.quantity}` });
-        }
-        // Deduct stock
-        med.stockCount -= p.quantity;
-        await med.save();
 
-        // Log issuance
+        if (source === 'INHOUSE') {
+          // Check stock availability
+          if (med.stockCount < p.quantity) {
+            return res.status(400).json({
+              error: `Insufficient stock for ${med.name}. Available: ${med.stockCount}, required: ${p.quantity}`
+            });
+          }
+          // Deduct stock
+          med.stockCount -= p.quantity;
+          await med.save();
+        }
+        // EXTERNAL: no stock check, no deduction
+
+        // Always log issuance for audit (source field distinguishes INHOUSE vs EXTERNAL)
         await new MedicineIssuance({
           patient: appointment.user,
           medicine: p.medicine,
           quantityIssued: p.quantity,
-          doctor: decoded.role === "doctor" ? decoded.id : appointment.doctor
+          doctor: decoded.role === 'doctor' ? decoded.id : appointment.doctor,
+          source: source,
+          notes: source === 'EXTERNAL'
+            ? `[EXTERNAL] Prescribed — patient obtains from external pharmacy`
+            : `[INHOUSE] Dispensed from college stock via prescription`
         }).save();
 
-        // Audit: Medicine issued to patient
+        // Audit log
         try {
           const medName = med.name || p.medication || 'Medicine';
           await logActivity({
@@ -106,10 +118,10 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
             sessionId: decoded.sessionId || null,
             module: 'Medicine',
             action: 'ISSUE_MEDICINE',
-            description: `Issued ${p.quantity} × ${medName} to patient (Appointment ID: ${appointment._id})`,
+            description: `[${source}] Issued ${p.quantity} × ${medName} to patient (Appointment: ${appointment._id})`,
             severity: 'AUDIT',
             ipAddress: getClientIp(req),
-            details: { medicineId: p.medicine, patientId: appointment.user, quantity: p.quantity }
+            details: { medicineId: p.medicine, patientId: appointment.user, quantity: p.quantity, source }
           });
         } catch (auditErr) {
           console.warn('Failed to write medicine issuance audit log:', auditErr.message);

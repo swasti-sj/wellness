@@ -83,7 +83,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
   };
 
   const addRow = () => {
-    setCurrent((prev) => [...prev, { medication: '', dosage: '', frequency: '', notes: '', quantity: 1, status: 'new' }]);
+    setCurrent((prev) => [...prev, { medication: '', dosage: '', frequency: '', notes: '', quantity: 1, status: 'new', source: 'INHOUSE' }]);
     setSaved(false);
   };
 
@@ -217,6 +217,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
             <span>Dosage</span>
             <span>Frequency</span>
             <span>Instructions</span>
+            <span>Source</span>
             <span></span>
           </div>
           {current.map((rx, i) => (
@@ -224,7 +225,12 @@ function DoctorPrescription({ appointmentId, patientId }) {
               <span className="rx-num">{i + 1}</span>
               <div className="rx-med-container">
                 <input value={rx.medication} onChange={(e) => handleMedInput(i, e.target.value)} placeholder="Type to search medicines" />
-                {rx.stockInfo && <small>{rx.stockInfo}</small>}
+                {rx.medicine && rx.source !== 'EXTERNAL' && rx.stockInfo && (
+                  <small style={{ color: '#1e8a55' }}>{rx.stockInfo}</small>
+                )}
+                {rx.medicine && rx.source === 'EXTERNAL' && (
+                  <small style={{ color: '#b45309' }}>External — stock not deducted</small>
+                )}
                 {dropdownIndex === i && dropdownSearch && fuse && (
                   <div className="rx-dropdown">
                     {fuse.search(dropdownSearch).slice(0, 8).map((result, idx) => (
@@ -239,6 +245,29 @@ function DoctorPrescription({ appointmentId, patientId }) {
               <input name="dosage" value={rx.dosage} onChange={(e) => updateRow(i, 'dosage', e.target.value)} placeholder="e.g. 500mg" />
               <input name="frequency" value={rx.frequency} onChange={(e) => updateRow(i, 'frequency', e.target.value)} placeholder="e.g. Twice daily" />
               <input name="notes" value={rx.notes} onChange={(e) => updateRow(i, 'notes', e.target.value)} placeholder="e.g. After food" />
+              {/* Source dropdown — always visible */}
+              <select
+                value={rx.source || 'INHOUSE'}
+                onChange={(e) => updateRow(i, 'source', e.target.value)}
+                title="Select stock source"
+                style={{
+                  fontSize: '0.78rem',
+                  padding: '4px 6px',
+                  borderRadius: 6,
+                  border: (rx.source || 'INHOUSE') === 'EXTERNAL'
+                    ? '1.5px solid #b45309'
+                    : '1.5px solid #1e8a55',
+                  background: (rx.source || 'INHOUSE') === 'EXTERNAL' ? '#fffbeb' : '#f0fdf4',
+                  color: (rx.source || 'INHOUSE') === 'EXTERNAL' ? '#b45309' : '#166534',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  minWidth: 100,
+                  width: '100%'
+                }}
+              >
+                <option value="INHOUSE">In-House</option>
+                <option value="EXTERNAL">External</option>
+              </select>
               <button className="rx-del" onClick={() => removeRow(i)} title="Remove">x</button>
               {rx.status === 'continued' && <span className="rx-badge-cont">Continued</span>}
             </div>

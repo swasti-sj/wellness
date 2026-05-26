@@ -20,6 +20,13 @@ const PrescriptionItemSchema = new Schema({
     type: String, 
     enum: ['new', 'continued'], 
     default: 'new' 
+  },
+  // INHOUSE = dispense from college stock (deducts quantity)
+  // EXTERNAL = patient buys from outside pharmacy (logged only, no stock deduction)
+  source: {
+    type: String,
+    enum: ['INHOUSE', 'EXTERNAL'],
+    default: 'INHOUSE'
   }
 });
 

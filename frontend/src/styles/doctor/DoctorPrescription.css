@@ -246,11 +246,11 @@
 }
 
 .rx-table-head {
-  grid-template-columns: 26px 1.8fr 0.8fr 1fr 1.2fr 1.2fr 34px;
+  grid-template-columns: 26px 1.8fr 0.8fr 1fr 1.2fr 1.2fr 110px 34px;
 }
 
 .rx-row {
-  grid-template-columns: 26px 1.8fr 0.8fr 1fr 1.2fr 1.2fr 34px;
+  grid-template-columns: 26px 1.8fr 0.8fr 1fr 1.2fr 1.2fr 110px 34px;
 }
 
 .rx-med-container input {
