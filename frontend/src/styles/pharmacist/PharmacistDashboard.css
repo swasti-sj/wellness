@@ -1038,32 +1038,88 @@
   .pharm-analytics-grid { grid-template-columns: 1fr; }
 }
 
-/* ── Responsive ── */
+/* ── Alert success class (was missing) ── */
+.pharm-success {
+  background: var(--pharm-green-pale);
+  border: 1px solid #86efac;
+  color: #14532d;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--pharm-radius-sm);
+  font-size: 0.85rem;
+}
+
+/* ── Responsive Breakpoints ── */
 @media (max-width: 1024px) {
   .pharm-issuance-summary { grid-template-columns: repeat(2, 1fr); }
+  .pharm-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .pharm-root { padding: 1rem; }
-  .pharm-header { flex-direction: column; align-items: flex-start; }
+  .pharm-root { padding: 1rem 0.75rem; }
+  .pharm-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .pharm-header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .pharm-header-actions .pharm-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 0;
+    font-size: 0.75rem;
+    padding: 0.45rem 0.6rem;
+  }
   .pharm-stats-grid { grid-template-columns: 1fr 1fr; }
-  .pharm-issuance-summary { grid-template-columns: 1fr; }
+  .pharm-issuance-summary { grid-template-columns: 1fr 1fr; }
   .pharm-form-grid, .pharm-form-grid.cols-3 { grid-template-columns: 1fr; }
   .pharm-form-group.span-2 { grid-column: span 1; }
   .pharm-title { font-size: 1.6rem; }
-  .pharm-section-header { padding: 1rem; }
+  .pharm-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+    gap: 0.5rem;
+  }
+  .pharm-section-header > * { width: 100%; }
   .pharm-stat-value { font-size: 1.5rem; }
-  
-  /* Tables on mobile */
-  .pharm-table-container { 
-    margin: 0 -1rem; 
-    padding: 0 1rem; 
-    overflow-x: auto; 
+  .pharm-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pharm-filter-bar .pharm-select,
+  .pharm-filter-bar .pharm-input {
+    width: 100%;
+    min-width: 0;
+  }
+  /* Tables on mobile — horizontal scroll */
+  .pharm-table-container {
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+  .pharm-table {
+    min-width: 640px;
+  }
+  /* Period selectors wrap */
+  .pharm-period-selector {
+    flex-wrap: wrap;
+  }
+  .pharm-analytics-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
+  .pharm-root { padding: 0.75rem 0.5rem; }
   .pharm-stats-grid { grid-template-columns: 1fr; }
+  .pharm-issuance-summary { grid-template-columns: 1fr; }
   .pharm-modal { width: 95vw; margin: 0 auto; }
-}
+  .pharm-title { font-size: 1.3rem; }
+  .pharm-issuance-card { padding: 1rem; }
+  .pharm-issuance-card .value { font-size: 1.5rem; }
+  .pharm-stat-card { padding: 1rem 1.25rem; }
+  .pharm-btn { font-size: 0.73rem; }
+}

@@ -2,38 +2,44 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const MedicineIssuanceSchema = new Schema({
-  patient: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  patient: {
+    type: Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
-  medicine: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'Medicine', 
-    required: true 
+  medicine: {
+    type: Schema.Types.ObjectId,
+    ref: 'Medicine',
+    required: true
   },
-  quantityIssued: { 
-    type: Number, 
+  quantityIssued: {
+    type: Number,
     required: true,
     min: 1
   },
-  doctor: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'Doctor', 
-    required: true 
+  doctor: {
+    type: Schema.Types.ObjectId,
+    ref: 'Doctor',
+    required: true
   },
   issuedBy: {
     type: Schema.Types.ObjectId,
     ref: 'Pharmacist'
   },
-  issuedDate: { 
-    type: Date, 
-    default: Date.now 
+  issuedDate: {
+    type: Date,
+    default: Date.now
   },
   // Prescription reference
   prescription: {
     type: Schema.Types.ObjectId,
     ref: 'Prescription'
+  },
+  // Source of medicine: in-house college stock or external pharmacy
+  source: {
+    type: String,
+    enum: ['INHOUSE', 'EXTERNAL'],
+    default: 'INHOUSE'
   },
   // Notes
   notes: {
@@ -47,8 +53,8 @@ const MedicineIssuanceSchema = new Schema({
   stockAfter: {
     type: Number
   }
-}, { 
-  timestamps: true 
+}, {
+  timestamps: true
 });
 
 MedicineIssuanceSchema.index({ issuedDate: -1 });

@@ -9,7 +9,7 @@ const StockTransactionSchema = new Schema({
   },
   transactionType: {
     type: String,
-    enum: ['ADDITION', 'ADJUSTMENT', 'RETURN', 'OPENING_BALANCE', 'EXPIRY_REMOVAL'],
+    enum: ['ADDITION', 'ADJUSTMENT', 'RETURN', 'OPENING_BALANCE', 'EXPIRY_REMOVAL', 'ISSUANCE'],
     required: true
   },
   quantityChanged: {
