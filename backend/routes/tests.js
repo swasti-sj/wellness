@@ -5,28 +5,11 @@ const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
 const Test = require('../models/Test');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { logActivity, getClientIp } = require('../utils/audit');
+const { uploadAndCompressImage, uploadDocument, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const fieldDirMap = {
-      certificateImage: path.join('backend', 'uploads', 'certificates'),
-      labTestDocument: path.join('backend', 'uploads', 'lab-tests'),
-      cashlessFormDocument: path.join('backend', 'uploads', 'cashless-forms')
-    };
-    const uploadDir = fieldDirMap[file.fieldname] || path.join('backend', 'uploads', 'misc');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for memory storage (we'll upload to Cloudinary)
+const storage = multer.memoryStorage();
 const allowedMimeTypes = [
   'image/jpeg',
   'image/jpg',
@@ -222,28 +205,82 @@ router.post('/save', upload.fields([
       certificate = { ...certificate, ...parsedCert };
     }
 
+    const debugFiles = {
+      filesReceived: Object.keys(req.files || {}).reduce((acc, k) => {
+        const arr = req.files?.[k] || [];
+        acc[k] = arr.map(f => ({
+          originalname: f.originalname,
+          mimetype: f.mimetype,
+          size: f.size,
+        }));
+        return acc;
+      }, {}),
+      bodyHasKeys: Object.keys(req.body || {}).reduce((acc, k) => {
+        acc[k] = typeof req.body[k] === 'string' ? true : req.body[k] !== undefined;
+        return acc;
+      }, {}),
+    };
+
+    // Log what multer actually received (helps debug '200 but nothing uploaded')
+    console.log('[Upload Debug][/api/tests/save] debugFiles=', JSON.stringify(debugFiles));
+
     const certificateImage = req.files?.certificateImage?.[0];
     const labTestDocument = req.files?.labTestDocument?.[0];
     const cashlessFormDocument = req.files?.cashlessFormDocument?.[0];
 
-    if (certificateImage) {
-      certificate.imageUrl = `/uploads/certificates/${certificateImage.filename}`;
-    } else if (req.body.existingImageUrl) {
-      certificate.imageUrl = req.body.existingImageUrl;
-    }
 
-    if (labTestDocument) {
-      req.body.labTestDocumentUrl = `/uploads/lab-tests/${labTestDocument.filename}`;
-    }
+    // Upload files to Cloudinary
+    try {
+      if (certificateImage) {
+        const result = await uploadAndCompressImage(
+          certificateImage.buffer,
+          'wellness/certificates',
+          certificateImage.originalname,
+          { width: 1000, height: 800, quality: 85 }
+        );
+        certificate.imageUrl = result.secure_url;
+        certificate.publicId = result.public_id;
+      } else if (req.body.existingImageUrl) {
+        certificate.imageUrl = req.body.existingImageUrl;
+        if (req.body.existingImagePublicId) {
+          certificate.publicId = req.body.existingImagePublicId;
+        }
+      }
 
-    if (cashlessFormDocument) {
-      hospitalReferral.cashlessFormDocumentUrl = `/uploads/cashless-forms/${cashlessFormDocument.filename}`;
-    } else if (req.body.existingCashlessFormDocumentUrl) {
-      hospitalReferral.cashlessFormDocumentUrl = req.body.existingCashlessFormDocumentUrl;
-    }
+      if (labTestDocument) {
+        const result = await uploadDocument(
+          labTestDocument.buffer,
+          'wellness/lab-tests',
+          labTestDocument.originalname,
+          'auto'
+        );
+        req.body.labTestDocumentUrl = result.secure_url;
+        req.body.labTestDocumentPublicId = result.public_id;
+      } else if (req.body.existingLabTestDocumentUrl) {
+        req.body.labTestDocumentUrl = req.body.existingLabTestDocumentUrl;
+        if (req.body.existingLabTestDocumentPublicId) {
+          req.body.labTestDocumentPublicId = req.body.existingLabTestDocumentPublicId;
+        }
+      }
 
-    if (typeof req.body.existingLabTestDocumentUrl === 'string' && !req.body.labTestDocumentUrl) {
-      req.body.labTestDocumentUrl = req.body.existingLabTestDocumentUrl;
+      if (cashlessFormDocument) {
+        const result = await uploadDocument(
+          cashlessFormDocument.buffer,
+          'wellness/cashless-forms',
+          cashlessFormDocument.originalname,
+          'auto'
+        );
+        hospitalReferral.cashlessFormDocumentUrl = result.secure_url;
+        hospitalReferral.cashlessFormDocumentPublicId = result.public_id;
+      } else if (req.body.existingCashlessFormDocumentUrl) {
+        hospitalReferral.cashlessFormDocumentUrl = req.body.existingCashlessFormDocumentUrl;
+        if (req.body.existingCashlessFormDocumentPublicId) {
+          hospitalReferral.cashlessFormDocumentPublicId = req.body.existingCashlessFormDocumentPublicId;
+        }
+      }
+    } catch (uploadErr) {
+      console.error('Cloudinary upload error:', uploadErr.message);
+      return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
     }
 
     if (!token || !appointmentId) {
@@ -314,7 +351,7 @@ router.post('/save', upload.fields([
       }
     }
 
-    res.json({ success: true, test: updatedTest });
+    res.json({ success: true, test: updatedTest, uploadDebug: debugFiles });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error while saving tests.' });

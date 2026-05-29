@@ -7,22 +7,11 @@ const Prescription = require("../models/Prescription");
 const Medicine = require("../models/Medicine");
 const MedicineIssuance = require("../models/MedicineIssuance");
 const multer = require("multer");
-const path = require("path");
-const fs = require("fs");
 const { logActivity, getClientIp } = require('../utils/audit');
+const { uploadDocument, deleteImage } = require('../utils/cloudinary');
 
-const prescriptionStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join("backend", "uploads", "prescriptions");
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+// Configure multer for memory storage (we'll upload to Cloudinary)
+const prescriptionStorage = multer.memoryStorage();
 
 const allowedMimeTypes = [
   "image/jpeg",
@@ -118,6 +107,25 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
     }
 
     // Use findOneAndUpdate with 'upsert' to create a new prescription or update if it exists
+    let documentUrl = existingDocumentUrl;
+    let documentPublicId = null;
+
+    if (req.file) {
+      try {
+        const result = await uploadDocument(
+          req.file.buffer,
+          'wellness/prescriptions',
+          req.file.originalname,
+          'auto'
+        );
+        documentUrl = result.secure_url;
+        documentPublicId = result.public_id;
+      } catch (uploadErr) {
+        console.error('Cloudinary upload error:', uploadErr.message);
+        return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
+      }
+    }
+
     const updatedPrescription = await Prescription.findOneAndUpdate(
       { appointment: appointmentId },
       {
@@ -127,9 +135,8 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
         prescriptions: prescriptions,
         bookNo,
         prescriptionNo,
-        documentUrl: req.file
-          ? `/uploads/prescriptions/${req.file.filename}`
-          : existingDocumentUrl
+        documentUrl: documentUrl,
+        documentPublicId: documentPublicId
       },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );

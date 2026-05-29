@@ -4,22 +4,11 @@ const jwt = require('jsonwebtoken');
 const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { logActivity, getClientIp } = require('../utils/audit');
+const { uploadDocument, deleteImage } = require('../utils/cloudinary');
 
-const createStorage = (folder) => multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = path.join('backend', 'uploads', folder);
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, `${Date.now()}${path.extname(file.originalname)}`);
-  }
-});
+// Configure multer for memory storage (we'll upload to Cloudinary)
+const storage = multer.memoryStorage();
 
 const allowedMimeTypes = [
   'image/jpeg',
@@ -30,7 +19,7 @@ const allowedMimeTypes = [
 ];
 
 const upload = multer({
-  storage: createStorage('case-sheets'),
+  storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     if (allowedMimeTypes.includes(file.mimetype)) {
@@ -62,7 +51,7 @@ router.get("/:appointmentId", async (req, res) => {
       return res.status(404).json({ error: "No vitals found" });
     }
 
-    res.json({ success: true, vital });
+    res.json({ success: true, vital, uploadDebug: debugFiles });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
@@ -100,7 +89,22 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
       return res.status(403).json({ error: "Access denied. Only doctors and nurses can save vitals." });
     }
 
+    const debugFile = req.file
+      ? [{
+          originalname: req.file.originalname,
+          mimetype: req.file.mimetype,
+          size: req.file.size,
+        }]
+      : [];
+
+    const debugFiles = {
+      fileReceived: debugFile,
+      bodyHasKeys: Object.keys(req.body || {}),
+    };
+    console.log('[Upload Debug][/api/vitals/save] debugFiles=', JSON.stringify(debugFiles));
+
     const { appointmentId, patientId, existingCaseSheetDocumentUrl, ...caseData } = req.body;
+
 
     if (!appointmentId || !patientId) {
       return res.status(400).json({ error: "Missing appointment or patient" });
@@ -117,10 +121,26 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
 
     Object.assign(vital, caseData);
 
+    // Upload case sheet document to Cloudinary
     if (req.file) {
-      vital.caseSheetDocumentUrl = `/uploads/case-sheets/${req.file.filename}`;
+      try {
+        const result = await uploadDocument(
+          req.file.buffer,
+          'wellness/case-sheets',
+          req.file.originalname,
+          'auto'
+        );
+        vital.caseSheetDocumentUrl = result.secure_url;
+        vital.caseSheetDocumentPublicId = result.public_id;
+      } catch (uploadErr) {
+        console.error('Cloudinary upload error:', uploadErr.message);
+        return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
+      }
     } else if (typeof existingCaseSheetDocumentUrl === "string") {
       vital.caseSheetDocumentUrl = existingCaseSheetDocumentUrl;
+      if (req.body.existingCaseSheetDocumentPublicId) {
+        vital.caseSheetDocumentPublicId = req.body.existingCaseSheetDocumentPublicId;
+      }
     }
 
     // Auto BMI calculation

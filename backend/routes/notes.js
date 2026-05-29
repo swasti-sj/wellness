@@ -5,35 +5,20 @@ const Doctor = require("../models/Doctor");
 const Appointment = require("../models/Appointment");
 const Note = require("../models/Note");
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const { logActivity, getClientIp } = require('../utils/audit');
+const { uploadMultipleImages, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
-// Configure multer for image uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    const uploadDir = 'backend/uploads/notes';
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
-
+// Configure multer for memory storage (we'll upload to Cloudinary)
+const storage = multer.memoryStorage();
 const upload = multer({
   storage: storage,
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
   fileFilter: (req, file, cb) => {
-    const allowedTypes = /jpeg|jpg|png|gif|webp/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
-    if (extname && mimetype) {
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+    if (allowedMimeTypes.includes(file.mimetype)) {
       return cb(null, true);
     }
-    cb(new Error('Only image files are allowed!'));
+    cb(new Error('Only image files (JPG, PNG, GIF, WEBP) are allowed!'));
   }
 });
 
@@ -168,19 +153,57 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Process uploaded images
+    // Process uploaded images and upload to Cloudinary
     if (req.files && req.files.length > 0) {
-      const newImages = req.files.map(file => ({
-        url: `/uploads/notes/${file.filename}`,
-        caption: req.body.caption || '',
-        uploadedAt: new Date()
-      }));
+      console.log(`[Notes] Uploading ${req.files.length} file(s) to Cloudinary...`);
+      console.log('[Notes] Files:', req.files.map(f => ({ name: f.originalname, size: f.size })));
+      try {
+        const uploadResults = await uploadMultipleImages(
+          req.files,
+          'wellness/notes'
+        );
+        console.log('[Notes] Upload results:', uploadResults.map(r => ({ url: r.secure_url })));
 
-      note.images = [...(note.images || []), ...newImages];
-      await note.save();
+        const newImages = uploadResults.map((result, index) => ({
+          url: result.secure_url,
+          publicId: result.public_id,
+          caption: req.body.caption || '',
+          uploadedAt: new Date(),
+          size: result.bytes,
+          format: result.format
+        }));
+
+        note.images = [...(note.images || []), ...newImages];
+        await note.save();
+
+        // Audit: Images added to note
+        try {
+          await logActivity({
+            userId: decoded.id,
+            userName: decoded.name || decoded.email || '',
+            userEmail: decoded.email || '',
+            role: decoded.role,
+            sessionId: decoded.sessionId || null,
+            module: 'Note',
+            action: 'ADD_IMAGES_TO_NOTE',
+            description: `Added ${newImages.length} image(s) to note ${noteId}`,
+            severity: 'AUDIT',
+            ipAddress: getClientIp(req),
+            details: { noteId, appointmentId: appointment._id, imageCount: newImages.length }
+          });
+        } catch (auditErr) {
+          console.warn('Failed to write image audit log:', auditErr.message);
+        }
+
+        res.json({ success: true, note, message: `${newImages.length} image(s) uploaded and compressed successfully` });
+      } catch (uploadErr) {
+        console.error('[Notes] Cloudinary upload error:', uploadErr.message);
+        console.error('[Notes] Error stack:', uploadErr.stack);
+        res.status(500).json({ error: `Failed to upload images: ${uploadErr.message}` });
+      }
+    } else {
+      res.status(400).json({ error: "No images provided" });
     }
-
-    res.json({ success: true, note });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
@@ -213,13 +236,40 @@ router.delete("/:noteId/images/:imageIndex", async (req, res) => {
     // Remove the image
     const index = parseInt(imageIndex);
     if (note.images && note.images[index]) {
-      // Optionally delete the file from disk
-      const imagePath = path.join(__dirname, '..', note.images[index].url);
-      if (fs.existsSync(imagePath)) {
-        fs.unlinkSync(imagePath);
+      const imageToDelete = note.images[index];
+      
+      // Delete from Cloudinary if publicId exists
+      if (imageToDelete.publicId) {
+        try {
+          await deleteImage(imageToDelete.publicId);
+          console.log('Image deleted from Cloudinary:', imageToDelete.publicId);
+        } catch (deleteErr) {
+          console.warn('Failed to delete from Cloudinary:', deleteErr.message);
+          // Continue anyway - database removal will still happen
+        }
       }
+
       note.images.splice(index, 1);
       await note.save();
+
+      // Audit: Image deleted
+      try {
+        await logActivity({
+          userId: decoded.id,
+          userName: decoded.name || decoded.email || '',
+          userEmail: decoded.email || '',
+          role: decoded.role,
+          sessionId: decoded.sessionId || null,
+          module: 'Note',
+          action: 'DELETE_IMAGE_FROM_NOTE',
+          description: `Deleted image from note ${noteId}`,
+          severity: 'AUDIT',
+          ipAddress: getClientIp(req),
+          details: { noteId, appointmentId: appointment._id }
+        });
+      } catch (auditErr) {
+        console.warn('Failed to write image deletion audit log:', auditErr.message);
+      }
     }
 
     res.json({ success: true, note });
@@ -252,14 +302,21 @@ router.delete("/:noteId", async (req, res) => {
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Delete associated images from disk
+    // Delete associated images from Cloudinary
     if (note.images && note.images.length > 0) {
-      note.images.forEach(image => {
-        const imagePath = path.join(__dirname, '..', image.url);
-        if (fs.existsSync(imagePath)) {
-          fs.unlinkSync(imagePath);
+      const deletePromises = note.images.map(image => {
+        if (image.publicId) {
+          return deleteImage(image.publicId).catch(err => {
+            console.warn('Failed to delete image from Cloudinary:', err.message);
+          });
         }
       });
+      try {
+        await Promise.all(deletePromises);
+      } catch (deleteErr) {
+        console.warn('Error deleting images from Cloudinary:', deleteErr.message);
+        // Continue anyway - database deletion will still happen
+      }
     }
 
     await Note.findByIdAndDelete(noteId);
@@ -283,7 +340,7 @@ router.delete("/:noteId", async (req, res) => {
       console.warn('Failed to write note deletion audit log:', auditErr.message);
     }
 
-    res.json({ success: true, message: "Note deleted successfully" });
+    res.json({ success: true, message: "Note and associated images deleted successfully" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });

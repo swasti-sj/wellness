@@ -84,12 +84,17 @@ const apiBase = useApi();
     } catch (e) { setError('Failed to delete.'); }
   };
 
-  const openAddImg = (id) => { addImgNote.current = id; addImgRef.current?.click(); };
+  const openAddImg = (id) => {
+    addImgNote.current = id;
+    // Defer click to avoid the same click event immediately causing a rerender/blur.
+    setTimeout(() => addImgRef.current?.click(), 0);
+  };
   const handleAddImg = async (e) => {
     const files = e.target.files;
     if (!files?.length) return;
     const id = addImgNote.current;
-    setUploadingId(id); setError('');
+    setUploadingId(id);
+    setError('');
     try {
       const fd = new FormData();
       fd.append('token', token);
@@ -97,9 +102,11 @@ const apiBase = useApi();
       const r = await axios.post(`${apiBase}/api/notes/${id}/images`, fd,
         { headers: { 'Content-Type': 'multipart/form-data' } });
       if (r.data.success) setNotes(notes.map(n => n._id === id ? r.data.note : n));
-    } catch (e) { setError('Upload failed.'); }
-    finally {
-      setUploadingId(null); addImgNote.current = null;
+    } catch (e) {
+      setError('Upload failed.');
+    } finally {
+      setUploadingId(null);
+      addImgNote.current = null;
       if (addImgRef.current) addImgRef.current.value = '';
     }
   };

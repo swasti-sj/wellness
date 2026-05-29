@@ -26,7 +26,7 @@ router.post("/book", async (req, res) => {
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== "user") return res.status(403).json({ error: "Access denied. Not a user." });
+    if (decoded.role !== "patient") return res.status(403).json({ error: "Access denied. Not a patient." });
 
     user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -333,7 +333,7 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
   try {
     // Verify user
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== "user") return res.status(403).json({ error: "Access denied. Not a user." });
+    if (decoded.role !== "patient") return res.status(403).json({ error: "Access denied. Not a patient." });
 
     const user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
