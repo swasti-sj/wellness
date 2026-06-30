@@ -1,4 +1,10 @@
 // Entry point for Express backend
+const dns = require("dns");
+// Use reliable public DNS resolvers. The local VM resolver intermittently
+// fails the Atlas SRV lookup (querySrv ESERVFAIL), which silently breaks
+// reconnection until the process is restarted.
+dns.setServers(["8.8.8.8", "1.1.1.1"]);
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -71,20 +77,49 @@ if (process.env.MONGOOSE_DEBUG === 'true') {
   mongoose.set('debug', true);
 }
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
+// Fail fast instead of buffering queries for 10s when the connection is down.
+// Combined with the reconnect loop below, the app self-heals without a redeploy.
+mongoose.set("bufferCommands", false);
+
+const MONGO_OPTIONS = {
   serverSelectionTimeoutMS: 5000,
   socketTimeoutMS: 45000,
-})
-  .then(() => console.log("✅ Connected to MongoDB"))
-  .catch(err => {
-    console.error("❌ MongoDB error:", err.message);
-    if (process.env.NODE_ENV !== "production") process.exit(1);
-  });
+  heartbeatFrequencyMS: 10000,
+  maxPoolSize: 10,
+};
+
+let reconnectTimer = null;
+function connectWithRetry() {
+  mongoose.connect(process.env.MONGO_URI, MONGO_OPTIONS)
+    .then(() => console.log("✅ Connected to MongoDB"))
+    .catch(err => {
+      console.error("❌ MongoDB error:", err.message);
+      console.log("⏳ Retrying MongoDB connection in 5s...");
+      scheduleReconnect();
+    });
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => {
+    reconnectTimer = null;
+    connectWithRetry();
+  }, 5000);
+}
+
+connectWithRetry();
 
 mongoose.connection.on("error", (err) => {
-  console.error("❌ Mongoose error:", err);
+  console.error("❌ Mongoose error:", err.message);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("⚠️ MongoDB disconnected — scheduling reconnect.");
+  scheduleReconnect();
+});
+
+mongoose.connection.on("reconnected", () => {
+  console.log("✅ MongoDB reconnected.");
 });
 
 // ================= PASSPORT =================
