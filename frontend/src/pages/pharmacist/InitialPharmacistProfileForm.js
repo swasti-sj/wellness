@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/pharmacist/PharmacistProfile.css'; // Reusing the same premium styles
 import { useApi } from '../../context/ApiContext';
 export default function InitialPharmacistProfileForm() {
-  const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
+  const [form, setForm] = useState({ name: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -72,46 +72,6 @@ const apiBaseUrl = useApi();
               />
             </div>
 
-            <div className="pharm-profile-section-title">Additional Details</div>
-
-            <div className="pharm-form-group">
-              <label htmlFor="age">Age</label>
-              <input 
-                id="age"
-                name="age" 
-                type="number" 
-                value={form.age} 
-                onChange={handleChange} 
-                placeholder="Years"
-                required 
-              />
-            </div>
-
-            <div className="pharm-form-group">
-              <label htmlFor="sex">Gender</label>
-              <select 
-                id="sex"
-                name="sex" 
-                value={form.sex} 
-                onChange={handleChange} 
-                required
-                style={{
-                  padding: '1rem 1.25rem',
-                  border: '2px solid var(--border)',
-                  borderRadius: 'var(--radius-lg)',
-                  fontFamily: 'DM Sans, sans-serif',
-                  fontSize: '0.95rem',
-                  color: 'var(--text-body)',
-                  background: 'var(--surface)',
-                  fontWeight: 500
-                }}
-              >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
 
             <div className="pharm-profile-actions">
               <button 

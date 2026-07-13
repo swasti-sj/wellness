@@ -71,17 +71,32 @@ export default function DoctorAppointment({ apiBaseUrl }) {
       const res = await axios.get(`${apiBaseUrl}/api/appointments/doctor-appointments`, {
         params: { token },
       });
-      const formatted = res.data.appointments.map((appt) => ({
-        id: appt._id,
-        title: `${appt.user?.name || "Unknown"} (${appt.status})`,
-        start: new Date(appt.startDateTime),
-        end: new Date(appt.endDateTime),
-        status: appt.status,
-        patient: appt.user,
-        slotDay: appt.slotDay,
-        slotTime: appt.slotTime,
-        fullData: appt,
-      }));
+      const formatted = res.data.appointments.map((appt) => {
+        const user = appt.user || appt.fullData?.user;
+        const dependant = appt.dependant || appt.fullData?.dependant || null;
+        const patientDisplayName = user?.name || user?.email || user?.roll || "Unknown Patient";
+        const dependantLabel = dependant?.name
+          ? `${dependant.name} (${dependant.relationship || "Dependant"})`
+          : null;
+        const eventTitle = dependantLabel
+          ? `${dependantLabel} — ${patientDisplayName} (${appt.status})`
+          : `${patientDisplayName} (${appt.status})`;
+
+        return {
+          id: appt._id,
+          title: eventTitle,
+          start: new Date(appt.startDateTime),
+          end: new Date(appt.endDateTime),
+          status: appt.status,
+          patient: user,
+          patientDisplayName,
+          dependant,
+          dependantLabel,
+          slotDay: appt.slotDay,
+          slotTime: appt.slotTime,
+          fullData: appt,
+        };
+      });
       setAppointments(formatted);
     } catch (err) {
       console.error("Error fetching appointments:", err);
@@ -278,9 +293,15 @@ export default function DoctorAppointment({ apiBaseUrl }) {
             <div className="modal-header-bar">
               <button className="close-btn" onClick={handleCloseModal} title="Close">✕</button>
               <div className="modal-patient-name">
-                {selectedEvent.patient?.name || "Unknown Patient"}
+                {selectedEvent.dependantLabel
+                  ? selectedEvent.dependantLabel
+                  : selectedEvent.patientDisplayName || selectedEvent.patient?.name || "Unknown Patient"}
               </div>
               <div className="modal-meta">
+                <span><strong>Primary Patient:</strong> {selectedEvent.patientDisplayName || selectedEvent.patient?.name || "N/A"}</span>
+                {selectedEvent.dependant?.name && (
+                  <span><strong>Dependant:</strong> {selectedEvent.dependant.name}</span>
+                )}
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
                 <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>

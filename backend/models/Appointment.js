@@ -14,6 +14,15 @@ const AppointmentSchema = new mongoose.Schema({
     enum: ['user', 'doctor', 'nurse', 'receptionist'], 
     default: 'user' 
   }, // Track who made the booking
+  dependant: {
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    age: Number,
+    sex: { type: String, enum: ["Male", "Female", "Other"] },
+    relationship: String,
+    bloodGroup: String,
+    phone: String,
+  },
   status: {
     type: String,
     enum: [

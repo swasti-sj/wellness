@@ -85,18 +85,31 @@ export default function NurseAppointment({ apiBaseUrl }) {
       const res = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`, {
         params: { token },
       });
-      const formatted = res.data.appointments.map((appt) => ({
-        id: appt._id,
-        title: `${appt.user?.name || "Unknown"} (${appt.status})`,
-        start: new Date(appt.startDateTime),
-        end: new Date(appt.endDateTime),
-        status: appt.status,
-        patient: appt.user,
-        doctor: appt.doctor,
-        slotDay: appt.slotDay,
-        slotTime: appt.slotTime,
-        fullData: appt,
-      }));
+      const formatted = res.data.appointments.map((appt) => {
+        const patient = appt.user || appt.fullData?.user;
+        const dependant = appt.dependant || appt.fullData?.dependant || null;
+        const patientName = patient?.name || patient?.email || patient?.roll || "Unknown";
+        const dependantLabel = dependant?.name
+          ? `${dependant.name} (${dependant.relationship || "Dependant"})`
+          : null;
+        return {
+          id: appt._id,
+          title: dependantLabel
+            ? `${dependantLabel} — ${patientName} (${appt.status})`
+            : `${patientName} (${appt.status})`,
+          start: new Date(appt.startDateTime),
+          end: new Date(appt.endDateTime),
+          status: appt.status,
+          patient,
+          patientName,
+          doctor: appt.doctor,
+          dependant,
+          dependantLabel,
+          slotDay: appt.slotDay,
+          slotTime: appt.slotTime,
+          fullData: appt,
+        };
+      });
       setAppointments(formatted);
       filterAppointments(formatted, patientSearch, startDate, endDate, statusFilter);
     } catch (err) {
@@ -355,9 +368,15 @@ export default function NurseAppointment({ apiBaseUrl }) {
             <div className="modal-header-bar">
               <button className="close-btn" onClick={handleCloseModal} title="Close">&#10005;</button>
               <div className="modal-patient-name">
-                {selectedEvent.patient?.name || "Unknown Patient"}
+                {selectedEvent.dependantLabel
+                  ? selectedEvent.dependantLabel
+                  : selectedEvent.patientName || selectedEvent.patient?.name || "Unknown Patient"}
               </div>
               <div className="modal-meta">
+                <span><strong>Primary Patient:</strong> {selectedEvent.patientName || selectedEvent.patient?.name || "N/A"}</span>
+                {selectedEvent.dependant?.name && (
+                  <span><strong>Dependant:</strong> {selectedEvent.dependant.name}</span>
+                )}
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
                 <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>

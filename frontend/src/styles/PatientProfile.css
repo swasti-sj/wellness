@@ -158,10 +158,104 @@ body {
   transition: all 0.3s ease;
 }
 
-.patient-signout-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(255, 173, 74, 0.35);
-  background: linear-gradient(135deg, #89288f 0%, #ffad4a 100%);
+.patient-dependants {
+  margin-top: 1.5rem;
+  text-align: left;
+}
+
+.patient-dependants h3 {
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+  color: #fff;
+}
+
+.patient-dependant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  margin-bottom: 1rem;
+}
+
+.patient-dependant-item button {
+  border: none;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  padding: 0.7rem 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.patient-dependant-item button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.patient-dependant-form-card {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.patient-dependant-form-card h3 {
+  color: #fff;
+  margin-bottom: 1rem;
+}
+
+.dependant-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.dependant-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.dependant-form input,
+.dependant-form select {
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 12px;
+  padding: 0.85rem 1rem;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.dependant-form input::placeholder {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.dependant-submit-btn {
+  grid-column: 1 / -1;
+  width: 100%;
+  padding: 1rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #ffb347 0%, #7c1f8a 100%);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dependant-error {
+  grid-column: 1 / -1;
+  color: #ffd2d2;
+  background: rgba(255, 0, 0, 0.12);
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  margin-top: 0.5rem;
 }
 
 /* --- Responsive --- */

@@ -22,7 +22,7 @@ router.post("/book", async (req, res) => {
   let user, doctor;
 
   try {
-    const { token, startDateTime, endDateTime, doctorId, slotDay, slotTime } = req.body;
+    const { token, startDateTime, endDateTime, doctorId, slotDay, slotTime, dependantId } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -30,6 +30,14 @@ router.post("/book", async (req, res) => {
 
     user = await User.findById(decoded.id);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    let dependant = null;
+    if (dependantId) {
+      dependant = user.dependants?.find((d) => d._id.toString() === dependantId);
+      if (!dependant) {
+        return res.status(400).json({ error: "Selected dependant not found" });
+      }
+    }
 
     doctor = await Doctor.findById(doctorId);
     if (!doctor) return res.status(404).json({ error: "Doctor not found" });
@@ -53,52 +61,77 @@ router.post("/book", async (req, res) => {
     patientOAuth2Client = await ensureFreshAccessToken(user, "user");
     doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
 
-    const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
-    const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+    let patientCalendar = null;
+    let doctorCalendar = null;
 
-    // --- Create patient event ---
-    patientResponse = await patientCalendar.events.insert({
-      calendarId: "primary",
-      requestBody: {
-        summary: `Appointment with Dr. ${doctor.name}`,
-        description: `Doctor: ${doctor.name}\nEmail: ${doctor.email || "Not provided"}`,
-        location: "Wellness Center, IIT Dharwad",
-        start: { dateTime: startDateTime },
-        end: { dateTime: endDateTime },
-      },
-    });
-    console.log("Patient event created:", patientResponse.data.id);
+    // --- Create patient event if possible ---
+    const patientSummary = dependant ? `Appointment for ${dependant.name} with Dr. ${doctor.name}` : `Appointment with Dr. ${doctor.name}`;
+    const patientDescription = dependant
+      ? `Dependant: ${dependant.name} (${dependant.relationship || 'N/A'})\nPrimary Patient: ${user.name}\nDoctor: ${doctor.name}`
+      : `Doctor: ${doctor.name}\nEmail: ${doctor.email || "Not provided"}`;
 
-    // --- Create doctor event ---
-    try {
-      doctorResponse = await doctorCalendar.events.insert({
-        calendarId: "primary",
-        requestBody: {
-          summary: `Appointment with ${user.name}`,
-          description: `Patient: ${user.name}\nEmail: ${user.email}`,
-          location: "Wellness Center, IIT Dharwad",
-          start: { dateTime: startDateTime },
-          end: { dateTime: endDateTime },
-        },
-      });
-      console.log("Doctor event created:", doctorResponse.data.id);
-    } catch (doctorErr) {
-      console.warn("Doctor calendar booking failed:", doctorErr.message);
-
-      // Rollback patient event
-      if (patientResponse?.data?.id) {
-        try {
-          await patientCalendar.events.delete({
-            calendarId: "primary",
-            eventId: patientResponse.data.id,
-          });
-          console.log("Rolled back patient event due to doctor failure");
-        } catch (rollbackErr) {
-          console.error("Failed to rollback patient event:", rollbackErr.message);
-        }
+    if (patientOAuth2Client) {
+      patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+      try {
+        patientResponse = await patientCalendar.events.insert({
+          calendarId: "primary",
+          requestBody: {
+            summary: patientSummary,
+            description: patientDescription,
+            location: "Wellness Center, IIT Dharwad",
+            start: { dateTime: startDateTime },
+            end: { dateTime: endDateTime },
+          },
+        });
+        console.log("Patient event created:", patientResponse.data.id);
+      } catch (err) {
+        console.warn("Could not create patient calendar event:", err.message);
+        patientResponse = null;
       }
+    } else {
+      console.log("Skipping patient calendar event: no OAuth client available for user");
+    }
 
-      return res.status(500).json({ error: "Booking failed: Doctor calendar error" });
+    const doctorSummary = dependant ? `Appointment with ${dependant.name}` : `Appointment with ${user.name}`;
+    const doctorDescription = dependant
+      ? `Dependant: ${dependant.name} (${dependant.relationship || 'N/A'})\nPrimary Patient: ${user.name}\nEmail: ${user.email}`
+      : `Patient: ${user.name}\nEmail: ${user.email}`;
+
+    // --- Create doctor event if possible ---
+    if (doctorOAuth2Client) {
+      doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+      try {
+        doctorResponse = await doctorCalendar.events.insert({
+          calendarId: "primary",
+          requestBody: {
+            summary: doctorSummary,
+            description: doctorDescription,
+            location: "Wellness Center, IIT Dharwad",
+            start: { dateTime: startDateTime },
+            end: { dateTime: endDateTime },
+          },
+        });
+        console.log("Doctor event created:", doctorResponse.data.id);
+      } catch (doctorErr) {
+        console.warn("Doctor calendar booking failed:", doctorErr.message);
+
+        // Rollback patient event only if we actually created it in Google
+        if (patientResponse?.data?.id && patientCalendar) {
+          try {
+            await patientCalendar.events.delete({
+              calendarId: "primary",
+              eventId: patientResponse.data.id,
+            });
+            console.log("Rolled back patient event due to doctor failure");
+          } catch (rollbackErr) {
+            console.error("Failed to rollback patient event:", rollbackErr.message);
+          }
+        }
+
+        return res.status(500).json({ error: "Booking failed: Doctor calendar error" });
+      }
+    } else {
+      console.log("Skipping doctor calendar event: no OAuth client available for doctor");
     }
 
     // --- Save appointment in DB ---
@@ -106,14 +139,25 @@ router.post("/book", async (req, res) => {
       _id: new mongoose.Types.ObjectId(),
       doctor: doctor._id,
       user: user._id,
-      doctorCalendarEventId: doctorResponse.data.id,
-      patientCalendarEventId: patientResponse.data.id,
+      doctorCalendarEventId: doctorResponse?.data?.id || null,
+      patientCalendarEventId: patientResponse?.data?.id || null,
       startDateTime,
       endDateTime,
       slotDay,
       slotTime,
       status: "booked",
       bookedBy: "user",
+      dependant: dependant
+        ? {
+            _id: dependant._id,
+            name: dependant.name,
+            age: dependant.age,
+            sex: dependant.sex,
+            relationship: dependant.relationship,
+            bloodGroup: dependant.bloodGroup,
+            phone: dependant.phone,
+          }
+        : undefined,
     });
     await appointment.save();
 
@@ -154,9 +198,11 @@ router.post("/book", async (req, res) => {
     res.json({
       success: true,
       appointment: populatedAppointment,
-      doctorCalendarEventId: doctorResponse.data.id,
-      patientCalendarEventId: patientResponse.data.id,
-      message: "Appointment booked successfully in both calendars.",
+      doctorCalendarEventId: doctorResponse?.data?.id || null,
+      patientCalendarEventId: patientResponse?.data?.id || null,
+      message: doctorResponse?.data?.id && patientResponse?.data?.id
+        ? "Appointment booked successfully in both calendars."
+        : "Appointment booked; calendar update unavailable for one or more participants.",
     });
 
   } catch (err) {
@@ -217,15 +263,20 @@ router.get("/my-appointments", async (req, res) => {
       .populate("doctor", "name specialization weeklySlots")
       .sort({ startDateTime: 1 });
 
-    // Setup patient calendar
+    // Setup patient calendar (may be null if user has no Google tokens)
     const patientOAuth2Client = await ensureFreshAccessToken(user, 'user');
-    const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+    let patientCalendar = null;
+    if (patientOAuth2Client) {
+      patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+    } else {
+      console.log("Skipping patient calendar checks: no OAuth client for user");
+    }
 
     for (const appt of appointments) {
       let doctor = appt.doctor;
 
       // --- Check patient calendar ---
-      if (appt.patientCalendarEventId) {
+      if (appt.patientCalendarEventId && patientCalendar) {
         try {
           const event = await patientCalendar.events.get({
             calendarId: "primary",
@@ -246,32 +297,37 @@ router.get("/my-appointments", async (req, res) => {
             await appt.save();
           }
         }
+      } else if (appt.patientCalendarEventId && !patientCalendar) {
+        console.log("Cannot check patient event (no OAuth client):", appt.patientCalendarEventId);
       }
 
       // --- Check doctor calendar ---
       if (appt.doctorCalendarEventId && doctor) {
-        try {
-          const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
-          const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+        const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
+        if (doctorOAuth2Client) {
+          try {
+            const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+            const event = await doctorCalendar.events.get({
+              calendarId: "primary",
+              eventId: appt.doctorCalendarEventId,
+            });
 
-          const event = await doctorCalendar.events.get({
-            calendarId: "primary",
-            eventId: appt.doctorCalendarEventId,
-          });
-
-          if (event.data.status === "cancelled") {
-            console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
-            appt.status = "cancelled by doctor";
-            appt.doctorCalendarEventId = null;
-            await appt.save();
+            if (event.data.status === "cancelled") {
+              console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
+              appt.status = "cancelled by doctor";
+              appt.doctorCalendarEventId = null;
+              await appt.save();
+            }
+          } catch (err) {
+            if (err?.code === 404) {
+              console.log("Doctor event missing:", appt.doctorCalendarEventId);
+              appt.status = "cancelled by doctor";
+              appt.doctorCalendarEventId = null;
+              await appt.save();
+            }
           }
-        } catch (err) {
-          if (err?.code === 404) {
-            console.log("Doctor event missing:", appt.doctorCalendarEventId);
-            appt.status = "cancelled by doctor";
-            appt.doctorCalendarEventId = null;
-            await appt.save();
-          }
+        } else {
+          console.log("Cannot check doctor event (no OAuth client):", appt.doctorCalendarEventId);
         }
       }
 
@@ -355,13 +411,17 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
     if (appointment.doctorCalendarEventId && doctor) {
       try {
         const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
-        const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
-
-        await doctorCalendar.events.delete({
-          calendarId: "primary",
-          eventId: appointment.doctorCalendarEventId,
-        });
-        console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
+        if (doctorOAuth2Client) {
+          const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+          await doctorCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.doctorCalendarEventId,
+          });
+          console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
+        } else {
+          console.log('Skipping deletion on doctor calendar: no OAuth client');
+          calendarDeletionErrors.push("doctor's calendar");
+        }
       } catch (err) {
         console.warn("Could not cancel doctor's calendar event:", err.message);
         calendarDeletionErrors.push("doctor's calendar");
@@ -372,13 +432,17 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
     if (appointment.patientCalendarEventId && user) {
       try {
         const patientOAuth2Client = await ensureFreshAccessToken(user, "user");
-        const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
-
-        await patientCalendar.events.delete({
-          calendarId: "primary",
-          eventId: appointment.patientCalendarEventId,
-        });
-        console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
+        if (patientOAuth2Client) {
+          const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+          await patientCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.patientCalendarEventId,
+          });
+          console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
+        } else {
+          console.log('Skipping deletion on patient calendar: no OAuth client');
+          calendarDeletionErrors.push("patient's calendar");
+        }
       } catch (err) {
         console.warn("Could not cancel patient's calendar event:", err.message);
         calendarDeletionErrors.push("patient's calendar");
@@ -473,6 +537,12 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
  * @returns {OAuth2Client} Authenticated OAuth2 client with fresh token
  */
 async function ensureFreshAccessToken(entity, entityType) {
+  // If there is no refresh token available, we cannot reliably refresh
+  if (!entity || (!entity.googleRefreshToken && !entity.googleAccessToken)) {
+    console.warn(`[Token Refresh] No Google tokens available for ${entityType} (${entity?.email || entity?.name || 'unknown'})`);
+    return null;
+  }
+
   const oAuth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
     process.env.GOOGLE_CLIENT_SECRET
@@ -483,23 +553,22 @@ async function ensureFreshAccessToken(entity, entityType) {
     refresh_token: entity.googleRefreshToken
   });
 
-  // Force refresh if token is expired or about to expire
+  // Try to refresh/get a fresh access token; return null if refresh fails
   try {
-    const { credentials } = await oAuth2Client.getAccessToken();
-    if (credentials?.token) {
-      // Update in DB if token changed
-      if (credentials.token !== entity.googleAccessToken) {
-        entity.googleAccessToken = credentials.token;
-        await entity.save();
-        console.log(`[Token Refresh] Updated ${entityType}'s access token in DB`);
-      }
+    const tokenResponse = await oAuth2Client.getAccessToken();
+    // tokenResponse can be {token: '...', res: ...} or {credentials: {token: '...'}} depending on lib version
+    const newToken = tokenResponse?.token || tokenResponse?.credentials?.token;
+    if (newToken && newToken !== entity.googleAccessToken) {
+      entity.googleAccessToken = newToken;
+      try { await entity.save(); } catch (saveErr) { console.warn('Could not save refreshed token to DB:', saveErr.message); }
+      console.log(`[Token Refresh] Updated ${entityType}'s access token in DB`);
     }
+    return oAuth2Client;
   } catch (err) {
-    console.error(`[Token Refresh] Failed for ${entityType}:`, err.message);
-    throw new Error(`Google Calendar authentication failed for ${entityType}`);
+    console.warn(`[Token Refresh] Failed for ${entityType}:`, err.message);
+    // Don't throw here; caller should handle a null return (calendar unavailable)
+    return null;
   }
-
-  return oAuth2Client;
 }
 
 router.post("/doctor-book", async (req, res) => {
@@ -540,21 +609,24 @@ router.post("/doctor-book", async (req, res) => {
       return res.status(400).json({ error: "Patient already has an appointment overlapping this time." });
     }
 
-    // --- Create event in doctor's calendar ---
+    // --- Create event in doctor's calendar (if OAuth available) ---
     const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
-    const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
-
-    doctorResponse = await doctorCalendar.events.insert({
-      calendarId: "primary",
-      requestBody: {
-        summary: `Appointment with ${user.name || user.email}`,
-        description: `Patient: ${user.name || "Unknown"}\nEmail: ${user.email}\nPhone: ${user.phone || "Not provided"}`,
-        location: "Wellness Center, IIT Dharwad",
-        start: { dateTime: startDateTime },
-        end: { dateTime: endDateTime },
-      },
-    });
-    console.log("Doctor calendar event created:", doctorResponse.data.id);
+    if (!doctorOAuth2Client) {
+      console.log('Doctor has no OAuth client; skipping doctor calendar event creation');
+    } else {
+      const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+      doctorResponse = await doctorCalendar.events.insert({
+        calendarId: "primary",
+        requestBody: {
+          summary: `Appointment with ${user.name || user.email}`,
+          description: `Patient: ${user.name || "Unknown"}\nEmail: ${user.email}\nPhone: ${user.phone || "Not provided"}`,
+          location: "Wellness Center, IIT Dharwad",
+          start: { dateTime: startDateTime },
+          end: { dateTime: endDateTime },
+        },
+      });
+      console.log("Doctor calendar event created:", doctorResponse.data.id);
+    }
 
     // --- Save appointment in DB ---
     appointment = new Appointment({
@@ -575,23 +647,25 @@ router.post("/doctor-book", async (req, res) => {
     if (user.googleAccessToken) {
       try {
         const patientOAuth2Client = await ensureFreshAccessToken(user, "user");
-        const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
-
-        patientResponse = await patientCalendar.events.insert({
-          calendarId: "primary",
-          requestBody: {
-            summary: `Medical Appointment with Dr. ${doctor.name}`,
-            description: `Appointment booked by Dr. ${doctor.name}\nSpecialization: ${doctor.specialization || "General"}`,
-            location: "Wellness Center, IIT Dharwad",
-            start: { dateTime: startDateTime },
-            end: { dateTime: endDateTime },
-          },
-        });
-        patientCalendarEventId = patientResponse.data.id;
-        appointment.patientCalendarEventId = patientCalendarEventId;
-        await appointment.save();
-
-        console.log("Patient calendar event created:", patientCalendarEventId);
+        if (patientOAuth2Client) {
+          const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+          patientResponse = await patientCalendar.events.insert({
+            calendarId: "primary",
+            requestBody: {
+              summary: `Medical Appointment with Dr. ${doctor.name}`,
+              description: `Appointment booked by Dr. ${doctor.name}\nSpecialization: ${doctor.specialization || "General"}`,
+              location: "Wellness Center, IIT Dharwad",
+              start: { dateTime: startDateTime },
+              end: { dateTime: endDateTime },
+            },
+          });
+          patientCalendarEventId = patientResponse.data.id;
+          appointment.patientCalendarEventId = patientCalendarEventId;
+          await appointment.save();
+          console.log("Patient calendar event created:", patientCalendarEventId);
+        } else {
+          console.log('Skipping patient calendar event: no OAuth client for user');
+        }
       } catch (err) {
         console.warn("Could not add to patient calendar:", err.message);
       }
@@ -613,7 +687,7 @@ router.post("/doctor-book", async (req, res) => {
     res.json({
       success: true,
       appointment: populatedAppointment,
-      doctorCalendarEventId: doctorResponse.data.id,
+      doctorCalendarEventId: doctorResponse?.data?.id || null,
       patientCalendarEventId,
       message: `Appointment booked successfully${patientCalendarEventId ? " in both calendars" : " (patient calendar not available)"}.`
     });
@@ -625,12 +699,16 @@ router.post("/doctor-book", async (req, res) => {
     if (patientResponse?.data?.id && user) {
       try {
         const rollbackPatient = await ensureFreshAccessToken(user, "user");
-        const patientCalendar = google.calendar({ version: "v3", auth: rollbackPatient });
-        await patientCalendar.events.delete({
-          calendarId: "primary",
-          eventId: patientResponse.data.id
-        });
-        console.log("Rolled back patient calendar event");
+        if (rollbackPatient) {
+          const patientCalendar = google.calendar({ version: "v3", auth: rollbackPatient });
+          await patientCalendar.events.delete({
+            calendarId: "primary",
+            eventId: patientResponse.data.id
+          });
+          console.log("Rolled back patient calendar event");
+        } else {
+          console.log('Could not rollback patient event: no OAuth client');
+        }
       } catch (rollbackErr) {
         console.error("Failed to rollback patient event:", rollbackErr);
       }
@@ -640,12 +718,16 @@ router.post("/doctor-book", async (req, res) => {
     if (doctorResponse?.data?.id && doctor) {
       try {
         const rollbackDoctor = await ensureFreshAccessToken(doctor, "doctor");
-        const doctorCalendar = google.calendar({ version: "v3", auth: rollbackDoctor });
-        await doctorCalendar.events.delete({
-          calendarId: "primary",
-          eventId: doctorResponse.data.id
-        });
-        console.log("Rolled back doctor calendar event");
+        if (rollbackDoctor) {
+          const doctorCalendar = google.calendar({ version: "v3", auth: rollbackDoctor });
+          await doctorCalendar.events.delete({
+            calendarId: "primary",
+            eventId: doctorResponse.data.id
+          });
+          console.log("Rolled back doctor calendar event");
+        } else {
+          console.log('Could not rollback doctor event: no OAuth client');
+        }
       } catch (rollbackErr) {
         console.error("Failed to rollback doctor event:", rollbackErr);
       }
@@ -694,12 +776,17 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
     if (appointment.doctorCalendarEventId && doctor.googleAccessToken) {
       try {
         const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
-        const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
-        await doctorCalendar.events.delete({
-          calendarId: "primary",
-          eventId: appointment.doctorCalendarEventId,
-        });
-        console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
+        if (doctorOAuth2Client) {
+          const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+          await doctorCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.doctorCalendarEventId,
+          });
+          console.log("Deleted event from doctor's calendar:", appointment.doctorCalendarEventId);
+        } else {
+          console.log('Skipping doctor calendar deletion: no OAuth client');
+          calendarDeletionErrors.push("doctor's calendar");
+        }
       } catch (err) {
         console.error("Could not cancel doctor's calendar event:", err.message);
         calendarDeletionErrors.push("doctor's calendar");
@@ -710,12 +797,17 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
     if (appointment.patientCalendarEventId && appointment.user.googleAccessToken) {
       try {
         const patientOAuth2Client = await ensureFreshAccessToken(appointment.user, "user");
-        const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
-        await patientCalendar.events.delete({
-          calendarId: "primary",
-          eventId: appointment.patientCalendarEventId,
-        });
-        console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
+        if (patientOAuth2Client) {
+          const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+          await patientCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.patientCalendarEventId,
+          });
+          console.log("Deleted event from patient's calendar:", appointment.patientCalendarEventId);
+        } else {
+          console.log('Skipping patient calendar deletion: no OAuth client');
+          calendarDeletionErrors.push("patient's calendar");
+        }
       } catch (err) {
         console.error("Could not cancel patient's calendar event:", err.message);
         calendarDeletionErrors.push("patient's calendar");

@@ -17,6 +17,21 @@ const userSchema = new mongoose.Schema({
 
   googleAccessToken: { type: String },
   googleRefreshToken: { type: String },
+  patientCategory: {
+    type: String,
+    enum: ["Student", "Faculty", "Staff", "Outsourced Staff"],
+  },
+  dependants: [{
+    _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
+    name: { type: String, required: true },
+    age: Number,
+    sex: { type: String, enum: ["Male", "Female", "Other"] },
+    relationship: String,
+    bloodGroup: String,
+    phone: String,
+    allergies: String,
+    uhid: String,
+  }],
 }, { timestamps: true });
 
 module.exports = mongoose.model("User", userSchema);

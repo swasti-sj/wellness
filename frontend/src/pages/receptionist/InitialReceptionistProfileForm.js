@@ -5,7 +5,7 @@ import '../../styles/InitialProfileForm.css';
 import { useApi } from '../../context/ApiContext';
 
 export default function InitialReceptionistProfileForm() {
-  const [form, setForm] = useState({ name: '', phone: '', age: '', sex: '' });
+  const [form, setForm] = useState({ name: '', phone: '' });
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const apiBaseUrl = useApi();
@@ -65,38 +65,6 @@ export default function InitialReceptionistProfileForm() {
             />
           </div>
 
-          <div className="ipf-row">
-            <div className="ipf-field">
-              <label htmlFor="age">Age <span className="ipf-required">*</span></label>
-              <input
-                id="age"
-                name="age"
-                type="number"
-                min="18"
-                max="100"
-                value={form.age}
-                onChange={handleChange}
-                placeholder="e.g., 28"
-                required
-              />
-            </div>
-
-            <div className="ipf-field">
-              <label htmlFor="sex">Sex <span className="ipf-required">*</span></label>
-              <select
-                id="sex"
-                name="sex"
-                value={form.sex}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Select</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-          </div>
 
           <button type="submit" className="ipf-submit" disabled={submitting}>
             {submitting ? 'Saving...' : 'Save and Continue'}

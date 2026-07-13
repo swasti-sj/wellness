@@ -35,6 +35,8 @@ export default function AppointmentBooking() {
   const [availableTimes, setAvailableTimes] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedDependantId, setSelectedDependantId] = useState("self");
+  const [dependants, setDependants] = useState([]);
   const [events, setEvents] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
   const [isBooking, setIsBooking] = useState(false);
@@ -47,10 +49,24 @@ export default function AppointmentBooking() {
     if (token) {
       fetchAvailableSlots();
       fetchEvents();
+      fetchUserProfile();
       const interval = setInterval(fetchEvents, 60000);
       return () => clearInterval(interval);
     }
   }, [token]);
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await axios.get(`${apiBaseUrl}/api/users/profile`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setDependants(res.data.dependants || []);
+    } catch (err) {
+      console.error("Failed to fetch user profile:", err);
+    }
+  };
 
   useEffect(() => {
     if (location.state?.selectedDoctorId) {
@@ -117,19 +133,21 @@ export default function AppointmentBooking() {
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
 
     try {
-      const res = await axios.post(
-        `${apiBaseUrl}/api/appointments/book`,
-        {
-          token,
-          doctorId: selectedDoctorId,
-          slotDay: new Date(selectedDate).toLocaleDateString("en-US", {
-            weekday: "long",
-          }),
-          slotTime: selectedTime,
-          startDateTime: startDateTime.toISOString(),
-          endDateTime: endDateTime.toISOString(),
-        }
-      );
+      const requestBody = {
+        token,
+        doctorId: selectedDoctorId,
+        slotDay: new Date(selectedDate).toLocaleDateString("en-US", {
+          weekday: "long",
+        }),
+        slotTime: selectedTime,
+        startDateTime: startDateTime.toISOString(),
+        endDateTime: endDateTime.toISOString(),
+      };
+      if (selectedDependantId && selectedDependantId !== "self") {
+        requestBody.dependantId = selectedDependantId;
+      }
+
+      const res = await axios.post(`${apiBaseUrl}/api/appointments/book`, requestBody);
 
       if (res.data?.success) {
         alert("Booked! Appointment saved successfully.");
@@ -231,6 +249,24 @@ export default function AppointmentBooking() {
               ))}
             </select>
           </div>
+
+          {dependants.length > 0 && (
+            <div>
+              <label className="appointment-label">Book For</label>
+              <select
+                className="appointment-select"
+                value={selectedDependantId}
+                onChange={(e) => setSelectedDependantId(e.target.value)}
+              >
+                <option value="self">Self</option>
+                {dependants.map((dep) => (
+                  <option key={dep._id} value={dep._id}>
+                    {dep.name} {dep.relationship ? `(${dep.relationship})` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <button
             className="appointment-btn"

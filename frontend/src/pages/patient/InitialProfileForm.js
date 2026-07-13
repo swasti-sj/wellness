@@ -3,9 +3,9 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 import { useApi } from '../../context/ApiContext';
+const PATIENT_CATEGORIES = ["Student", "Faculty", "Staff", "Outsourced Staff"];
 function InitialProfileForm() {
-  console.log("hi");
-  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '', uhid: '', consentAccepted: false });
+  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '', uhid: '', patientCategory: '', consentAccepted: false });
   const navigate = useNavigate();
   const apiBaseUrl = useApi();
   const handleChange = (e) => {
@@ -53,6 +53,18 @@ function InitialProfileForm() {
             <label>
               Roll Number / ID:
               <input name="roll" value={form.roll} onChange={handleChange} placeholder="e.g. 210010001" required />
+            </label>
+
+            <label>
+              Patient Category:
+              <select name="patientCategory" value={form.patientCategory} onChange={handleChange} required>
+                <option value="">Select Category</option>
+                {PATIENT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <label>

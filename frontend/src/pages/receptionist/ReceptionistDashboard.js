@@ -77,19 +77,27 @@ export default function ReceptionistDashboard() {
     try {
       setLoading(true);
       const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`);
-      const formatted = (response.data.appointments || []).map(appt => ({
-        _id: appt._id,
-        patientName: appt.user?.name || 'Unknown',
-        roll: appt.user?.roll || '-',
-        doctorName: appt.doctor?.name || 'Unknown',
-        doctorId: appt.doctor?._id || '',
-        email: appt.user?.email || '-',
-        phone: appt.user?.phone || '-',
-        date: appt.startDateTime,
-        time: appt.slotTime || '-',
-        status: appt.status || 'booked',
-        source: 'system'
-      }));
+      const formatted = (response.data.appointments || []).map(appt => {
+        const patient = appt.user || appt.fullData?.user;
+        const dependant = appt.dependant || appt.fullData?.dependant || null;
+        const patientName = patient?.name || patient?.email || patient?.roll || 'Unknown';
+        const dependantLabel = dependant?.name
+          ? `${dependant.name} (${dependant.relationship || 'Dependant'})`
+          : null;
+        return {
+          _id: appt._id,
+          patientName: dependantLabel ? `${dependantLabel} — ${patientName}` : patientName,
+          roll: appt.user?.roll || '-',
+          doctorName: appt.doctor?.name || 'Unknown',
+          doctorId: appt.doctor?._id || '',
+          email: appt.user?.email || '-',
+          phone: appt.user?.phone || '-',
+          date: appt.startDateTime,
+          time: appt.slotTime || '-',
+          status: appt.status || 'booked',
+          source: 'system'
+        };
+      });
       setAppointments(formatted);
       setMessage('');
     } catch (error) {
