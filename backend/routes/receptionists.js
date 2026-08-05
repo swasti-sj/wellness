@@ -50,8 +50,7 @@ router.post("/entries", async (req, res) => {
   try {
     console.log("[API] POST /receptionist/entries called");
 
-    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, email, phone } = req.body;
-
+    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, email, phone, isWalkIn, remarks } = req.body;
 
     // Validate required fields
     if (!patientName || !roll || !doctorId || !doctorName) {
@@ -64,64 +63,106 @@ router.post("/entries", async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    // Create (or reuse) a real User + real Appointment so doctors/nurses/patient can see it.
-    // ReceptionistEntry remains for receptionist UI/history.
+    const isWalkInEntry = isWalkIn === true || isWalkIn === 'true';
 
-    const appointmentDateObj = appointmentDate ? new Date(appointmentDate) : new Date();
-    // receptionist UI stores only time string, so we try to use it to build startDateTime.
-    // If no time provided or parsing fails, default to 10:00.
-    let startDateTime = new Date(appointmentDateObj);
-    let endDateTime = new Date(appointmentDateObj);
+    // =========================================================
+    // WALK-IN (no account) → ENTRY ONLY, no User/Appointment
+    // =========================================================
+    if (isWalkInEntry) {
+      const walkInEntry = new ReceptionistEntry({
+        patientName,
+        roll,
+        role: role || 'Student',
+        doctorId,
+        doctorName,
+        appointmentDate: appointmentDate ? new Date(appointmentDate) : new Date(),
+        appointmentTime: appointmentTime || null,
+        email: email || "-",
+        phone: phone || "-",
+        status: 'walk in',
+        isWalkIn: true,
+        remarks: remarks || 'None'
+      });
+      await walkInEntry.save();
+
+      return res.json({
+        success: true,
+        message: "Walk-in entry added successfully (record only)",
+        entry: walkInEntry,
+        appointmentId: null
+      });
+    }
+
+// =========================================================
+    // NOT WALK-IN → create real User + Appointment + Entry
+    // =========================================================
+    // Build the date timezone-safely from the raw YYYY-MM-DD string so the
+    // selected date is preserved (no UTC shift). If no date provided, use today.
+    let dateStr = null;
+    if (appointmentDate) {
+      // Accept both "YYYY-MM-DD" and ISO timestamps.
+      const m = String(appointmentDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (m) {
+        dateStr = `${m[1]}-${m[2]}-${m[3]}`;
+      } else {
+        dateStr = new Date(appointmentDate).toISOString().slice(0, 10);
+      }
+    }
+    if (!dateStr) {
+      const now = new Date();
+      dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    }
 
     const defaultStart = { h: 10, m: 0 };
+    let startHour = defaultStart.h;
+    let startMin = defaultStart.m;
 
     if (appointmentTime && typeof appointmentTime === 'string' && appointmentTime.trim()) {
       // Expected formats might be: "14:30" or "2:30 PM".
       const t = appointmentTime.trim();
-      const parsed = new Date(`${appointmentDateObj.toISOString().slice(0, 10)}T00:00:00`);
-      // Try HH:MM (24h)
       const hhmm = t.match(/^(\d{1,2}):(\d{2})$/);
       if (hhmm) {
-        parsed.setHours(parseInt(hhmm[1], 10), parseInt(hhmm[2], 10), 0, 0);
-        startDateTime = parsed;
+        startHour = parseInt(hhmm[1], 10);
+        startMin = parseInt(hhmm[2], 10);
       } else {
-        // Try Date-parsing for things like "2:30 PM" by setting time on a Date.
-        const timeTry = new Date(`${appointmentDateObj.toISOString().slice(0, 10)} ${t}`);
+        const timeTry = new Date(`${dateStr} ${t}`);
         if (!isNaN(timeTry.getTime())) {
-          startDateTime = timeTry;
-        } else {
-          startDateTime.setHours(defaultStart.h, defaultStart.m, 0, 0);
+          startHour = timeTry.getHours();
+          startMin = timeTry.getMinutes();
         }
       }
-    } else {
-      startDateTime.setHours(defaultStart.h, defaultStart.m, 0, 0);
     }
 
-    // Appointment duration: default 30 mins (since receptionist UI doesn't send duration)
-    endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
+    // Create a local Date object (server's local timezone) matching the selected date.
+    const startDateTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
+    const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
 
-    // Find patient user by roll or (email if provided)
-    // Your User model is not shown here, so we keep it flexible.
-    const patientQuery = { $or: [{ roll }, { email: email && email !== '-' ? email : undefined }] };
-    // Remove undefined email query to avoid matching everything.
-    if (patientQuery.$or) {
-      patientQuery.$or = patientQuery.$or.filter(Boolean);
-    }
-
+// Find patient user by roll or (email if provided)
     const User = require('../models/User');
-    let patientUser = await User.findOne(patientQuery);
+    const cleanEmail = email && email !== '-' ? email : null;
+    const patientQuery = {};
+    if (cleanEmail) patientQuery.email = cleanEmail;
+    if (roll) patientQuery.roll = roll;
+
+    let patientUser = roll ? await User.findOne({ roll }) : null;
+    if (!patientUser && cleanEmail) {
+      patientUser = await User.findOne({ email: cleanEmail });
+    }
+
     if (!patientUser) {
-      // Create minimal user so appointment foreign keys work.
+      // Create a proper user so the appointment is fully visible on patient side.
+      // User model requires email, so generate a safe placeholder if none provided.
+      const userEmail = cleanEmail || `${(roll || 'walkin').replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}@wellness.local`;
       patientUser = new User({
         name: patientName,
-        roll,
-        email: email && email !== '-' ? email : undefined,
+        roll: roll || undefined,
+        email: userEmail,
         phone: phone && phone !== '-' ? phone : undefined,
-        role: 'user'
+        role: 'user',
+        isVerified: false
       });
       await patientUser.save();
     }
-
 
     const Appointment = require('../models/Appointment');
     const appointment = new Appointment({
@@ -141,17 +182,18 @@ router.post("/entries", async (req, res) => {
       roll,
       role: role || 'Student',
       doctorId,
-      doctorName,
-      appointmentDate: appointmentDateObj,
+doctorName,
+      appointmentDate: startDateTime,
       appointmentTime: appointmentTime || null,
       email: email || "-",
       phone: phone || "-",
-      status: 'booked'
+      status: 'booked',
+      isWalkIn: false,
+      remarks: remarks || 'None'
     });
 
-    // NOTE: receptionist entries here create a real Appointment (so doctor/nurse/patient UIs see it).
+    // NOTE: receptionist entries here create a real Appointment
     // This receptionist entry record is kept only for receptionist dashboard history UI.
-
 
     await newEntry.save();
 
@@ -194,7 +236,7 @@ router.patch("/entries/:entryId", async (req, res) => {
     console.log("[API] PATCH /receptionist/entries/:entryId called");
 
     const { entryId } = req.params;
-    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, status, email, phone } = req.body;
+    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, status, email, phone, isWalkIn, remarks } = req.body;
 
     // Find entry
     const entry = await ReceptionistEntry.findById(entryId);
@@ -221,6 +263,8 @@ router.patch("/entries/:entryId", async (req, res) => {
     if (status) entry.status = status;
     if (email) entry.email = email;
     if (phone) entry.phone = phone;
+    if (isWalkIn !== undefined) entry.isWalkIn = isWalkIn === true || isWalkIn === 'true';
+    if (remarks !== undefined) entry.remarks = remarks;
 
     entry.updatedAt = new Date();
     await entry.save();

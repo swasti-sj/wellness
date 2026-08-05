@@ -37,10 +37,19 @@ const ReceptionistEntrySchema = new mongoose.Schema({
   appointmentTime: {
     type: String
   },
-  status: {
+status: {
     type: String,
     enum: ['Added', 'booked', 'attended', 'no show', 'cancelled by user', 'cancelled by doctor', 'cancelled by nurse', 'cancelled by receptionist', 'walk in'],
     default: 'Added'
+  },
+  isWalkIn: {
+    type: Boolean,
+    default: false
+  },
+  remarks: {
+    type: String,
+    enum: ['None', 'Outsourced Staff', 'Dependant'],
+    default: 'None'
   },
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
