@@ -326,6 +326,11 @@
   align-items: end;
 }
 
+/* Extended grid for Entry Type + Remarks dropdowns */
+.rd-form-grid-ext {
+  grid-template-columns: 1.2fr 2fr 1.4fr 1fr 1.4fr 2fr 1.4fr auto;
+}
+
 .rd-form-group {
   display: flex;
   flex-direction: column;
@@ -457,7 +462,7 @@
 
 .rd-table {
   width: 100%;
-  min-width: 960px;
+  min-width: 1080px;
   border-collapse: collapse;
   table-layout: fixed;
 }
@@ -474,16 +479,21 @@
 
 .rd-table th:nth-child(2),
 .rd-table td:nth-child(2) {
-  width: 130px;
+  width: 120px;
 }
 
 .rd-table th:nth-child(3),
 .rd-table td:nth-child(3) {
-  width: 100px;
+  width: 90px;
 }
 
 .rd-table th:nth-child(7),
 .rd-table td:nth-child(7) {
+  width: 160px;
+}
+
+.rd-table th:nth-child(8),
+.rd-table td:nth-child(8) {
   width: 140px;
 }
 

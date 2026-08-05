@@ -16,7 +16,9 @@ export default function ReceptionistDashboard() {
     doctorId: '',
     doctorName: '',
     date: new Date().toISOString().split('T')[0],
-    time: ''
+    time: '',
+    entryType: 'appointment', // 'appointment' | 'walkin'
+    remarks: 'None'
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -95,7 +97,9 @@ export default function ReceptionistDashboard() {
           date: appt.startDateTime,
           time: appt.slotTime || '-',
           status: appt.status || 'booked',
-          source: 'system'
+          source: 'system',
+          remarks: 'None',
+          isWalkIn: false
         };
       });
       setAppointments(formatted);
@@ -120,7 +124,9 @@ export default function ReceptionistDashboard() {
         date: entry.appointmentDate,
         time: entry.appointmentTime || '-',
         status: entry.status,
-        source: 'manual'
+        source: 'manual',
+        remarks: entry.remarks || 'None',
+        isWalkIn: entry.isWalkIn || false
       }));
       setManualEntries(entries);
     } catch (error) {
@@ -173,11 +179,12 @@ export default function ReceptionistDashboard() {
   const handleEditRow = (item) => {
     setEditingRowId(item._id);
     setEditedValues({
-      patientName: item.patientName,
+patientName: item.patientName,
       roll: item.roll,
       doctorName: item.doctorName,
-      date: item.date ? new Date(item.date).toISOString().split('T')[0] : '',
-      time: item.time || ''
+      date: toLocalDateInput(item.date),
+      time: item.time || '',
+      remarks: item.remarks || 'None'
     });
   };
 
@@ -196,7 +203,8 @@ export default function ReceptionistDashboard() {
           roll: editedValues.roll,
           doctorName: editedValues.doctorName,
           appointmentDate: editedValues.date || null,
-          appointmentTime: editedValues.time || null
+          appointmentTime: editedValues.time || null,
+          remarks: editedValues.remarks || 'None'
         });
 
         // Update status if changed during edit
@@ -239,10 +247,11 @@ export default function ReceptionistDashboard() {
       showMessage('Please select a doctor', 'error');
       return;
     }
-    try {
-      const appointmentDateTime = formData.date
-        ? new Date(`${formData.date}T00:00:00`).toISOString()
-        : null;
+try {
+      const isWalkIn = formData.entryType === 'walkin';
+      // Send the raw date string (YYYY-MM-DD) so the backend builds a local Date
+      // without a UTC/timezone shift.
+      const appointmentDateRaw = formData.date || null;
       // If receptionist didn't enter time, set it to current time.
       const timeToSend = formData.time || new Date().toTimeString().slice(0, 5);
 
@@ -252,10 +261,12 @@ export default function ReceptionistDashboard() {
         role: formData.role,
         doctorId: formData.doctorId,
         doctorName: formData.doctorName,
-        appointmentDate: appointmentDateTime,
+        appointmentDate: appointmentDateRaw,
         appointmentTime: timeToSend || null,
         email: '-',
-        phone: '-'
+        phone: '-',
+        isWalkIn,
+        remarks: formData.remarks || 'None'
       });
       if (response.data.success) {
         const newEntry = {
@@ -267,14 +278,19 @@ export default function ReceptionistDashboard() {
           date: response.data.entry.appointmentDate,
           time: response.data.entry.appointmentTime || '-',
           status: response.data.entry.status,
-          source: 'manual'
+          source: 'manual',
+          remarks: response.data.entry.remarks || 'None',
+          isWalkIn: response.data.entry.isWalkIn || isWalkIn
         };
         setManualEntries(prev => [newEntry, ...prev]);
         setFormData({
           name: '', rollNo: '', role: 'Student', doctorId: '', doctorName: '',
-          date: new Date().toISOString().split('T')[0]
+          date: new Date().toISOString().split('T')[0],
+          time: '',
+          entryType: 'appointment',
+          remarks: 'None'
         });
-        showMessage('Entry added successfully');
+        showMessage(isWalkIn ? 'Walk-in entry added successfully (record only)' : 'Entry added successfully');
       }
     } catch (error) {
       showMessage(error.response?.data?.error || 'Error adding entry', 'error');
@@ -293,7 +309,7 @@ export default function ReceptionistDashboard() {
 
     if (searchQuery.trim()) {
       const fuse = new Fuse(result, {
-        keys: ['patientName', 'roll', 'doctorName', 'date', 'time', 'status', 'email'],
+        keys: ['patientName', 'roll', 'doctorName', 'date', 'time', 'status', 'email', 'remarks'],
         threshold: 0.3,
         includeScore: true
       });
@@ -325,9 +341,21 @@ export default function ReceptionistDashboard() {
   }, [allData, searchQuery, sortBy, filterDoctor, fromDate, toDate]);
 
 
-  const formatDate = (dateString) => {
+const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+
+  // Convert a stored date into a local YYYY-MM-DD string WITHOUT UTC shift,
+  // so editing shows the exact date the receptionist selected.
+  const toLocalDateInput = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
   };
 
   const getStatusMeta = (status) => {
@@ -510,7 +538,14 @@ export default function ReceptionistDashboard() {
           </div>
           {(!isMobileView || showAddEntryMobile) && (
             <>
-              <form onSubmit={handleAddEntry} className="rd-form-grid">
+              <form onSubmit={handleAddEntry} className="rd-form-grid rd-form-grid-ext">
+                <div className="rd-form-group">
+                  <label>Entry Type <span className="rd-required">*</span></label>
+                  <select name="entryType" value={formData.entryType} onChange={handleFormChange} required>
+                    <option value="appointment">Appointment</option>
+                    <option value="walkin">Walk-in</option>
+                  </select>
+                </div>
                 <div className="rd-form-group">
                   <label>Patient Name <span className="rd-required">*</span></label>
                   <input
@@ -541,6 +576,14 @@ export default function ReceptionistDashboard() {
                   </select>
                 </div>
                 <div className="rd-form-group">
+                  <label>Remarks</label>
+                  <select name="remarks" value={formData.remarks} onChange={handleFormChange}>
+                    <option value="None">None</option>
+                    <option value="Outsourced Staff">Outsourced Staff</option>
+                    <option value="Dependant">Dependant</option>
+                  </select>
+                </div>
+                <div className="rd-form-group">
                   <label>Doctor <span className="rd-required">*</span></label>
                   <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
                     <option value="">— Select Doctor —</option>
@@ -551,27 +594,33 @@ export default function ReceptionistDashboard() {
                     ))}
                   </select>
                 </div>
-                <div className="rd-form-group">
-                  <label>Appointment Date</label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleFormChange}
-                  />
-                </div>
-                <div className="rd-form-group">
-                  <label>Appointment Time</label>
-                  <input
-                    type="time"
-                    name="time"
-                    value={formData.time}
-                    onChange={handleFormChange}
-                  />
-                </div>
+                {formData.entryType === 'appointment' && (
+                  <>
+                    <div className="rd-form-group">
+                      <label>Appointment Date</label>
+                      <input
+                        type="date"
+                        name="date"
+                        value={formData.date}
+                        onChange={handleFormChange}
+                      />
+                    </div>
+                    <div className="rd-form-group">
+                      <label>Appointment Time</label>
+                      <input
+                        type="time"
+                        name="time"
+                        value={formData.time}
+                        onChange={handleFormChange}
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="rd-form-group rd-form-submit-col">
                   <label>&nbsp;</label>
-                  <button type="submit" className="rd-btn-add">Add Entry</button>
+                  <button type="submit" className="rd-btn-add">
+                    {formData.entryType === 'walkin' ? 'Add Walk-in Entry' : 'Add Entry'}
+                  </button>
                 </div>
               </form>
               {message && (
@@ -642,6 +691,7 @@ export default function ReceptionistDashboard() {
                         <div className="rd-mobile-card-row"><span>Doctor</span><strong>{item.doctorName}</strong></div>
                         <div className="rd-mobile-card-row"><span>Email</span><strong>{item.email}</strong></div>
                         <div className="rd-mobile-card-row"><span>Source</span><strong>{item.source}</strong></div>
+                        <div className="rd-mobile-card-row"><span>Remarks</span><strong>{item.remarks || 'None'}</strong></div>
                         {isEditing ? (
                           <>
                             <div className="rd-mobile-card-row">
@@ -670,6 +720,18 @@ export default function ReceptionistDashboard() {
                                 value={editedValues.doctorName}
                                 onChange={(e) => handleEditFieldChange('doctorName', e.target.value)}
                               />
+                            </div>
+                            <div className="rd-mobile-card-row">
+                              <span>Remarks</span>
+                              <select
+                                className="rd-status-select"
+                                value={editedValues.remarks || 'None'}
+                                onChange={(e) => handleEditFieldChange('remarks', e.target.value)}
+                              >
+                                <option value="None">None</option>
+                                <option value="Outsourced Staff">Outsourced Staff</option>
+                                <option value="Dependant">Dependant</option>
+                              </select>
                             </div>
                             <div className="rd-mobile-card-row">
                               <span>Date</span>
@@ -718,6 +780,7 @@ export default function ReceptionistDashboard() {
                     <th>Patient Name</th>
                     <th>Roll No / Emp ID</th>
                     <th>Doctor</th>
+                    <th>Remarks</th>
                     <th>Status</th>
                     <th>Actions</th>
                   </tr>
@@ -778,6 +841,19 @@ export default function ReceptionistDashboard() {
                               onChange={(e) => handleEditFieldChange('doctorName', e.target.value)}
                             />
                           ) : item.doctorName}
+                        </td>
+                        <td data-label="Remarks">
+                          {isEditing ? (
+                            <select
+                              className="rd-status-select"
+                              value={editedValues.remarks || 'None'}
+                              onChange={(e) => handleEditFieldChange('remarks', e.target.value)}
+                            >
+                              <option value="None">None</option>
+                              <option value="Outsourced Staff">Outsourced Staff</option>
+                              <option value="Dependant">Dependant</option>
+                            </select>
+                          ) : (item.remarks || 'None')}
                         </td>
                         <td data-label="Status">
                           {isEditing ? (
