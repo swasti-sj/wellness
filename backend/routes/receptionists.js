@@ -137,17 +137,11 @@ router.post("/entries", async (req, res) => {
     const startDateTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
 
-// Find patient user by roll or (email if provided)
+// Find patient user by roll (the receptionist form only collects roll, not email)
     const User = require('../models/User');
     const cleanEmail = email && email !== '-' ? email : null;
-    const patientQuery = {};
-    if (cleanEmail) patientQuery.email = cleanEmail;
-    if (roll) patientQuery.roll = roll;
 
     let patientUser = roll ? await User.findOne({ roll }) : null;
-    if (!patientUser && cleanEmail) {
-      patientUser = await User.findOne({ email: cleanEmail });
-    }
 
     if (!patientUser) {
       // Create a proper user so the appointment is fully visible on patient side.
