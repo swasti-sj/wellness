@@ -119,9 +119,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
         formData.append('existingDocumentUrl', documentUrl);
       }
 
-      const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData);
 
       if (r.data.success) {
         setCurrent(r.data.prescription.prescriptions);

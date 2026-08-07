@@ -26,81 +26,92 @@ const AccSection = ({ id, title, subtitle, children, openSection, toggleSection 
   );
 };
 
+const initialFormData = {
+  department: '',
+  uhid: '',
+  tokenNumber: '',
+  bloodGroup: '',
+  time: '',
+  pastMedicalHistory: '',
+  medicalAllergy: '',
+  chiefComplaints: '',
+  systemicExamination: '',
+  generalPhysicalExamination: '',
+  investigations: '',
+  treatmentAdvice: '',
+  followUpDate: '',
+  bloodPressureSystolic: '',
+  bloodPressureDiastolic: '',
+  weight: '',
+  height: '',
+  temperature: '',
+  pulse: '',
+  respiratoryRate: '',
+  spO2: '',
+  notes: ''
+};
+
 const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
   const token = localStorage.getItem('token');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [existingVitalId, setExistingVitalId] = useState(null);
-  const [openSection, setOpenSection] = useState(null);
+  const [openSection, setOpenSection] = useState('basic');
   const [caseSheetDocument, setCaseSheetDocument] = useState(null);
   const [caseSheetDocumentUrl, setCaseSheetDocumentUrl] = useState('');
-  const [formData, setFormData] = useState({
-    department: '',
-    uhid: '',
-    tokenNumber: '',
-    bloodGroup: '',
-    time: '',
-    pastMedicalHistory: '',
-    medicalAllergy: '',
-    chiefComplaints: '',
-    systemicExamination: '',
-    generalPhysicalExamination: '',
-    investigations: '',
-    treatmentAdvice: '',
-    followUpDate: '',
-    bloodPressureSystolic: '',
-    bloodPressureDiastolic: '',
-    weight: '',
-    height: '',
-    temperature: '',
-    pulse: '',
-    respiratoryRate: '',
-    spO2: '',
-    notes: ''
+  const [formData, setFormData] = useState(initialFormData);
+
+  const mapVitalToFormData = (v) => ({
+    department: v.department || '',
+    uhid: v.uhid || '',
+    tokenNumber: v.tokenNumber || '',
+    bloodGroup: v.bloodGroup || '',
+    time: v.time || '',
+    pastMedicalHistory: v.pastMedicalHistory || '',
+    medicalAllergy: v.medicalAllergy || '',
+    chiefComplaints: v.chiefComplaints || '',
+    systemicExamination: v.systemicExamination || '',
+    generalPhysicalExamination: v.generalPhysicalExamination || '',
+    investigations: v.investigations || '',
+    treatmentAdvice: v.treatmentAdvice || '',
+    followUpDate: v.followUpDate ? v.followUpDate.split('T')[0] : '',
+    bloodPressureSystolic: v.bloodPressureSystolic || '',
+    bloodPressureDiastolic: v.bloodPressureDiastolic || '',
+    weight: v.weight || '',
+    height: v.height || '',
+    temperature: v.temperature || '',
+    pulse: v.pulse || '',
+    respiratoryRate: v.respiratoryRate || '',
+    spO2: v.spO2 || '',
+    notes: v.notes || ''
   });
 
-  useEffect(() => {
-    const fetchVitals = async () => {
-      if (!apiBaseUrl || !appointmentId) return;
-      try {
-        const res = await axios.get(`${apiBaseUrl}/api/vitals/${appointmentId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+  const fetchVitals = async () => {
+    if (!apiBaseUrl || !appointmentId) return;
+    try {
+      const res = await axios.get(`${apiBaseUrl}/api/vitals/${appointmentId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-        if (res.data.vital) {
-          const v = res.data.vital;
-          setExistingVitalId(v._id);
-          setFormData({
-            department: v.department || '',
-            uhid: v.uhid || '',
-            tokenNumber: v.tokenNumber || '',
-            bloodGroup: v.bloodGroup || '',
-            time: v.time || '',
-            pastMedicalHistory: v.pastMedicalHistory || '',
-            medicalAllergy: v.medicalAllergy || '',
-            chiefComplaints: v.chiefComplaints || '',
-            systemicExamination: v.systemicExamination || '',
-            generalPhysicalExamination: v.generalPhysicalExamination || '',
-            investigations: v.investigations || '',
-            treatmentAdvice: v.treatmentAdvice || '',
-            followUpDate: v.followUpDate ? v.followUpDate.split('T')[0] : '',
-            bloodPressureSystolic: v.bloodPressureSystolic || '',
-            bloodPressureDiastolic: v.bloodPressureDiastolic || '',
-            weight: v.weight || '',
-            height: v.height || '',
-            temperature: v.temperature || '',
-            pulse: v.pulse || '',
-            respiratoryRate: v.respiratoryRate || '',
-            spO2: v.spO2 || '',
-            notes: v.notes || ''
-          });
-          setCaseSheetDocumentUrl(v.caseSheetDocumentUrl || '');
-        }
-      } catch (err) {
-        console.log('No previous vitals found.');
+      if (res.data?.vital) {
+        const v = res.data.vital;
+        setExistingVitalId(v._id);
+        setFormData(mapVitalToFormData(v));
+        setCaseSheetDocumentUrl(v.caseSheetDocumentUrl || '');
       }
-    };
+    } catch (err) {
+      const status = err.response?.status;
+      const errorMessage = err.response?.data?.error || err.message;
+      console.log('Failed to load vitals:', status, errorMessage);
+      if (status === 404) {
+        setExistingVitalId(null);
+        setFormData(initialFormData);
+        setCaseSheetDocumentUrl('');
+      }
+    }
+  };
 
+  useEffect(() => {
     fetchVitals();
   }, [appointmentId, apiBaseUrl, token]);
 
@@ -126,8 +137,7 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
 
       const res = await axios.post(`${apiBaseUrl}/api/vitals/save`, payload, {
         headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
+          Authorization: `Bearer ${token}`
         }
       });
 
@@ -136,6 +146,10 @@ const DoctorVitals = ({ appointmentId, patientId, apiBaseUrl }) => {
         setExistingVitalId(res.data.vital?._id || existingVitalId);
         setCaseSheetDocument(null);
         setCaseSheetDocumentUrl(res.data.vital?.caseSheetDocumentUrl || caseSheetDocumentUrl);
+        if (res.data.vital) {
+          setFormData(mapVitalToFormData(res.data.vital));
+        }
+        await fetchVitals();
       }
     } catch (err) {
       setMessage(err.response?.data?.error || 'Failed to save case sheet.');

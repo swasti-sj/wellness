@@ -51,7 +51,7 @@ router.get("/:appointmentId", async (req, res) => {
       return res.status(404).json({ error: "No vitals found" });
     }
 
-    res.json({ success: true, vital, uploadDebug: debugFiles });
+    res.json({ success: true, vital });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Server error" });
