@@ -49,6 +49,7 @@ const PrescriptionSchema = new Schema({
   },
   prescriptions: [PrescriptionItemSchema],
   documentUrl: { type: String, default: '' },
+  documentPublicId: { type: String, default: '' },
   bookNo: { type: String, default: '' },
   prescriptionNo: { type: String, default: '' }
 }, { timestamps: true });

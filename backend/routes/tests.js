@@ -6,7 +6,7 @@ const Appointment = require('../models/Appointment');
 const Test = require('../models/Test');
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
-const { uploadAndCompressImage, uploadDocument, deleteImage, extractPublicId } = require('../utils/cloudinary');
+const { uploadAndCompressImage, uploadAndCompressDocumentImage, uploadDocument, compressImageToDataUri, bufferToDataUri, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -228,18 +228,26 @@ router.post('/save', upload.fields([
     const labTestDocument = req.files?.labTestDocument?.[0];
     const cashlessFormDocument = req.files?.cashlessFormDocument?.[0];
 
+    // The user can choose how small the stored document should be. Lab test
+    // and cashless form documents default to 100KB max (like prescriptions);
+    // certificates default to a higher 300KB max since they may contain
+    // finer detail such as signatures or stamps.
+    let documentTargetSizeKB = parseInt(req.body.targetSizeKB, 10);
+    if (!Number.isFinite(documentTargetSizeKB)) documentTargetSizeKB = 100;
+    documentTargetSizeKB = Math.min(Math.max(documentTargetSizeKB, 10), 100);
 
-    // Upload files to Cloudinary
+    let certificateTargetSizeKB = parseInt(req.body.certificateTargetSizeKB, 10);
+    if (!Number.isFinite(certificateTargetSizeKB)) certificateTargetSizeKB = 300;
+    certificateTargetSizeKB = Math.min(Math.max(certificateTargetSizeKB, 10), 300);
+
+    // Upload files
     try {
       if (certificateImage) {
-        const result = await uploadAndCompressImage(
-          certificateImage.buffer,
-          'wellness/certificates',
-          certificateImage.originalname,
-          { width: 1000, height: 800, quality: 85 }
-        );
-        certificate.imageUrl = result.secure_url;
-        certificate.publicId = result.public_id;
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is
+        // configured. To switch to Cloudinary later, replace this block with
+        // the uploadAndCompressImage(...) call that is already imported above.
+        certificate.imageUrl = await compressImageToDataUri(certificateImage.buffer, { targetSizeKB: certificateTargetSizeKB });
+        certificate.publicId = '';
       } else if (req.body.existingImageUrl) {
         certificate.imageUrl = req.body.existingImageUrl;
         if (req.body.existingImagePublicId) {
@@ -248,14 +256,13 @@ router.post('/save', upload.fields([
       }
 
       if (labTestDocument) {
-        const result = await uploadDocument(
-          labTestDocument.buffer,
-          'wellness/lab-tests',
-          labTestDocument.originalname,
-          'auto'
-        );
-        req.body.labTestDocumentUrl = result.secure_url;
-        req.body.labTestDocumentPublicId = result.public_id;
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is configured.
+        if (labTestDocument.mimetype.startsWith('image/')) {
+          req.body.labTestDocumentUrl = await compressImageToDataUri(labTestDocument.buffer, { targetSizeKB: documentTargetSizeKB });
+        } else {
+          req.body.labTestDocumentUrl = bufferToDataUri(labTestDocument.buffer, labTestDocument.mimetype);
+        }
+        req.body.labTestDocumentPublicId = '';
       } else if (req.body.existingLabTestDocumentUrl) {
         req.body.labTestDocumentUrl = req.body.existingLabTestDocumentUrl;
         if (req.body.existingLabTestDocumentPublicId) {
@@ -264,14 +271,13 @@ router.post('/save', upload.fields([
       }
 
       if (cashlessFormDocument) {
-        const result = await uploadDocument(
-          cashlessFormDocument.buffer,
-          'wellness/cashless-forms',
-          cashlessFormDocument.originalname,
-          'auto'
-        );
-        hospitalReferral.cashlessFormDocumentUrl = result.secure_url;
-        hospitalReferral.cashlessFormDocumentPublicId = result.public_id;
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is configured.
+        if (cashlessFormDocument.mimetype.startsWith('image/')) {
+          hospitalReferral.cashlessFormDocumentUrl = await compressImageToDataUri(cashlessFormDocument.buffer, { targetSizeKB: documentTargetSizeKB });
+        } else {
+          hospitalReferral.cashlessFormDocumentUrl = bufferToDataUri(cashlessFormDocument.buffer, cashlessFormDocument.mimetype);
+        }
+        hospitalReferral.cashlessFormDocumentPublicId = '';
       } else if (req.body.existingCashlessFormDocumentUrl) {
         hospitalReferral.cashlessFormDocumentUrl = req.body.existingCashlessFormDocumentUrl;
         if (req.body.existingCashlessFormDocumentPublicId) {
@@ -279,7 +285,7 @@ router.post('/save', upload.fields([
         }
       }
     } catch (uploadErr) {
-      console.error('Cloudinary upload error:', uploadErr.message);
+      console.error('File storage error:', uploadErr.message);
       return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
     }
 

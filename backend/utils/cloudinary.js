@@ -11,10 +11,10 @@ cloudinary.config({
 });
 
 // Log Cloudinary configuration (without secrets)
-console.log('🔧 Cloudinary Config:');
+console.log('Cloudinary Config:');
 console.log('  Cloud Name:', process.env.CLOUDINARY_CLOUD_NAME);
-console.log('  API Key:', process.env.CLOUDINARY_API_KEY ? '✓ Set' : '✗ Missing');
-console.log('  API Secret:', process.env.CLOUDINARY_API_SECRET ? '✓ Set' : '✗ Missing');
+console.log('  API Key:', process.env.CLOUDINARY_API_KEY ? 'Set' : 'Missing');
+console.log('  API Secret:', process.env.CLOUDINARY_API_SECRET ? 'Set' : 'Missing');
 
 /**
  * Compress and upload an image to Cloudinary
@@ -80,6 +80,123 @@ async function uploadAndCompressImage(fileBuffer, folder, fileName, options = {}
     console.error('[Cloudinary] Image compression/upload error:', err.message);
     console.error('[Cloudinary] Error stack:', err.stack);
     throw new Error(`Failed to upload image: ${err.message}`);
+  }
+}
+
+/**
+ * ============================================================
+ * DOCUMENT IMAGE COMPRESSION (Prescriptions / Lab Test / Cashless Form)
+ * ============================================================
+ * These settings control how scanned/photographed documents (e.g. a
+ * handwritten prescription photographed by a nurse) are compressed
+ * before being stored. The goal is to keep the file small while
+ * preserving enough resolution/quality for the text to remain readable.
+ *
+ * To change the target file size or quality behaviour later, only the
+ * values below need to be edited — no other code needs to change.
+ */
+const DOCUMENT_COMPRESSION_CONFIG = {
+  targetSizeKB: 100,   // desired final file size, in kilobytes
+  maxWidth: 1800,       // starting max width (px)
+  maxHeight: 1800,      // starting max height (px)
+  minWidth: 900,        // will not shrink below this width, to protect readability
+  minHeight: 900,
+  startQuality: 90,     // starting WebP quality (1-100)
+  minQuality: 50,       // will not go below this quality, to protect readability
+  qualityStep: 10,      // how much quality is reduced per attempt
+  format: 'webp'
+};
+
+/**
+ * Internal helper: repeatedly compress an image, first by lowering
+ * quality, then (if still above target size) by reducing dimensions,
+ * until the target size or the configured floor is reached.
+ */
+async function compressToTargetSize(fileBuffer, config) {
+  let width = config.maxWidth;
+  let height = config.maxHeight;
+  let quality = config.startQuality;
+  let buffer = null;
+
+  // Step 1: reduce quality first — this preserves resolution/readability
+  while (quality >= config.minQuality) {
+    buffer = await sharp(fileBuffer)
+      .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality })
+      .toBuffer();
+
+    if (buffer.length <= config.targetSizeKB * 1024) {
+      return { buffer, width, height, quality };
+    }
+    quality -= config.qualityStep;
+  }
+
+  // Step 2: if still above target at minimum quality, reduce dimensions
+  quality = config.minQuality;
+  while (width > config.minWidth && height > config.minHeight) {
+    width = Math.round(width * 0.85);
+    height = Math.round(height * 0.85);
+
+    buffer = await sharp(fileBuffer)
+      .resize(width, height, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality })
+      .toBuffer();
+
+    if (buffer.length <= config.targetSizeKB * 1024) {
+      return { buffer, width, height, quality };
+    }
+  }
+
+  // Best effort reached (minimum floors hit). Returned even if slightly
+  // above target, so readability is never degraded past the configured limits.
+  return { buffer, width, height, quality };
+}
+
+/**
+ * Compress and upload a scanned/photographed document image
+ * (prescriptions, lab test reports, cashless forms, etc.)
+ * Targets a configurable file size while protecting a minimum
+ * resolution/quality floor for readability.
+ *
+ * @param {Buffer} fileBuffer - File buffer from multer
+ * @param {String} folder - Cloudinary folder
+ * @param {String} fileName - Original file name
+ * @param {Object} options - Overrides for DOCUMENT_COMPRESSION_CONFIG
+ * @returns {Promise<Object>} - Cloudinary response with secure_url
+ */
+async function uploadAndCompressDocumentImage(fileBuffer, folder, fileName, options = {}) {
+  try {
+    const config = { ...DOCUMENT_COMPRESSION_CONFIG, ...options };
+    console.log(`[Cloudinary] Compressing document image: ${fileName} (target: ${config.targetSizeKB}KB)`);
+
+    const { buffer: compressedBuffer, width, height, quality } = await compressToTargetSize(fileBuffer, config);
+
+    console.log(`[Sharp] Document compressed to ${Math.round(compressedBuffer.length / 1024)}KB at ${width}x${height}, quality ${quality}`);
+
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: folder,
+          public_id: `${Date.now()}-${path.parse(fileName).name}`,
+          overwrite: false,
+          resource_type: 'auto'
+        },
+        (error, result) => {
+          if (error) {
+            console.error('[Cloudinary] Document upload stream error:', error);
+            reject(error);
+          } else {
+            console.log('[Cloudinary] Document upload successful:', result.public_id);
+            resolve(result);
+          }
+        }
+      );
+
+      uploadStream.end(compressedBuffer);
+    });
+  } catch (err) {
+    console.error('[Cloudinary] Document image compression/upload error:', err.message);
+    throw new Error(`Failed to upload document image: ${err.message}`);
   }
 }
 
@@ -191,12 +308,41 @@ function getOptimizedUrl(publicId, transformations = {}) {
   });
 }
 
+/**
+ * ============================================================
+ * INTERIM STORAGE (MongoDB-embedded, no external service)
+ * ============================================================
+ * Temporary storage path used until Cloudinary credentials or
+ * allocated disk storage are configured. Stores the compressed
+ * image directly inside the MongoDB document as a base64 data URI.
+ * The frontend already supports rendering "data:" URIs directly
+ * (see documentHelpers.js buildDocumentUrl), so no frontend
+ * changes are required for this to work.
+ *
+ * To switch to Cloudinary or disk storage later, only the route
+ * files (prescriptions.js / tests.js) need to call a different
+ * function — this file and the database schema stay unchanged.
+ */
+async function compressImageToDataUri(fileBuffer, options = {}) {
+  const config = { ...DOCUMENT_COMPRESSION_CONFIG, ...options };
+  const { buffer, width, height, quality } = await compressToTargetSize(fileBuffer, config);
+  console.log(`[Interim Storage] Image compressed to ${Math.round(buffer.length / 1024)}KB at ${width}x${height}, quality ${quality}`);
+  return `data:image/webp;base64,${buffer.toString('base64')}`;
+}
+
+function bufferToDataUri(buffer, mimetype) {
+  return `data:${mimetype};base64,${buffer.toString('base64')}`;
+}
+
 module.exports = {
   uploadAndCompressImage,
+  uploadAndCompressDocumentImage,
   uploadDocument,
   deleteImage,
   extractPublicId,
   uploadMultipleImages,
   getOptimizedUrl,
+  compressImageToDataUri,
+  bufferToDataUri,
   cloudinary
 };

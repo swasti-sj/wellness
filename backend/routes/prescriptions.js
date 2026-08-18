@@ -8,7 +8,7 @@ const Medicine = require("../models/Medicine");
 const MedicineIssuance = require("../models/MedicineIssuance");
 const multer = require("multer");
 const { logActivity, getClientIp } = require('../utils/audit');
-const { uploadDocument, deleteImage } = require('../utils/cloudinary');
+const { uploadDocument, uploadAndCompressDocumentImage, compressImageToDataUri, bufferToDataUri, deleteImage } = require('../utils/cloudinary');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const prescriptionStorage = multer.memoryStorage();
@@ -124,19 +124,41 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
 
     if (req.file) {
       try {
-        const result = await uploadDocument(
-          req.file.buffer,
-          'wellness/prescriptions',
-          req.file.originalname,
-          'auto'
-        );
-        documentUrl = result.secure_url;
-        documentPublicId = result.public_id;
+        // The user can choose how small the stored file should be (10-100 KB).
+        // A lower target means smaller storage footprint but may reduce
+        // readability of fine handwriting; a higher target keeps more detail.
+        let targetSizeKB = parseInt(req.body.targetSizeKB, 10);
+        if (!Number.isFinite(targetSizeKB)) targetSizeKB = 100;
+        targetSizeKB = Math.min(Math.max(targetSizeKB, 10), 100);
+
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is configured.
+        // To switch to Cloudinary/disk storage later, swap these two lines for
+        // uploadAndCompressDocumentImage / uploadDocument (already defined
+        // and imported above, ready to use).
+        if (req.file.mimetype.startsWith('image/')) {
+          documentUrl = await compressImageToDataUri(req.file.buffer, { targetSizeKB });
+        } else {
+          documentUrl = bufferToDataUri(req.file.buffer, req.file.mimetype);
+        }
+        documentPublicId = '';
       } catch (uploadErr) {
-        console.error('Cloudinary upload error:', uploadErr.message);
-        return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
+        console.error('Document storage error:', uploadErr.message);
+        return res.status(500).json({ error: `File storage failed: ${uploadErr.message}` });
       }
     }
+
+    // Sanitize: an empty string in the `medicine` ObjectId field causes a
+    // Mongoose CastError. This happens when a medication name was typed but
+    // never selected from the dropdown (so no Medicine _id was attached).
+    // The prescription text itself (name, dosage, frequency, notes) is still
+    // saved — only the stock-linked `medicine` reference is omitted.
+    const sanitizedPrescriptions = prescriptions.map((p) => {
+      const item = { ...p };
+      if (!item.medicine) {
+        delete item.medicine;
+      }
+      return item;
+    });
 
     const updatedPrescription = await Prescription.findOneAndUpdate(
       { appointment: appointmentId },
@@ -144,7 +166,7 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
         appointment: appointmentId,
         patient: appointment.user,
         doctor: decoded.role === "doctor" ? decoded.id : appointment.doctor,
-        prescriptions: prescriptions,
+        prescriptions: sanitizedPrescriptions,
         bookNo,
         prescriptionNo,
         documentUrl: documentUrl,
@@ -173,7 +195,7 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
       console.warn('Failed to write prescription audit log:', auditErr.message);
     }
   } catch (err) {
-    console.error("❌ Prescription save error:", err.message, err.stack);
+    console.error("Prescription save error:", err.message, err.stack);
     res.status(500).json({ error: `Server error: ${err.message}` });
   }
 });

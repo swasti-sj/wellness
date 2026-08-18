@@ -5,7 +5,7 @@ const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
-const { uploadDocument, deleteImage } = require('../utils/cloudinary');
+const { uploadDocument, compressImageToDataUri, bufferToDataUri, deleteImage } = require('../utils/cloudinary');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -103,7 +103,7 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
     };
     console.log('[Upload Debug][/api/vitals/save] debugFiles=', JSON.stringify(debugFiles));
 
-    const { appointmentId, patientId, existingCaseSheetDocumentUrl, ...caseData } = req.body;
+    const { appointmentId, patientId, existingCaseSheetDocumentUrl, targetSizeKB: rawTargetSizeKB, ...caseData } = req.body;
 
 
     if (!appointmentId || !patientId) {
@@ -121,20 +121,26 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
 
     Object.assign(vital, caseData);
 
-    // Upload case sheet document to Cloudinary
+    // Store the case sheet document
     if (req.file) {
       try {
-        const result = await uploadDocument(
-          req.file.buffer,
-          'wellness/case-sheets',
-          req.file.originalname,
-          'auto'
-        );
-        vital.caseSheetDocumentUrl = result.secure_url;
-        vital.caseSheetDocumentPublicId = result.public_id;
+        // The user can choose how small the stored file should be (10-100 KB).
+        let targetSizeKB = parseInt(rawTargetSizeKB, 10);
+        if (!Number.isFinite(targetSizeKB)) targetSizeKB = 100;
+        targetSizeKB = Math.min(Math.max(targetSizeKB, 10), 100);
+
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is
+        // configured. To switch to Cloudinary later, replace this block with
+        // the uploadDocument(...) call that is already imported above.
+        if (req.file.mimetype.startsWith('image/')) {
+          vital.caseSheetDocumentUrl = await compressImageToDataUri(req.file.buffer, { targetSizeKB });
+        } else {
+          vital.caseSheetDocumentUrl = bufferToDataUri(req.file.buffer, req.file.mimetype);
+        }
+        vital.caseSheetDocumentPublicId = '';
       } catch (uploadErr) {
-        console.error('Cloudinary upload error:', uploadErr.message);
-        return res.status(500).json({ error: `File upload failed: ${uploadErr.message}` });
+        console.error('Case sheet document storage error:', uploadErr.message);
+        return res.status(500).json({ error: `File storage failed: ${uploadErr.message}` });
       }
     } else if (typeof existingCaseSheetDocumentUrl === "string") {
       vital.caseSheetDocumentUrl = existingCaseSheetDocumentUrl;
