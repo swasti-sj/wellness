@@ -1,24 +1,61 @@
-# iitdh-doctor-app
+# Swasti — IIT Dharwad Wellness App
 
-## Discussion 1 summary:
-  1. confidentiality: head, dean SW, academics: can view whether someoe visited or not. CANNOT view details. Deans notes should be visible only to him e.g. when student drops out.
-  2. details:
-     i. name,date,time of visit, phone call, (last medication]
-     
-     ii. e.g. last week tuesday walk in
+A full-stack medical records and appointment management system for IIT Dharwad's health centre.
 
-     iii. expand the pane to see: last medication, list of select or deselect new medications.
+## Tech Stack
 
-     iv. option for referral: e.g. irregular periods referto gynac or psychologist(counsellor) or other way.
-  4. authentication: via e-mail/ldap for now. Later upgrade to signature on a pad or thumbprint maybe.
-  5. first time form :
-     i. Name, sex, age, place of origin, year, department, mode of referral. 
-  6. search feature:
-     i. when was last visit, expand detailed comments, but have some succint comments.
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React.js |
+| Backend | Node.js + Express |
+| Database | MongoDB (Mongoose) |
+| Auth | Google OAuth 2.0 + JWT |
+| File Storage | Cloudinary (images/documents) |
+| Calendar | react-big-calendar |
 
-     ii. similar name suggestion e.g. muthappa, muthanna. ALso some suggestions as you type e.g.Neh should show Neha from list.
-  8. problem with existing solutions:
-     i. very slow, server didn't work, local server didn't work.
-  9. concise report for dean:
-     i. statistics anonymised e.g. how many visits.
-  10. Different accounts for pyschologist, counsellor, extendability for future, confidential.
+## Roles
+
+| Role | Access |
+|------|--------|
+| **Patient** | Book appointments, view history, manage profile |
+| **Doctor** | Manage appointments, write prescriptions, case sheets, referrals, tests |
+| **Nurse** | Same as Doctor (shared components) |
+| **Receptionist** | Walk-in entry, appointment creation |
+| **Pharmacist** | Medicine stock management, issuances |
+| **Admin** | Audit logs, user management |
+
+## Running Locally
+
+```bash
+# Backend (always use dev for hot-reload)
+cd backend
+npm run dev        # ✅ nodemon auto-reloads on file changes
+# NOT: npm start   # ❌ plain node — changes ignored until manual restart
+
+# Frontend
+cd frontend
+npm start
+```
+
+Backend runs on **port 5000**, Frontend on **port 3000**.
+
+Network access (mobile testing): `http://<your-local-ip>:3000`
+
+## Key Features
+
+- **UHID Auto-generation**: Sequential 4-digit IDs (0001, 0002 ...) assigned server-side
+- **Profile Guard**: Incomplete profiles redirect user back to setup form on next login
+- **Prescription**: Manual medicine entry OR image upload (or both)
+- **Lab Tests**: Select tests + upload lab document
+- **Case Sheet**: Vitals, history, examination, treatment notes
+- **Referrals**: Hospital and internal referrals with documents
+- **Certificates**: Medical/fitness certificate generation
+
+## Discussion Notes (Initial Design)
+
+1. **Confidentiality**: Head/Dean SW/Academics can see *whether* someone visited — NOT details. Dean's notes visible only to Dean.
+2. **Authentication**: Google OAuth (institute email). Future: LDAP/biometric.
+3. **First-visit form**: Name, sex, age, place of origin, year, department, mode of referral.
+4. **Search**: Last visit date, expandable details, similar-name suggestions.
+5. **Reports**: Anonymised statistics for Dean (visit counts etc.).
+6. **Extendability**: Psychologist/Counsellor accounts, separate confidentiality.

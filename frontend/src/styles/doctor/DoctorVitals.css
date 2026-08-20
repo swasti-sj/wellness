@@ -32,6 +32,40 @@
   background: var(--surface);
 }
 
+.doctor-vitals.read-only input[readonly],
+.doctor-vitals.read-only textarea[readonly],
+.doctor-vitals.read-only select:disabled {
+  background: #f5effa;
+  border-color: #d8c2e8;
+  color: var(--text-body);
+  cursor: default;
+  opacity: 1;
+}
+
+.doctor-vitals.read-only input[readonly]::placeholder,
+.doctor-vitals.read-only textarea[readonly]::placeholder {
+  color: var(--text-muted);
+}
+
+.no-case-sheet-message {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  background: var(--plum-ghost);
+  color: var(--text-muted);
+}
+
+.no-case-sheet-message strong {
+  color: var(--plum);
+  font-size: 1rem;
+}
+
+.no-case-sheet-message span {
+  font-size: 0.85rem;
+}
+
 /* ── Case Sheet Title ── */
 .case-sheet-title {
   text-align: center;

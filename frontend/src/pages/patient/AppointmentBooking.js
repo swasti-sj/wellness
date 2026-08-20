@@ -1,14 +1,26 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "../../styles/doctor/DoctorAppointment.css";
 import "../../styles/AppointmentBooking.css";
+import "../../styles/doctor/PatientHistory.css";
 import CustomToolbar from "../doctor/CustomToolbar";
+import DoctorVitals from "../doctor/DoctorVitals";
+import PatientDocumentPreview from "./PatientDocumentPreview";
 import { useApi } from "../../context/ApiContext";
 
 const localizer = momentLocalizer(moment);
+
+const RECORD_SECTIONS = [
+  { key: "vitals", label: "Case Sheet" },
+  { key: "notes", label: "Notes" },
+  { key: "rx", label: "Prescription" },
+  { key: "tests", label: "Lab Tests" },
+  { key: "referral", label: "Referral" },
+  { key: "cert", label: "Certificate" },
+];
 
 const getNextDateForDay = (dayName) => {
   const days = [
@@ -37,36 +49,31 @@ export default function AppointmentBooking() {
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedDependantId, setSelectedDependantId] = useState("self");
   const [dependants, setDependants] = useState([]);
-  const [events, setEvents] = useState([]);
   const [calendarEvents, setCalendarEvents] = useState([]);
+  const [patientId, setPatientId] = useState("");
   const [isBooking, setIsBooking] = useState(false);
   const [view, setView] = useState("month");
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [patientRecords, setPatientRecords] = useState([]);
+  const [recordLoading, setRecordLoading] = useState(false);
+  const [recordError, setRecordError] = useState("");
+  const [activeRecordSection, setActiveRecordSection] = useState("vitals");
   const apiBaseUrl = useApi();
   const token = localStorage.getItem("token");
 
-  useEffect(() => {
-    if (token) {
-      fetchAvailableSlots();
-      fetchEvents();
-      fetchUserProfile();
-      const interval = setInterval(fetchEvents, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [token]);
-
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const res = await axios.get(`${apiBaseUrl}/api/users/profile`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          Authorization: `Bearer ${token}`,
         },
       });
+      setPatientId(res.data?._id || res.data?.user?._id || "");
       setDependants(res.data.dependants || []);
     } catch (err) {
       console.error("Failed to fetch user profile:", err);
     }
-  };
+  }, [apiBaseUrl, token]);
 
   useEffect(() => {
     if (location.state?.selectedDoctorId) {
@@ -74,7 +81,7 @@ export default function AppointmentBooking() {
     }
   }, [location.state]);
 
-  const fetchAvailableSlots = async () => {
+  const fetchAvailableSlots = useCallback(async () => {
     try {
       const res = await axios.get(
         `${apiBaseUrl}/api/doctors/available`
@@ -83,9 +90,9 @@ export default function AppointmentBooking() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [apiBaseUrl]);
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     try {
       const res = await axios.get(
         `${apiBaseUrl}/api/appointments/my-appointments`,
@@ -93,7 +100,6 @@ export default function AppointmentBooking() {
           params: { token },
         }
       );
-      setEvents(res.data.appointments || []);
 
       const calEvents = (res.data.appointments || []).map((ev) => ({
         id: ev._id,
@@ -101,10 +107,45 @@ export default function AppointmentBooking() {
         start: new Date(ev.startDateTime),
         end: new Date(ev.endDateTime),
         status: ev.status,
+        appointment: ev,
       }));
       setCalendarEvents(calEvents);
     } catch (err) {
       console.error(err);
+    }
+  }, [apiBaseUrl, token]);
+
+  const fetchPatientRecords = useCallback(async () => {
+    setRecordLoading(true);
+    setRecordError("");
+    try {
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/my-records`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setPatientRecords(res.data.records || []);
+    } catch (err) {
+      setRecordError(err.response?.data?.error || "Unable to load appointment records.");
+    } finally {
+      setRecordLoading(false);
+    }
+  }, [apiBaseUrl, token]);
+
+  useEffect(() => {
+    if (token) {
+      fetchAvailableSlots();
+      fetchEvents();
+      fetchPatientRecords();
+      fetchUserProfile();
+      const interval = setInterval(fetchEvents, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [token, fetchAvailableSlots, fetchEvents, fetchPatientRecords, fetchUserProfile]);
+
+  const openAppointmentDetails = async (event) => {
+    setSelectedEvent(event);
+    setActiveRecordSection("vitals");
+    if (patientRecords.length === 0) {
+      await fetchPatientRecords();
     }
   };
 
@@ -187,6 +228,125 @@ export default function AppointmentBooking() {
       console.error(err);
       alert(err.response?.data?.error || "Failed to cancel.");
     }
+  };
+
+  const renderAppointmentRecord = () => {
+    if (!selectedEvent) return null;
+
+    const record = patientRecords.find((item) => item._id === selectedEvent.id) || selectedEvent.appointment || {};
+    const dependant = record.dependant || selectedEvent.appointment?.dependant;
+    const patient = record.user || selectedEvent.appointment?.user;
+
+    return (
+      <>
+        <div className="ph-appointment-context patient-modal-context">
+          {dependant?.name ? (
+            <>
+              <strong>Patient:</strong> {dependant.name}
+              <strong>Dependant of:</strong> {patient?.name || "Primary patient"}
+              <strong>UHID:</strong> {dependant.uhid || "N/A"}
+            </>
+          ) : (
+            <>
+              <strong>Patient:</strong> {patient?.name || "Patient"}
+              <strong>UHID:</strong> {patient?.uhid || "N/A"}
+            </>
+          )}
+        </div>
+
+        <div className="ph-section-btns patient-modal-sections">
+          {RECORD_SECTIONS.map((section) => (
+            <button
+              key={section.key}
+              type="button"
+              className={`ph-sec-btn${activeRecordSection === section.key ? " active" : ""}`}
+              onClick={() => setActiveRecordSection(section.key)}
+            >
+              <span>{section.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {recordLoading && <p className="ph-empty">Loading appointment records...</p>}
+        {recordError && <p className="ph-error">{recordError}</p>}
+
+        {!recordLoading && activeRecordSection === "vitals" && (
+          <div className="ph-section-panel patient-modal-panel">
+            <DoctorVitals
+              appointmentId={selectedEvent.id}
+              patientId={patient?._id || patientId}
+              dependantUhid={dependant?.uhid}
+              apiBaseUrl={apiBaseUrl}
+              readOnly
+            />
+          </div>
+        )}
+
+        {!recordLoading && activeRecordSection === "notes" && (
+          <div className="ph-section-panel ph-read-panel patient-modal-panel">
+            {record.notes?.length ? record.notes.map((note) => (
+              <article className="ph-read-item" key={note._id}>
+                <strong>Clinical note</strong>
+                <p>{note.text}</p>
+              </article>
+            )) : <p className="ph-empty">No clinical notes have been recorded.</p>}
+          </div>
+        )}
+
+        {!recordLoading && activeRecordSection === "rx" && (
+          <div className="ph-section-panel ph-read-panel patient-modal-panel">
+            {record.prescription?.prescriptions?.length ? record.prescription.prescriptions.map((item, index) => (
+              <article className="ph-read-item" key={`${item.medication || item.medicine?.name || "medicine"}-${index}`}>
+                <strong>{item.medication || item.medicine?.name || "Medication"}</strong>
+                <p>{item.dosage || ""} - {item.frequency || ""} - Quantity {item.quantity || "N/A"}</p>
+                {item.notes && <small>{item.notes}</small>}
+              </article>
+            )) : <p className="ph-empty">No prescription has been issued.</p>}
+            <PatientDocumentPreview title="Prescription Document" url={record.prescription?.documentUrl} emptyMessage="No prescription document uploaded." />
+          </div>
+        )}
+
+        {!recordLoading && activeRecordSection === "tests" && (
+          <div className="ph-section-panel ph-read-panel patient-modal-panel">
+            {record.tests?.tests?.length ? (
+              <ul className="ph-test-list">
+                {record.tests.tests.filter((test) => test.selected !== false).map((test) => (
+                  <li key={test._id || test.testName}>{test.testName}</li>
+                ))}
+              </ul>
+            ) : <p className="ph-empty">No tests recorded.</p>}
+            <PatientDocumentPreview title="Lab Test Document" url={record.tests?.labTestDocumentUrl} emptyMessage="No lab test document uploaded." />
+          </div>
+        )}
+
+        {!recordLoading && activeRecordSection === "referral" && (
+          <div className="ph-section-panel ph-read-panel patient-modal-panel">
+            {record.tests?.hospitalReferral?.refer ? (
+              <article className="ph-read-item">
+                <strong>{record.tests.hospitalReferral.hospitalName || "Hospital referral"}</strong>
+                {record.tests.hospitalReferral.remarks && <p>{record.tests.hospitalReferral.remarks}</p>}
+                <small>Ambulance: {record.tests.hospitalReferral.ambulanceUsed ? "Yes" : "No"}</small>
+                <small>Cashless form: {record.tests.hospitalReferral.cashlessFormUsed ? "Yes" : "No"}</small>
+                {record.tests.hospitalReferral.staffWent && <small>Staff: {record.tests.hospitalReferral.staffWent}</small>}
+              </article>
+            ) : <p className="ph-empty">No hospital referral has been recorded.</p>}
+            <PatientDocumentPreview title="Referral Document" url={record.tests?.hospitalReferral?.cashlessFormDocumentUrl} emptyMessage="No referral document uploaded." />
+          </div>
+        )}
+
+        {!recordLoading && activeRecordSection === "cert" && (
+          <div className="ph-section-panel ph-read-panel patient-modal-panel">
+            {record.tests?.certificate?.issued ? (
+              <article className="ph-read-item">
+                <strong>Medical certificate issued</strong>
+                {record.tests.certificate.clinicalDetails && <p>{record.tests.certificate.clinicalDetails}</p>}
+              </article>
+            ) : <p className="ph-empty">No medical certificate has been issued.</p>}
+            <PatientDocumentPreview title="Medical Certificate" url={record.tests?.certificate?.imageUrl} emptyMessage="No medical certificate uploaded." />
+          </div>
+        )}
+      </>
+    );
   };
 
   return (
@@ -310,35 +470,44 @@ export default function AppointmentBooking() {
                 },
               };
             }}
-            onSelectEvent={(event) => setSelectedEvent(event)}
+            onSelectEvent={openAppointmentDetails}
           />
         </div>
       </div>
 
-      {/* CANCEL POPUP */}
-      {selectedEvent && selectedEvent.status === "booked" && (
-        <div className="modal-overlay">
-          <div className="modal-popup">
-            <h4 className="modal-title">Cancel Appointment</h4>
-            <p>
-              {selectedEvent.title}
-              <br />
-              {moment(selectedEvent.start).format("LLLL")} -{" "}
-              {moment(selectedEvent.end).format("LLLL")}
-            </p>
-            <div className="modal-buttons">
-              <button
-                className="appointment-cancel-btn"
-                onClick={() => cancelEvent(selectedEvent)}
-              >
-                Confirm Cancel
-              </button>
-              <button
-                className="appointment-btn"
-                onClick={() => setSelectedEvent(null)}
-              >
-                Close
-              </button>
+      {selectedEvent && (
+        <div className="appointment-modal" onClick={(e) => e.target === e.currentTarget && setSelectedEvent(null)}>
+          <div className="modal-content patient-appointment-detail-modal">
+            <div className="modal-header-bar">
+              <button className="close-btn" onClick={() => setSelectedEvent(null)} title="Close">x</button>
+              <div className="modal-patient-name">
+                {selectedEvent.appointment?.dependant?.name || selectedEvent.appointment?.doctor?.name || "Appointment"}
+              </div>
+              <div className="modal-meta">
+                <span><strong>Doctor:</strong> {selectedEvent.appointment?.doctor?.name || "N/A"}</span>
+                {selectedEvent.appointment?.dependant?.name && (
+                  <>
+                    <span><strong>UHID:</strong> {selectedEvent.appointment.dependant.uhid || "N/A"}</span>
+                    <span><strong>Dependant of:</strong> {selectedEvent.appointment.user?.name || "Primary patient"}</span>
+                  </>
+                )}
+                <span><strong>Date:</strong> {moment(selectedEvent.start).format("DD MMM YYYY")}</span>
+                <span><strong>Time:</strong> {moment(selectedEvent.start).format("hh:mm A")} - {moment(selectedEvent.end).format("hh:mm A")}</span>
+                <span><strong>Status:</strong> {selectedEvent.status}</span>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              {selectedEvent.status === "booked" && (
+                <div className="modal-actions patient-appointment-actions">
+                  <button className="cancel-btn" onClick={() => cancelEvent(selectedEvent)}>
+                    Cancel Appointment
+                  </button>
+                </div>
+              )}
+
+              <div className="modal-divider" />
+              {renderAppointmentRecord()}
             </div>
           </div>
         </div>

@@ -277,7 +277,11 @@ function DoctorPrescription({ appointmentId, patientId }) {
         <button className="rx-add-btn" onClick={addRow}>Add Medication</button>
         <div className="rx-save-group">
           {saved && <span className="rx-saved">Saved</span>}
-          <button className="rx-save-btn" onClick={handleSave} disabled={isSaving || current.length === 0}>
+          <button
+            className="rx-save-btn"
+            onClick={handleSave}
+            disabled={isSaving || (current.length === 0 && !prescriptionDocument && !documentUrl)}
+          >
             {isSaving ? 'Saving...' : 'Save Prescription'}
           </button>
         </div>

@@ -300,6 +300,9 @@ app.get("/api/auth/google/callback",
         user = new User({ googleId, email, name, picture, role: "patient" });
         await user.save();
         firstLogin = true;
+      } else if (!user.profileComplete) {
+        // User exists but never finished the initial profile form — treat as first login
+        firstLogin = true;
       }
 
       token = jwt.sign({ id: user._id, name: user.name, email, role: "patient", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });

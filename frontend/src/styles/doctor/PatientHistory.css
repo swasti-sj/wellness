@@ -59,6 +59,19 @@
   margin: 6px auto 0;
 }
 
+.ph-page-subtitle {
+  margin: -1rem auto 1.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.ph-loading {
+  padding: 2rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* ── Search form ── */
 .ph-search-form {
   display: flex;
@@ -265,6 +278,43 @@
   border-radius: 50%;
 }
 
+.ph-expand-button {
+  width: 2rem;
+  height: 2rem;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: rgba(74, 16, 96, 0.07);
+  color: var(--plum-mid);
+  cursor: pointer;
+  font: inherit;
+  transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.ph-expand-button span {
+  display: block;
+  font-size: 1.1rem;
+  line-height: 1;
+  transform: translateY(-0.08rem);
+}
+
+.ph-expand-button:hover,
+.ph-expand-button:focus-visible {
+  outline: none;
+  border-color: var(--plum-mid);
+  background: var(--plum-soft);
+  box-shadow: 0 0 0 3px rgba(108, 27, 133, 0.12);
+}
+
+.ph-expand-button.open {
+  background: var(--plum-mid);
+  color: #fff;
+  transform: rotate(180deg);
+}
+
 /* Patient body */
 .ph-patient-body {
   padding: 1.25rem 1.3rem;
@@ -288,6 +338,14 @@
 
 .ph-quick-info strong {
   color: var(--plum-mid);
+}
+
+.patient-profile-row {
+  cursor: default;
+}
+
+.patient-profile-row:hover {
+  background: linear-gradient(90deg, var(--plum-ghost), var(--surface));
 }
 
 /* Section title */
@@ -424,6 +482,41 @@
   gap: 0.5rem;
 }
 
+.ph-status {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+
+.ph-status.booked {
+  border-color: var(--border-gold);
+  background: var(--gold-soft);
+  color: var(--gold);
+}
+
+.ph-status.attended {
+  border-color: #B8DEC9;
+  background: #E8F6EF;
+  color: var(--success);
+}
+
+.ph-cancel-btn {
+  padding: 0.32rem 0.7rem;
+  border: 1px solid #E6AAB4;
+  border-radius: 6px;
+  background: #FFF4F5;
+  color: var(--danger);
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .ph-print-btn {
   padding: 0.32rem 0.8rem;
   background: var(--surface);
@@ -449,6 +542,23 @@
   background: #FDFBFF;
 }
 
+.ph-appointment-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.2rem;
+  margin-bottom: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  background: var(--gold-ghost);
+  color: var(--text-body);
+  font-size: 0.82rem;
+}
+
+.ph-appointment-context strong {
+  color: var(--plum-mid);
+}
+
 /* 6 section buttons */
 .ph-section-btns {
   display: grid;
@@ -459,7 +569,7 @@
 
 .ph-sec-btn {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   gap: 0.25rem;
   padding: 0.65rem 0.5rem;
@@ -502,9 +612,136 @@
   animation: phFadeIn 0.25s ease;
 }
 
+.ph-read-panel {
+  padding: 1rem;
+}
+
+.ph-read-item {
+  margin-bottom: 0.65rem;
+  padding: 0.75rem;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 6px 6px 0;
+  background: var(--gold-ghost);
+}
+
+.ph-read-item strong {
+  color: var(--plum-mid);
+  font-size: 0.86rem;
+}
+
+.ph-read-item p,
+.ph-read-item small {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--text-body);
+  font-size: 0.83rem;
+}
+
+.ph-empty {
+  padding: 1.25rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.ph-document-link {
+  display: inline-block;
+  margin: 0.25rem 0.7rem 0.1rem 0;
+  color: var(--plum-mid);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.ph-doc-preview {
+  margin-top: 0.8rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.ph-doc-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--plum-ghost);
+  border-bottom: 1px solid var(--border);
+}
+
+.ph-doc-preview-header strong,
+.ph-doc-preview-header span {
+  display: block;
+}
+
+.ph-doc-preview-header strong {
+  color: var(--plum-mid);
+  font-size: 0.86rem;
+}
+
+.ph-doc-preview-header span {
+  max-width: 30rem;
+  color: var(--text-muted);
+  font-size: 0.76rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ph-doc-open {
+  flex: 0 0 auto;
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: #fff;
+  color: var(--plum-mid);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.ph-doc-open:hover {
+  background: var(--plum-soft);
+  text-decoration: none;
+}
+
+.ph-doc-frame {
+  display: grid;
+  place-items: center;
+  min-height: 180px;
+  max-height: 520px;
+  background: #fff;
+  overflow: auto;
+}
+
+.ph-doc-frame img {
+  width: 100%;
+  max-height: 520px;
+  object-fit: contain;
+}
+
+.ph-doc-frame object {
+  width: 100%;
+  height: 520px;
+  border: 0;
+}
+
+.ph-test-list {
+  margin: 0 0 0.8rem 1.2rem;
+  color: var(--text-body);
+  font-size: 0.84rem;
+}
+
 @keyframes phFadeIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ── Print area — hidden normally, visible only when printing ── */
@@ -516,11 +753,13 @@
   #root {
     display: none !important;
   }
+
   body {
     background: #fff !important;
     margin: 0 !important;
     padding: 0 !important;
   }
+
   #ph-print-area {
     display: block !important;
     position: static !important;
@@ -534,6 +773,7 @@
     overflow: visible !important;
     box-sizing: border-box !important;
   }
+
   @page {
     margin: 12mm 15mm;
     size: A4 portrait;
@@ -582,6 +822,19 @@
     flex-wrap: wrap;
   }
 
+  .ph-appt-top {
+    align-items: flex-start;
+  }
+
+  .ph-appt-right {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .ph-appt-meta {
+    max-width: 13rem;
+  }
+
   .ph-quick-info {
     flex-direction: column;
     gap: 0.35rem;
@@ -598,6 +851,15 @@
 }
 
 @media (max-width: 400px) {
+  .ph-appt-top {
+    flex-direction: column;
+  }
+
+  .ph-appt-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
   .ph-section-btns {
     grid-template-columns: repeat(2, 1fr);
   }

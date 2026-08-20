@@ -12,12 +12,12 @@ import "../../styles/doctor/PatientHistory.css";
 import Fuse from "fuse.js";
 
 const SECTIONS = [
-  { key: "vitals",   icon: "💓", label: "Case Sheet"    },
-  { key: "notes",    icon: "📝", label: "Notes"         },
-  { key: "rx",       icon: "💊", label: "Prescription"  },
-  { key: "tests",    icon: "🧪", label: "Tests"         },
-  { key: "referral", icon: "🏥", label: "Hosp. Referral"},
-  { key: "cert",     icon: "📋", label: "Certificate"   },
+  { key: "vitals", label: "Case Sheet" },
+  { key: "notes", label: "Notes" },
+  { key: "rx", label: "Prescription" },
+  { key: "tests", label: "Tests" },
+  { key: "referral", label: "Hosp. Referral" },
+  { key: "cert", label: "Certificate" },
 ];
 
 export default function PatientHistory({ apiBaseUrl }) {
@@ -47,7 +47,7 @@ export default function PatientHistory({ apiBaseUrl }) {
       }, 300);
       return () => clearTimeout(timer);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readyToPrint, printData]);
 
   const token = localStorage.getItem("token");
@@ -82,7 +82,7 @@ export default function PatientHistory({ apiBaseUrl }) {
           }
         });
         setRecentPatients(unique.slice(0, 5));
-      } catch (err) {}
+      } catch (err) { }
     };
     fetchRecent();
   }, [apiBaseUrl, token]);
@@ -256,8 +256,8 @@ export default function PatientHistory({ apiBaseUrl }) {
       </style>
     </head><body>
       <div class="no-print-btn">
-        <button class="btn-save" onclick="window.print()">⬇ Save as PDF</button>
-        <button class="btn-close" onclick="window.close()">✕ Close</button>
+        <button class="btn-save" onclick="window.print()">Save as PDF</button>
+        <button class="btn-close" onclick="window.close()">Close</button>
       </div>
       ${html}
     </body></html>`], { type: "text/html" });
@@ -272,10 +272,10 @@ export default function PatientHistory({ apiBaseUrl }) {
     });
 
   // Print inline styles
-  const td = { padding:"4px 7px", border:"1px solid #ddd", verticalAlign:"top" };
-  const tdH = { padding:"4px 7px", border:"1px solid #ddd", fontWeight:"bold", background:"#f5f0ff", width:"120px", verticalAlign:"top" };
-  const th = { padding:"5px 7px", border:"1px solid rgba(255,255,255,0.3)", textAlign:"left" };
-  const secHead = { fontSize:"12px", fontWeight:"bold", color:"#4A1060", background:"#EDE0FA", padding:"3px 7px", marginBottom:"4px", borderLeft:"3px solid #C8860A" };
+  const td = { padding: "4px 7px", border: "1px solid #ddd", verticalAlign: "top" };
+  const tdH = { padding: "4px 7px", border: "1px solid #ddd", fontWeight: "bold", background: "#f5f0ff", width: "120px", verticalAlign: "top" };
+  const th = { padding: "5px 7px", border: "1px solid rgba(255,255,255,0.3)", textAlign: "left" };
+  const secHead = { fontSize: "12px", fontWeight: "bold", color: "#4A1060", background: "#EDE0FA", padding: "3px 7px", marginBottom: "4px", borderLeft: "3px solid #C8860A" };
 
   return (
     <div className="ph-container">
@@ -285,22 +285,22 @@ export default function PatientHistory({ apiBaseUrl }) {
         <div id="ph-print-area" ref={printRef}>
           <>
             {/* Header */}
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"6px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "6px" }}>
               <div>
-                <div style={{ fontSize:"18px", fontWeight:"bold", color:"#4A1060" }}>IIT Dharwad Wellness Centre</div>
-                <div style={{ fontSize:"12px", color:"#555", marginTop:"2px" }}>Patient Complete Visit Summary</div>
+                <div style={{ fontSize: "18px", fontWeight: "bold", color: "#4A1060" }}>IIT Dharwad Wellness Centre</div>
+                <div style={{ fontSize: "12px", color: "#555", marginTop: "2px" }}>Patient Complete Visit Summary</div>
               </div>
-              <div style={{ textAlign:"right", fontSize:"11px", color:"#777" }}>
+              <div style={{ textAlign: "right", fontSize: "11px", color: "#777" }}>
                 Generated: {new Date().toLocaleString("en-IN")}
               </div>
             </div>
-            <div style={{ borderBottom:"3px solid #C8860A", marginBottom:"10px" }} />
+            <div style={{ borderBottom: "3px solid #C8860A", marginBottom: "10px" }} />
 
             {/* Patient Info */}
-            <div style={{ fontSize:"13px", fontWeight:"bold", color:"#4A1060", marginBottom:"5px" }}>Patient Information</div>
-            <table style={{ width:"100%", borderCollapse:"collapse", marginBottom:"12px", fontSize:"12px" }}>
+            <div style={{ fontSize: "13px", fontWeight: "bold", color: "#4A1060", marginBottom: "5px" }}>Patient Information</div>
+            <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "12px", fontSize: "12px" }}>
               <tbody>
-                <tr style={{ background:"#F0E4FA" }}>
+                <tr style={{ background: "#F0E4FA" }}>
                   <td style={tdH}>Name</td><td style={td}>{printData.patient.name}</td>
                   <td style={tdH}>Roll No.</td><td style={td}>{printData.patient.roll || "N/A"}</td>
                 </tr>
@@ -308,7 +308,7 @@ export default function PatientHistory({ apiBaseUrl }) {
                   <td style={tdH}>Email</td><td style={td}>{printData.patient.email}</td>
                   <td style={tdH}>Phone</td><td style={td}>{printData.patient.phone || "N/A"}</td>
                 </tr>
-                <tr style={{ background:"#F0E4FA" }}>
+                <tr style={{ background: "#F0E4FA" }}>
                   <td style={tdH}>Age / Sex</td><td style={td}>{printData.patient.age || "N/A"} / {printData.patient.sex || "N/A"}</td>
                   <td style={tdH}>Blood Group</td><td style={td}>{printData.patient.bloodGroup || "N/A"}</td>
                 </tr>
@@ -316,19 +316,19 @@ export default function PatientHistory({ apiBaseUrl }) {
             </table>
 
             {/* Selected Appointment */}
-            <div style={{ fontSize:"13px", fontWeight:"bold", color:"#4A1060", marginBottom:"5px" }}>
+            <div style={{ fontSize: "13px", fontWeight: "bold", color: "#4A1060", marginBottom: "5px" }}>
               Visit Summary — {printData.patientAppts.length} Total Visit{printData.patientAppts.length !== 1 ? "s" : ""}
             </div>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px", marginBottom:"14px" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px", marginBottom: "14px" }}>
               <thead>
-                <tr style={{ background:"#4A1060", color:"#fff" }}>
+                <tr style={{ background: "#4A1060", color: "#fff" }}>
                   <th style={th}>#</th><th style={th}>Date &amp; Time</th><th style={th}>Mode</th>
                 </tr>
               </thead>
               <tbody>
                 {printData.patientAppts.map((a, i) => (
-                  <tr key={a._id} style={{ background: i%2===0?"#fff":"#FAF4FF" }}>
-                    <td style={td}>{i+1}</td>
+                  <tr key={a._id} style={{ background: i % 2 === 0 ? "#fff" : "#FAF4FF" }}>
+                    <td style={td}>{i + 1}</td>
                     <td style={td}>{formatDate(a.startDateTime)}</td>
                     <td style={td}>{a.mode || "Walk-in"}</td>
                   </tr>
@@ -338,25 +338,25 @@ export default function PatientHistory({ apiBaseUrl }) {
 
             {/* Per-visit detailed sections */}
             {printData.visitDataArr.map((v, idx) => (
-              <div key={v.appt._id} style={{ marginBottom:"18px" }}>
-                <div style={{ background:"#4A1060", color:"#fff", padding:"5px 10px", fontSize:"12px", fontWeight:"bold", borderRadius:"4px 4px 0 0", marginBottom:"0" }}>
+              <div key={v.appt._id} style={{ marginBottom: "18px" }}>
+                <div style={{ background: "#4A1060", color: "#fff", padding: "5px 10px", fontSize: "12px", fontWeight: "bold", borderRadius: "4px 4px 0 0", marginBottom: "0" }}>
                   Clinical Details — {formatDate(v.appt.startDateTime)}
                 </div>
-                <div style={{ border:"1px solid #6C1B85", borderTop:"none", padding:"8px 10px", borderRadius:"0 0 4px 4px" }}>
+                <div style={{ border: "1px solid #6C1B85", borderTop: "none", padding: "8px 10px", borderRadius: "0 0 4px 4px" }}>
 
                   {v.vitals && (
-                    <div style={{ marginBottom:"8px" }}>
-                      <div style={secHead}>📋 Case Sheet &amp; Vitals</div>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={secHead}>Case Sheet &amp; Vitals</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                         <tbody>
                           {v.vitals.department && <tr><td style={tdH}>Department</td><td style={td} colSpan={3}>{v.vitals.department}</td></tr>}
-                          {v.vitals.chiefComplaints && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Chief Complaints</td><td style={td} colSpan={3}>{v.vitals.chiefComplaints}</td></tr>}
+                          {v.vitals.chiefComplaints && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Chief Complaints</td><td style={td} colSpan={3}>{v.vitals.chiefComplaints}</td></tr>}
                           {v.vitals.pastMedicalHistory && <tr><td style={tdH}>Past Medical History</td><td style={td} colSpan={3}>{v.vitals.pastMedicalHistory}</td></tr>}
-                          {v.vitals.medicalAllergy && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Allergies</td><td style={td} colSpan={3}>{v.vitals.medicalAllergy}</td></tr>}
+                          {v.vitals.medicalAllergy && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Allergies</td><td style={td} colSpan={3}>{v.vitals.medicalAllergy}</td></tr>}
                           {v.vitals.generalPhysicalExamination && <tr><td style={tdH}>General Examination</td><td style={td} colSpan={3}>{v.vitals.generalPhysicalExamination}</td></tr>}
-                          {v.vitals.systemicExamination && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Systemic Examination</td><td style={td} colSpan={3}>{v.vitals.systemicExamination}</td></tr>}
+                          {v.vitals.systemicExamination && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Systemic Examination</td><td style={td} colSpan={3}>{v.vitals.systemicExamination}</td></tr>}
                           {v.vitals.investigations && <tr><td style={tdH}>Investigations</td><td style={td} colSpan={3}>{v.vitals.investigations}</td></tr>}
-                          {v.vitals.treatmentAdvice && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Treatment Advice</td><td style={td} colSpan={3}>{v.vitals.treatmentAdvice}</td></tr>}
+                          {v.vitals.treatmentAdvice && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Treatment Advice</td><td style={td} colSpan={3}>{v.vitals.treatmentAdvice}</td></tr>}
                           {(v.vitals.bloodPressureSystolic || v.vitals.pulse) && (
                             <tr>
                               {v.vitals.bloodPressureSystolic && <><td style={tdH}>BP</td><td style={td}>{v.vitals.bloodPressureSystolic}/{v.vitals.bloodPressureDiastolic} mmHg</td></>}
@@ -364,7 +364,7 @@ export default function PatientHistory({ apiBaseUrl }) {
                             </tr>
                           )}
                           {(v.vitals.temperature || v.vitals.spO2) && (
-                            <tr style={{background:"#FAF4FF"}}>
+                            <tr style={{ background: "#FAF4FF" }}>
                               {v.vitals.temperature && <><td style={tdH}>Temp</td><td style={td}>{v.vitals.temperature}°F</td></>}
                               {v.vitals.spO2 && <><td style={tdH}>SpO₂</td><td style={td}>{v.vitals.spO2}%</td></>}
                             </tr>
@@ -375,17 +375,17 @@ export default function PatientHistory({ apiBaseUrl }) {
                               {v.vitals.height && <><td style={tdH}>Height</td><td style={td}>{v.vitals.height} cm {v.vitals.bmi ? `(BMI: ${v.vitals.bmi})` : ""}</td></>}
                             </tr>
                           )}
-                          {v.vitals.followUpDate && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Follow-up</td><td style={td} colSpan={3}>{formatDate(v.vitals.followUpDate)}</td></tr>}
+                          {v.vitals.followUpDate && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Follow-up</td><td style={td} colSpan={3}>{formatDate(v.vitals.followUpDate)}</td></tr>}
                         </tbody>
                       </table>
                     </div>
                   )}
 
                   {v.notes.length > 0 && (
-                    <div style={{ marginBottom:"8px" }}>
-                      <div style={secHead}>📝 Doctor Notes</div>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={secHead}>Doctor Notes</div>
                       {v.notes.map((n, ni) => (
-                        <div key={ni} style={{ padding:"5px 8px", background: ni%2===0?"#fff":"#F9F6FF", border:"1px solid #E0D0EF", borderRadius:"4px", marginBottom:"3px", fontSize:"11px" }}>
+                        <div key={ni} style={{ padding: "5px 8px", background: ni % 2 === 0 ? "#fff" : "#F9F6FF", border: "1px solid #E0D0EF", borderRadius: "4px", marginBottom: "3px", fontSize: "11px" }}>
                           {n.text}
                         </div>
                       ))}
@@ -393,18 +393,18 @@ export default function PatientHistory({ apiBaseUrl }) {
                   )}
 
                   {v.prescriptions.length > 0 && (
-                    <div style={{ marginBottom:"8px" }}>
-                      <div style={secHead}>💊 Prescription</div>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={secHead}>Prescription</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                         <thead>
-                          <tr style={{ background:"#C8860A", color:"#fff" }}>
+                          <tr style={{ background: "#C8860A", color: "#fff" }}>
                             <th style={th}>#</th><th style={th}>Medication</th><th style={th}>Dosage</th><th style={th}>Frequency</th><th style={th}>Notes</th>
                           </tr>
                         </thead>
                         <tbody>
                           {v.prescriptions.map((p, pi) => (
-                            <tr key={pi} style={{ background: pi%2===0?"#fff":"#FFFBF0" }}>
-                              <td style={td}>{pi+1}</td>
+                            <tr key={pi} style={{ background: pi % 2 === 0 ? "#fff" : "#FFFBF0" }}>
+                              <td style={td}>{pi + 1}</td>
                               <td style={td}>{p.medication}</td>
                               <td style={td}>{p.dosage}</td>
                               <td style={td}>{p.frequency}</td>
@@ -417,18 +417,18 @@ export default function PatientHistory({ apiBaseUrl }) {
                   )}
 
                   {v.tests.filter(t => t.selected).length > 0 && (
-                    <div style={{ marginBottom:"8px" }}>
-                      <div style={secHead}>🧪 Tests Ordered</div>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={secHead}>Tests Ordered</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                         <thead>
-                          <tr style={{ background:"#1E8A55", color:"#fff" }}>
+                          <tr style={{ background: "#1E8A55", color: "#fff" }}>
                             <th style={th}>#</th><th style={th}>Test Name</th><th style={th}>Category</th>
                           </tr>
                         </thead>
                         <tbody>
                           {v.tests.filter(t => t.selected).map((t, ti) => (
-                            <tr key={ti} style={{ background: ti%2===0?"#fff":"#F0FFF6" }}>
-                              <td style={td}>{ti+1}</td>
+                            <tr key={ti} style={{ background: ti % 2 === 0 ? "#fff" : "#F0FFF6" }}>
+                              <td style={td}>{ti + 1}</td>
                               <td style={td}>{t.testName}</td>
                               <td style={td}>{t.category}</td>
                             </tr>
@@ -439,39 +439,39 @@ export default function PatientHistory({ apiBaseUrl }) {
                   )}
 
                   {v.hospitalReferral?.refer && (
-                    <div style={{ marginBottom:"8px" }}>
-                      <div style={secHead}>🏥 Hospital Referral</div>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px" }}>
+                    <div style={{ marginBottom: "8px" }}>
+                      <div style={secHead}>Hospital Referral</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                         <tbody>
                           {v.hospitalReferral.hospitalName && <tr><td style={tdH}>Hospital</td><td style={td}>{v.hospitalReferral.hospitalName}</td></tr>}
-                          {v.hospitalReferral.remarks && <tr style={{background:"#FAF4FF"}}><td style={tdH}>Remarks</td><td style={td}>{v.hospitalReferral.remarks}</td></tr>}
+                          {v.hospitalReferral.remarks && <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Remarks</td><td style={td}>{v.hospitalReferral.remarks}</td></tr>}
                           {v.hospitalReferral.staffWent && <tr><td style={tdH}>Staff</td><td style={td}>{v.hospitalReferral.staffWent}</td></tr>}
-                          <tr style={{background:"#FAF4FF"}}><td style={tdH}>Ambulance</td><td style={td}>{v.hospitalReferral.ambulanceUsed ? "Yes" : "No"}</td></tr>
+                          <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Ambulance</td><td style={td}>{v.hospitalReferral.ambulanceUsed ? "Yes" : "No"}</td></tr>
                         </tbody>
                       </table>
                     </div>
                   )}
 
                   {v.certificate?.issued && (
-                    <div style={{ marginBottom:"4px" }}>
-                      <div style={secHead}>📋 Medical Certificate</div>
-                      <table style={{ width:"100%", borderCollapse:"collapse", fontSize:"11px" }}>
+                    <div style={{ marginBottom: "4px" }}>
+                      <div style={secHead}>Medical Certificate</div>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "11px" }}>
                         <tbody>
                           {v.certificate.clinicalDetails && <tr><td style={tdH}>Clinical Details</td><td style={td}>{v.certificate.clinicalDetails}</td></tr>}
-                          <tr style={{background:"#FAF4FF"}}><td style={tdH}>Status</td><td style={td}>Certificate Issued</td></tr>
+                          <tr style={{ background: "#FAF4FF" }}><td style={tdH}>Status</td><td style={td}>Certificate Issued</td></tr>
                         </tbody>
                       </table>
                     </div>
                   )}
 
-                  {!v.vitals && v.notes.length===0 && v.prescriptions.length===0 && v.tests.filter(t=>t.selected).length===0 && !v.hospitalReferral?.refer && !v.certificate?.issued && (
-                    <div style={{ fontSize:"11px", color:"#999", fontStyle:"italic", padding:"4px 0" }}>No clinical data recorded for this visit.</div>
+                  {!v.vitals && v.notes.length === 0 && v.prescriptions.length === 0 && v.tests.filter(t => t.selected).length === 0 && !v.hospitalReferral?.refer && !v.certificate?.issued && (
+                    <div style={{ fontSize: "11px", color: "#999", fontStyle: "italic", padding: "4px 0" }}>No clinical data recorded for this visit.</div>
                   )}
                 </div>
               </div>
             ))}
 
-            <div style={{ borderTop:"1px solid #ddd", paddingTop:"6px", fontSize:"10px", color:"#999", marginTop:"8px" }}>
+            <div style={{ borderTop: "1px solid #ddd", paddingTop: "6px", fontSize: "10px", color: "#999", marginTop: "8px" }}>
               Computer-generated summary — IIT Dharwad Wellness Centre. For complete clinical details, refer to the system record.
             </div>
           </>
@@ -532,7 +532,7 @@ export default function PatientHistory({ apiBaseUrl }) {
                 </div>
                 <div className="ph-patient-right">
                   {isFrequent && (
-                    <span className="ph-frequent-badge">⚠ Frequent ({recentVisits} in 30d)</span>
+                    <span className="ph-frequent-badge">Frequent ({recentVisits} in 30d)</span>
                   )}
                   <span className="ph-visit-count">{patientAppts.length} visit{patientAppts.length !== 1 ? "s" : ""}</span>
                   <button
@@ -541,9 +541,9 @@ export default function PatientHistory({ apiBaseUrl }) {
                     disabled={printLoading}
                     title="Print complete history"
                   >
-                    {printLoading && printingApptId === null ? "⏳ Loading…" : "⬇ Download PDF"}
+                    {printLoading && printingApptId === null ? "Loading..." : "Download PDF"}
                   </button>
-                  <span className="ph-expand-icon">{expandedPatient === p._id ? "▲" : "▼"}</span>
+                  <span className="ph-expand-icon">{expandedPatient === p._id ? "Collapse" : "Expand"}</span>
                 </div>
               </div>
 
@@ -569,7 +569,7 @@ export default function PatientHistory({ apiBaseUrl }) {
                           </option>
                         ))}
                       </select>
-                      <button type="submit" className="ph-refer-btn">Refer →</button>
+                      <button type="submit" className="ph-refer-btn">Refer</button>
                     </div>
                     <textarea
                       value={reason}
@@ -596,9 +596,9 @@ export default function PatientHistory({ apiBaseUrl }) {
                               disabled={printLoading}
                               title="Download PDF for this visit"
                             >
-                              {printLoading && printingApptId === a._id ? "⏳ Loading…" : "⬇ Visit PDF"}
+                              {printLoading && printingApptId === a._id ? "Loading..." : "Visit PDF"}
                             </button>
-                            <span className="ph-expand-icon">{expandedAppt === a._id ? "▲" : "▼"}</span>
+                            <span className="ph-expand-icon">{expandedAppt === a._id ? "Collapse" : "Expand"}</span>
                           </div>
                         </div>
 
@@ -611,7 +611,6 @@ export default function PatientHistory({ apiBaseUrl }) {
                                   className={`ph-sec-btn${openSection[a._id] === sec.key ? " active" : ""}`}
                                   onClick={() => toggleSection(a._id, sec.key)}
                                 >
-                                  <span className="ph-sec-icon">{sec.icon}</span>
                                   <span>{sec.label}</span>
                                 </button>
                               ))}

@@ -223,6 +223,48 @@ body {
   cursor: not-allowed;
 }
 
+/* — UHID read-only field — */
+.uhid-readonly-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.uhid-readonly {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(74, 16, 96, 0.06), rgba(200, 134, 10, 0.04)) !important;
+  border-color: rgba(74, 16, 96, 0.25) !important;
+  color: #4a1060 !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  letter-spacing: 0.08em;
+  cursor: not-allowed !important;
+  padding-right: 110px !important; /* room for badge */
+  border-radius: 14px !important;
+}
+
+.uhid-readonly:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+  border-color: rgba(74, 16, 96, 0.25) !important;
+}
+
+.uhid-badge {
+  position: absolute;
+  right: 12px;
+  background: linear-gradient(135deg, #4a1060, #8c2d8f);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 
 /* ══════════════════════════════════════════════════════════════════════
    SECTION 2 — Doctor Initial Profile (REDESIGNED)

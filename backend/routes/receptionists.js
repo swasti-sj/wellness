@@ -93,7 +93,7 @@ router.post("/entries", async (req, res) => {
       });
     }
 
-// =========================================================
+    // =========================================================
     // NOT WALK-IN → create real User + Appointment + Entry
     // =========================================================
     // Build the date timezone-safely from the raw YYYY-MM-DD string so the
@@ -137,7 +137,7 @@ router.post("/entries", async (req, res) => {
     const startDateTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
 
-// Find patient user by roll (the receptionist form only collects roll, not email)
+    // Find patient user by roll (the receptionist form only collects roll, not email)
     const User = require('../models/User');
     const cleanEmail = email && email !== '-' ? email : null;
 
@@ -174,9 +174,10 @@ router.post("/entries", async (req, res) => {
     const newEntry = new ReceptionistEntry({
       patientName,
       roll,
+      appointmentId: appointment._id,
       role: role || 'Student',
       doctorId,
-doctorName,
+      doctorName,
       appointmentDate: startDateTime,
       appointmentTime: appointmentTime || null,
       email: email || "-",

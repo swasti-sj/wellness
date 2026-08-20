@@ -9,10 +9,10 @@ const AppointmentSchema = new mongoose.Schema({
   endDateTime: { type: Date, required: true },
   slotDay: { type: String },
   slotTime: { type: String },
-  bookedBy: { 
-    type: String, 
-    enum: ['user', 'doctor', 'nurse', 'receptionist'], 
-    default: 'user' 
+  bookedBy: {
+    type: String,
+    enum: ['user', 'doctor', 'nurse', 'receptionist'],
+    default: 'user'
   }, // Track who made the booking
   dependant: {
     _id: mongoose.Schema.Types.ObjectId,
@@ -22,12 +22,13 @@ const AppointmentSchema = new mongoose.Schema({
     relationship: String,
     bloodGroup: String,
     phone: String,
+    uhid: String,
   },
   status: {
     type: String,
     enum: [
       "booked",
-      "attended", 
+      "attended",
       "no show",
       "cancelled by user",
       "cancelled by doctor",

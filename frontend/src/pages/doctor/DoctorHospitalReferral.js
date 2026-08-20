@@ -4,6 +4,30 @@ import '../../styles/doctor/DoctorHospitalReferral.css';
 import DocumentUpload from './documentUpload';
 import { buildDocumentUrl, getDocumentName } from './documentHelpers';
 import { useApi } from '../../context/ApiContext';
+
+const CashlessDocumentPreview = ({ url }) => {
+  const documentUrl = buildDocumentUrl(url);
+  const isImage = /^data:image\//i.test(documentUrl) || /\.(png|jpe?g|webp|gif)(\?|#|$)/i.test(documentUrl);
+  const isPdf = /^data:application\/pdf/i.test(documentUrl) || /\.pdf(\?|#|$)/i.test(documentUrl);
+
+  if (!documentUrl) return null;
+
+  return (
+    <div className="cashless-document-preview">
+      {isImage ? (
+        <img src={documentUrl} alt="Cashless form" />
+      ) : isPdf ? (
+        <iframe src={documentUrl} title="Cashless form" />
+      ) : (
+        <object data={documentUrl} type="application/octet-stream" aria-label="Cashless form">
+          <p>Document preview is not supported in this browser.</p>
+        </object>
+      )}
+      <a href={documentUrl} target="_blank" rel="noreferrer">Open full document</a>
+    </div>
+  );
+};
+
 function DoctorHospitalReferral({ appointmentId }) {
   const [refer, setRefer] = useState(false);
   const [hospitalName, setHospitalName] = useState('');
@@ -170,9 +194,7 @@ function DoctorHospitalReferral({ appointmentId }) {
             {cashlessFormUsed && cashlessFormDocumentUrl && (
               <div className="summary-item full-width">
                 <span className="summary-label">Cashless Form Document:</span>
-                <a className="summary-value" href={buildDocumentUrl(cashlessFormDocumentUrl)} target="_blank" rel="noreferrer">
-                  {getDocumentName(cashlessFormDocumentUrl, 'View cashless form')}
-                </a>
+                <CashlessDocumentPreview url={cashlessFormDocumentUrl} />
               </div>
             )}
             {remarks && <div className="summary-item full-width"><span className="summary-label">Remarks:</span><span className="summary-value remarks-box">{remarks}</span></div>}

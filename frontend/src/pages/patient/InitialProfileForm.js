@@ -3,11 +3,22 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 import { useApi } from '../../context/ApiContext';
+
 const PATIENT_CATEGORIES = ["Student", "Faculty", "Staff", "Outsourced Staff"];
+
 function InitialProfileForm() {
-  const [form, setForm] = useState({ name: '', roll: '', sex: '', age: '', phone: '', uhid: '', patientCategory: '', consentAccepted: false });
+  const [form, setForm] = useState({
+    name: '',
+    roll: '',
+    sex: '',
+    age: '',
+    phone: '',
+    patientCategory: '',
+    consentAccepted: false,
+  });
   const navigate = useNavigate();
   const apiBaseUrl = useApi();
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm({ ...form, [name]: type === 'checkbox' ? checked : value });
@@ -23,7 +34,6 @@ function InitialProfileForm() {
       });
       alert('Profile saved');
       navigate('/patdashboard', { replace: true });
-
     } catch (err) {
       console.error(err);
       alert('Failed to save profile');
@@ -49,7 +59,7 @@ function InitialProfileForm() {
               Full Name:
               <input name="name" value={form.name} onChange={handleChange} placeholder="As per official records" required />
             </label>
-            
+
             <label>
               Roll Number / ID:
               <input name="roll" value={form.roll} onChange={handleChange} placeholder="e.g. 210010001" required />
@@ -82,13 +92,9 @@ function InitialProfileForm() {
               <input name="age" type="number" value={form.age} onChange={handleChange} placeholder="Years" required />
             </label>
 
-            <label>
+            <label className="profile-span-2">
               Phone Number:
               <input name="phone" value={form.phone} onChange={handleChange} placeholder="e.g. +91 XXXXX XXXXX" required />
-            </label>
-            <label>
-              UHID Number:
-              <input name="uhid" value={form.uhid} onChange={handleChange} placeholder="Unique Health ID" required />
             </label>
           </div>
 
@@ -103,7 +109,7 @@ function InitialProfileForm() {
             </label>
           </div>
 
-          <button type="submit">Save & Enter Dashboard</button>
+          <button type="submit">Save &amp; Enter Dashboard</button>
         </form>
       </div>
     </div>

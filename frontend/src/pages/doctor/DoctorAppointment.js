@@ -31,14 +31,44 @@ export default function DoctorAppointment({ apiBaseUrl }) {
   const [bookingData, setBookingData] = useState({
     patientEmail: "",
     patientPhone: "",
+    dependantId: "",
     date: "",
     time: "",
     duration: 30,
   });
+  const [isBooking, setIsBooking] = useState(false);
+  const [dependants, setDependants] = useState([]);
+  const [patientCategory, setPatientCategory] = useState("");
+  const [dependantsLoading, setDependantsLoading] = useState(false);
 
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const email = bookingData.patientEmail.trim();
+    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    setDependants([]);
+    setPatientCategory("");
+    setBookingData((current) => ({ ...current, dependantId: "" }));
+    if (!isValidEmail || !token || !apiBaseUrl) return;
+
+    setDependantsLoading(true);
+    axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
+      params: { email },
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      setPatientCategory(res.data.patientCategory || "");
+      setDependants(res.data.dependants || []);
+    })
+      .catch(() => {
+        setPatientCategory("");
+        setDependants([]);
+      })
+      .finally(() => setDependantsLoading(false));
+  }, [bookingData.patientEmail, apiBaseUrl, token]);
+
+  const patientCanHaveDependants = ["Faculty", "Staff", "Outsourced Staff"].includes(patientCategory);
 
   // ── Reopen appointment modal when returning from TestPage ──
   useEffect(() => {
@@ -123,6 +153,8 @@ export default function DoctorAppointment({ apiBaseUrl }) {
 
   const handleBookAppointment = async (e) => {
     e.preventDefault();
+    if (isBooking) return;
+    setIsBooking(true);
     try {
       const startDateTime = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
       const endDateTime = new Date(new Date(startDateTime).getTime() + bookingData.duration * 60000).toISOString();
@@ -130,6 +162,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
         token,
         patientEmail: bookingData.patientEmail,
         patientPhone: bookingData.patientPhone,
+        dependantId: bookingData.dependantId,
         startDateTime,
         endDateTime,
         slotDay: new Date(bookingData.date).toLocaleDateString("en-US", { weekday: "long" }),
@@ -137,13 +170,15 @@ export default function DoctorAppointment({ apiBaseUrl }) {
       });
       if (res.data.success) {
         setShowBookingForm(false);
-        setBookingData({ patientEmail: "", patientPhone: "", date: "", time: "", duration: 30 });
+        setBookingData({ patientEmail: "", patientPhone: "", dependantId: "", date: "", time: "", duration: 30 });
         fetchAppointments();
         fetchAvailableSlots();
         alert("Appointment booked successfully!");
       }
     } catch (err) {
       alert("Failed to book appointment: " + (err.response?.data?.error || err.message));
+    } finally {
+      setIsBooking(false);
     }
   };
 
@@ -298,9 +333,15 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   : selectedEvent.patientDisplayName || selectedEvent.patient?.name || "Unknown Patient"}
               </div>
               <div className="modal-meta">
-                <span><strong>Primary Patient:</strong> {selectedEvent.patientDisplayName || selectedEvent.patient?.name || "N/A"}</span>
                 {selectedEvent.dependant?.name && (
-                  <span><strong>Dependant:</strong> {selectedEvent.dependant.name}</span>
+                  <>
+                    <span><strong>Primary Patient:</strong> {selectedEvent.dependant.name}</span>
+                    <span><strong>UHID:</strong> {selectedEvent.dependant.uhid || "N/A"}</span>
+                    <span><strong>Dependant of:</strong> {selectedEvent.patientDisplayName || selectedEvent.patient?.name || "N/A"}</span>
+                  </>
+                )}
+                {!selectedEvent.dependant?.name && (
+                  <span><strong>Patient:</strong> {selectedEvent.patientDisplayName || selectedEvent.patient?.name || "N/A"}</span>
                 )}
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
@@ -361,6 +402,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                 <DoctorVitals
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
+                  dependantUhid={selectedEvent.dependant?.uhid}
                   apiBaseUrl={apiBaseUrl}
                 />
               </SubSection>
@@ -435,6 +477,25 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                     onChange={(e) => setBookingData({ ...bookingData, patientPhone: e.target.value })} />
                 </div>
                 <div className="booking-field">
+                  {patientCanHaveDependants && <label>Book For (required)</label>}
+                  {patientCanHaveDependants && (
+                    <select value={bookingData.dependantId}
+                      onChange={(e) => setBookingData({ ...bookingData, dependantId: e.target.value })}
+                      disabled={dependantsLoading || !dependants.length}
+                      required>
+                      <option value="">Select dependant</option>
+                      {dependantsLoading && <option disabled>Loading dependants...</option>}
+                      {!dependantsLoading && !dependants.length && (
+                        <option disabled>No dependants found</option>
+                      )}
+                      {dependants.map((dependant) => (
+                        <option key={dependant._id} value={dependant._id}>
+                          {dependant.name}{dependant.relationship ? ` (${dependant.relationship})` : ""}
+                        </option>
+                      ))}
+                    </select>)}
+                </div>
+                <div className="booking-field">
                   <label>Date</label>
                   <input type="date" value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
@@ -456,7 +517,9 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   </select>
                 </div>
                 <div className="modal-actions" style={{ marginTop: "1.2rem" }}>
-                  <button type="submit" className="booking-submit-btn">Book Appointment</button>
+                  <button type="submit" className="booking-submit-btn" disabled={isBooking}>
+                    {isBooking ? "Booking..." : "Book Appointment"}
+                  </button>
                   <button type="button" className="booking-cancel-btn" onClick={() => setShowBookingForm(false)}>Cancel</button>
                 </div>
               </form>

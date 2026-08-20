@@ -17,7 +17,7 @@ function DocumentUpload({
 
   const isPdf = useMemo(() => {
     if (selectedFile?.type === 'application/pdf') return true;
-    return /\.pdf($|\?)/i.test(previewUrl || '');
+    return /\.pdf($|\?)/i.test(previewUrl || '') || /^data:application\/pdf/i.test(previewUrl || '');
   }, [previewUrl, selectedFile]);
 
   const resolvedUrl = previewUrl && !selectedFile ? buildDocumentUrl(previewUrl) : previewUrl;

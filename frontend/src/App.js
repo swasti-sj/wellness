@@ -1,4 +1,4 @@
-import {React,useEffect} from "react";
+import { React, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -225,9 +225,9 @@ function App() {
         {/* Admin routes */}
         {/* <Route path="/admin/audit" element={<AdminAuditPage />} /> */}
         <Route
-  path="/admin/initial-profile"
-  element={<AdminInitialProfile />}
-/>
+          path="/admin/initial-profile"
+          element={<AdminInitialProfile />}
+        />
         <Route path="/admin-dashboard" element={<AdminDashboardLayout />}>
           <Route path="audit" element={<AdminAuditPage />} />
           <Route path="profile" element={<AdminProfilePage apiBaseUrl={apiBaseUrl} />} />
@@ -307,15 +307,15 @@ function App() {
 
         {/* Pharmacist routes */}
         <Route path="/pharmacist-dashboard" element={<LayoutWithPharmNavbar><PharmacistDashboard /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
-{/* Legacy routes redirect to unified analytics */}
-<Route path="/pharmacist-dashboard/medicine-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/advanced-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
-<Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
+        <Route path="/pharmacist-dashboard/stock" element={<LayoutWithPharmNavbar><PharmacistMedicineStock /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/records" element={<LayoutWithPharmNavbar><PharmacistIssuanceRecords /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
+        {/* Legacy routes redirect to unified analytics */}
+        <Route path="/pharmacist-dashboard/medicine-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/advanced-analytics" element={<LayoutWithPharmNavbar><PharmacistAnalytics /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/stock-history" element={<LayoutWithPharmNavbar><PharmacistStockHistory /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist-dashboard/profile" element={<LayoutWithPharmNavbar><PharmacistProfile /></LayoutWithPharmNavbar>} />
+        <Route path="/pharmacist/initial-profile" element={<InitialPharmacistProfileForm />} />
       </Routes>
     </Router>
   );
