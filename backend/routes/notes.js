@@ -6,7 +6,8 @@ const Appointment = require("../models/Appointment");
 const Note = require("../models/Note");
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
-const { compressImageToDataUri, deleteImage, extractPublicId } = require('../utils/cloudinary');
+const { deleteImage, extractPublicId } = require('../utils/cloudinary');
+const { saveCompressedImageToDisk, deleteFileFromDisk } = require('../utils/diskStorage');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -158,20 +159,17 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
       console.log(`[Notes] Compressing and storing ${req.files.length} file(s)...`);
       console.log('[Notes] Files:', req.files.map(f => ({ name: f.originalname, size: f.size })));
       try {
-        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is
-        // configured. To switch back to Cloudinary later, replace this block
-        // with a call to uploadMultipleImages(req.files, 'wellness/notes')
-        // (already defined and exported in utils/cloudinary.js).
-        const dataUris = await Promise.all(
-          req.files.map((f) => compressImageToDataUri(f.buffer))
+        // Compressed and written to the institute-allocated disk storage;
+        // only the returned URL is saved in MongoDB (not the image itself).
+        const saved = await Promise.all(
+          req.files.map((f) => saveCompressedImageToDisk(f.buffer, 'wellness/notes', f.originalname))
         );
 
-        const newImages = dataUris.map((dataUri) => ({
-          url: dataUri,
+        const newImages = saved.map(({ url }) => ({
+          url,
           publicId: '',
           caption: req.body.caption || '',
           uploadedAt: new Date(),
-          size: dataUri.length,
           format: 'webp'
         }));
 
@@ -240,9 +238,11 @@ router.delete("/:noteId/images/:imageIndex", async (req, res) => {
     if (note.images && note.images[index]) {
       const imageToDelete = note.images[index];
       
-      // Delete from Cloudinary if publicId exists (skipped for interim-stored
-      // images, which have an empty publicId since they live inside MongoDB)
-      if (imageToDelete.publicId) {
+      // Delete the underlying file: disk-stored images (url starts with
+      // /uploads/) or, for older records, Cloudinary ones (have a publicId).
+      if (imageToDelete.url && imageToDelete.url.startsWith('/uploads/')) {
+        await deleteFileFromDisk(imageToDelete.url);
+      } else if (imageToDelete.publicId) {
         try {
           await deleteImage(imageToDelete.publicId);
           console.log('Image deleted from Cloudinary:', imageToDelete.publicId);
@@ -305,11 +305,13 @@ router.delete("/:noteId", async (req, res) => {
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Delete associated images from Cloudinary (skipped for interim-stored
-    // images, which have an empty publicId)
+    // Delete associated image files: disk-stored (url starts with /uploads/)
+    // or, for older records, Cloudinary ones (have a publicId).
     if (note.images && note.images.length > 0) {
       const deletePromises = note.images.map(image => {
-        if (image.publicId) {
+        if (image.url && image.url.startsWith('/uploads/')) {
+          return deleteFileFromDisk(image.url);
+        } else if (image.publicId) {
           return deleteImage(image.publicId).catch(err => {
             console.warn('Failed to delete image from Cloudinary:', err.message);
           });
@@ -318,7 +320,7 @@ router.delete("/:noteId", async (req, res) => {
       try {
         await Promise.all(deletePromises);
       } catch (deleteErr) {
-        console.warn('Error deleting images from Cloudinary:', deleteErr.message);
+        console.warn('Error deleting note image files:', deleteErr.message);
         // Continue anyway - database deletion will still happen
       }
     }

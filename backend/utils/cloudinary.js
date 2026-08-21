@@ -344,5 +344,9 @@ module.exports = {
   getOptimizedUrl,
   compressImageToDataUri,
   bufferToDataUri,
+  // Exported so utils/diskStorage.js can reuse the same compression logic
+  // instead of duplicating it — see DOCUMENT_COMPRESSION_CONFIG comment above.
+  compressToTargetSize,
+  DOCUMENT_COMPRESSION_CONFIG,
   cloudinary
 };

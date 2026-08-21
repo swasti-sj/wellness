@@ -1,2 +1,6 @@
 /node_modules
 .env
+
+# Uploaded files (prescriptions, lab documents, note images, etc.) — these
+# are patient health data and must never be committed to git.
+/uploads/

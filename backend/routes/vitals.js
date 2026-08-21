@@ -5,7 +5,8 @@ const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
-const { uploadDocument, compressImageToDataUri, bufferToDataUri, deleteImage } = require('../utils/cloudinary');
+const { uploadDocument, deleteImage } = require('../utils/cloudinary');
+const { saveCompressedImageToDisk, saveRawFileToDisk } = require('../utils/diskStorage');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -129,13 +130,14 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
         if (!Number.isFinite(targetSizeKB)) targetSizeKB = 100;
         targetSizeKB = Math.min(Math.max(targetSizeKB, 10), 100);
 
-        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is
-        // configured. To switch to Cloudinary later, replace this block with
-        // the uploadDocument(...) call that is already imported above.
+        // Compressed and written to the institute-allocated disk storage;
+        // only the returned URL is saved in MongoDB.
         if (req.file.mimetype.startsWith('image/')) {
-          vital.caseSheetDocumentUrl = await compressImageToDataUri(req.file.buffer, { targetSizeKB });
+          const saved = await saveCompressedImageToDisk(req.file.buffer, 'wellness/vitals', req.file.originalname, { targetSizeKB });
+          vital.caseSheetDocumentUrl = saved.url;
         } else {
-          vital.caseSheetDocumentUrl = bufferToDataUri(req.file.buffer, req.file.mimetype);
+          const saved = await saveRawFileToDisk(req.file.buffer, 'wellness/vitals', req.file.originalname, req.file.mimetype);
+          vital.caseSheetDocumentUrl = saved.url;
         }
         vital.caseSheetDocumentPublicId = '';
       } catch (uploadErr) {

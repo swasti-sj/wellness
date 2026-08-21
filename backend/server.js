@@ -59,7 +59,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(auditLogger);
 
-app.use('/uploads', express.static('backend/uploads'));
+// Resolved from __dirname (not process.cwd()) so it matches wherever
+// diskStorage.js actually writes files, regardless of how/where the
+// process was started (local dev vs PM2 on the VM).
+app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
 
 app.use(session({
   secret: process.env.SESSION_SECRET || "my_secret_key",
