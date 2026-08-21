@@ -133,6 +133,13 @@ Uploaded files (prescriptions, lab test documents, vitals case sheets, note imag
 3. `~/wellness/backend/uploads` is a **symlink** pointing at `/mnt/ccs-wellness` — the app always writes to `backend/uploads/...`, and the symlink transparently redirects that onto the network share.
 4. `server.js` serves files back out via `express.static(...)` mounted at `/uploads`, so a saved file becomes reachable at `https://wellness.iitdh.ac.in/uploads/wellness/<feature>/<filename>`. Only that short URL is stored in MongoDB — never the file itself.
 
+**What happens when a file is uploaded (e.g. a lab test document):**
+1. Browser sends the file to a route like `POST /api/tests/save`; `multer` receives it into memory (not saved anywhere yet).
+2. If it's an image, `compressToTargetSize()` (in `utils/cloudinary.js`) shrinks/converts it to webp at the requested target size (10–300 KB depending on the field) — **this is the same compression function originally built for the Cloudinary path**; only the destination changed, not the compression itself.
+3. `utils/diskStorage.js` writes the compressed bytes to `backend/uploads/wellness/<feature>/<timestamp>-<name>.webp` — which, via the symlink, actually lands on the CCS network share.
+4. Only the resulting short URL (e.g. `/uploads/wellness/tests/1755-report.webp`) is saved into the MongoDB document — never the file bytes.
+5. On later view, the frontend (`documentHelpers.js` → `buildDocumentUrl`) prefixes that path with the backend's base URL, and `express.static` serves the actual file back from the mount.
+
 **Important operational notes:**
 - If the `/mnt/ccs-wellness` mount ever drops (network blip, VM reboot before `_netdev` remount completes, credentials expired) and the symlink target becomes unreachable, **do not let the app silently fall back to writing a real local folder at `backend/uploads`** — that would start filling the VM's own small disk again and scatter files across two different storage locations. Check `mount | grep ccs-wellness` first if uploads start failing.
 - Re-mount manually if needed: `sudo mount -a` (re-reads `/etc/fstab`).
