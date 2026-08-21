@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/Dashboard.css";
@@ -9,12 +9,7 @@ export default function Dashboard() {
   const [lastVisit, setLastVisit] = useState(null);
   const [lastVisitPrescription, setLastVisitPrescription] = useState(null);
   const [error, setError] = useState("");
-  const [expandedDoctorId, setExpandedDoctorId] = useState(null);
-  const containerRefs = useRef({});
   const apiBaseUrl = useApi();
-  const toggleExpand = (doctorId) => {
-    setExpandedDoctorId(expandedDoctorId === doctorId ? null : doctorId);
-  };
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -108,7 +103,11 @@ export default function Dashboard() {
     const nextSlot = doctor.availableSlots?.[0];
     if (!nextSlot) return "No slots available";
     const nextTime = nextSlot.times?.[0]?.time || "Available";
-    return `${new Date(nextSlot.date).toLocaleDateString()} at ${nextTime}`;
+    const nextDate = new Date(nextSlot.date).toLocaleDateString(undefined, {
+      day: "numeric",
+      month: "short",
+    });
+    return `${nextDate} · ${nextTime}`;
   };
 
   return (
@@ -144,45 +143,39 @@ export default function Dashboard() {
         <div className="visiting-doctors-list">
           {doctors.length > 0 ? (
             doctors.map((d) => {
-              const expanded = expandedDoctorId === d._id;
               return (
                 <div
                   key={d._id}
-                  ref={(el) => (containerRefs.current[d._id] = el)}
-                  onClick={() => toggleExpand(d._id)}
-                  onMouseEnter={() => setExpandedDoctorId(d._id)}
-                  onMouseLeave={() => setExpandedDoctorId(null)}
-                  className={`doctor-card${expanded ? " expanded" : ""}`}
-                  style={{ maxHeight: expanded ? "500px" : "250px" }}
+                  className="doctor-card"
                 >
-                  <h3 className="doctor-card-title">{d.name}</h3>
-                  <p className="doctor-card-specialty">{d.specialization}</p>
-                  <p className="doctor-card-availability">
-                    <strong>Next available:</strong> {renderNextAvailability(d)}
-                  </p>
-
-                  {expanded && (
-                    <div className="doctorHover">
-                      <p>
-                        <strong>Primary specialty:</strong> {d.specialization || "General care"}
-                      </p>
-                      <p>
-                        <strong>Available on:</strong>{" "}
-                        {d.availableSlots?.map((slot) => slot.day).join(", ") || "Not scheduled"}
-                      </p>
-                      {/* <p>
-                        <strong>Consultation fee:</strong> ₹{d.consultationFee || "N/A"}
-                      </p> */}
-                      <Link
-                        to="/patdashboard/book"
-                        className="doctor-card-btn"
-                        onClick={(e) => e.stopPropagation()}
-                        state={{ selectedDoctorId: d._id }}
-                      >
-                        Book Now
-                      </Link>
+                  <div className="doctor-card-body">
+                    <div className="doctor-card-heading">
+                      <div className="doctor-avatar" aria-hidden="true">Dr</div>
+                      <div>
+                        <h3 className="doctor-card-title">{d.name}</h3>
+                        <p className="doctor-card-specialty">{d.specialization || "General care"}</p>
+                      </div>
                     </div>
-                  )}
+                    <div className="doctor-card-availability">
+                      <span className="availability-mark" aria-hidden="true">●</span>
+                      <span><strong>Next opening</strong>{renderNextAvailability(d)}</span>
+                    </div>
+                    <p className="doctor-card-schedule">
+
+                      {d.availableSlots?.length
+                        ? `${d.availableSlots.length} available day${d.availableSlots.length === 1 ? "" : "s"}`
+                        : "Schedule unavailable"}
+                    </p>
+                  </div>
+                  <div className="doctor-card-footer">
+                    <Link
+                      to="/patdashboard/book"
+                      className="doctor-card-btn"
+                      state={{ selectedDoctorId: d._id }}
+                    >
+                      Book appointment <span aria-hidden="true">→</span>
+                    </Link>
+                  </div>
                 </div>
               );
             })
@@ -273,6 +266,7 @@ export default function Dashboard() {
           <p className="empty-message">No past visits recorded yet.</p>
         )}
       </section>
+
     </div>
   );
 }

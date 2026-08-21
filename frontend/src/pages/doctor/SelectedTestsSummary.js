@@ -48,7 +48,7 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
         formData.append('existingLabTestDocumentUrl', labTestDocumentUrl);
       }
 
-      const response = await axios.post('${apiBaseUrl}/api/tests/save', formData, {
+      const response = await axios.post(`${apiBaseUrl}/api/tests/save`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

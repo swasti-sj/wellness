@@ -117,10 +117,12 @@ export default function ReceptionistDashboard() {
       const response = await axios.get(`${apiBaseUrl}/api/receptionist/entries`);
       const entries = (response.data.entries || []).map(entry => ({
         _id: entry._id,
+        appointmentId: entry.appointmentId || null,
         patientName: entry.patientName,
         roll: entry.roll,
         role: entry.role,
         doctorName: entry.doctorName || '-',
+        doctorId: entry.doctorId?._id || entry.doctorId || '',
         date: entry.appointmentDate,
         time: entry.appointmentTime || '-',
         status: entry.status,
@@ -179,7 +181,7 @@ export default function ReceptionistDashboard() {
   const handleEditRow = (item) => {
     setEditingRowId(item._id);
     setEditedValues({
-patientName: item.patientName,
+      patientName: item.patientName,
       roll: item.roll,
       doctorName: item.doctorName,
       date: toLocalDateInput(item.date),
@@ -247,7 +249,7 @@ patientName: item.patientName,
       showMessage('Please select a doctor', 'error');
       return;
     }
-try {
+    try {
       const isWalkIn = formData.entryType === 'walkin';
       // Send the raw date string (YYYY-MM-DD) so the backend builds a local Date
       // without a UTC/timezone shift.
@@ -271,6 +273,7 @@ try {
       if (response.data.success) {
         const newEntry = {
           _id: response.data.entry._id,
+          appointmentId: response.data.entry.appointmentId || null,
           patientName: response.data.entry.patientName,
           roll: response.data.entry.roll,
           role: response.data.entry.role,
@@ -297,7 +300,53 @@ try {
     }
   };
 
-  const allData = [...appointments, ...manualEntries];
+  const toLocalDateInput = (dateString) => {
+    if (!dateString) return '';
+    const d = new Date(dateString);
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const linkedEntriesByAppointmentId = new Map(
+    manualEntries
+      .filter(entry => entry.appointmentId)
+      .map(entry => [entry.appointmentId.toString(), entry])
+  );
+
+  const canonicalAppointments = appointments.map(appointment => {
+    const linkedEntry = linkedEntriesByAppointmentId.get(appointment._id.toString());
+    return linkedEntry
+      ? { ...appointment, remarks: linkedEntry.remarks || appointment.remarks }
+      : appointment;
+  });
+
+  const appointmentKeys = new Set(canonicalAppointments.map(appointment => [
+    appointment.roll,
+    appointment.doctorId,
+    toLocalDateInput(appointment.date),
+    appointment.time,
+  ].join('|')));
+
+  const standaloneManualEntries = manualEntries.filter(entry => {
+    if (entry.appointmentId) return false;
+
+    const legacyAppointmentKey = [
+      entry.roll,
+      entry.doctorId,
+      toLocalDateInput(entry.date),
+      entry.time,
+    ].join('|');
+
+    return !appointmentKeys.has(legacyAppointmentKey);
+  });
+
+  const allData = [
+    ...canonicalAppointments,
+    ...standaloneManualEntries,
+  ];
 
   const filteredData = useMemo(() => {
     let result = allData;
@@ -341,21 +390,9 @@ try {
   }, [allData, searchQuery, sortBy, filterDoctor, fromDate, toDate]);
 
 
-const formatDate = (dateString) => {
+  const formatDate = (dateString) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-
-  // Convert a stored date into a local YYYY-MM-DD string WITHOUT UTC shift,
-  // so editing shows the exact date the receptionist selected.
-  const toLocalDateInput = (dateString) => {
-    if (!dateString) return '';
-    const d = new Date(dateString);
-    if (isNaN(d.getTime())) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
   };
 
   const getStatusMeta = (status) => {

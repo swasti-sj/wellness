@@ -6,7 +6,7 @@ const Appointment = require("../models/Appointment");
 const Note = require("../models/Note");
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
-const { uploadMultipleImages, deleteImage, extractPublicId } = require('../utils/cloudinary');
+const { compressImageToDataUri, deleteImage, extractPublicId } = require('../utils/cloudinary');
 
 // Configure multer for memory storage (we'll upload to Cloudinary)
 const storage = multer.memoryStorage();
@@ -153,24 +153,26 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Process uploaded images and upload to Cloudinary
+    // Process uploaded images
     if (req.files && req.files.length > 0) {
-      console.log(`[Notes] Uploading ${req.files.length} file(s) to Cloudinary...`);
+      console.log(`[Notes] Compressing and storing ${req.files.length} file(s)...`);
       console.log('[Notes] Files:', req.files.map(f => ({ name: f.originalname, size: f.size })));
       try {
-        const uploadResults = await uploadMultipleImages(
-          req.files,
-          'wellness/notes'
+        // INTERIM: storing directly in MongoDB until Cloudinary/disk storage is
+        // configured. To switch back to Cloudinary later, replace this block
+        // with a call to uploadMultipleImages(req.files, 'wellness/notes')
+        // (already defined and exported in utils/cloudinary.js).
+        const dataUris = await Promise.all(
+          req.files.map((f) => compressImageToDataUri(f.buffer))
         );
-        console.log('[Notes] Upload results:', uploadResults.map(r => ({ url: r.secure_url })));
 
-        const newImages = uploadResults.map((result, index) => ({
-          url: result.secure_url,
-          publicId: result.public_id,
+        const newImages = dataUris.map((dataUri) => ({
+          url: dataUri,
+          publicId: '',
           caption: req.body.caption || '',
           uploadedAt: new Date(),
-          size: result.bytes,
-          format: result.format
+          size: dataUri.length,
+          format: 'webp'
         }));
 
         note.images = [...(note.images || []), ...newImages];
@@ -197,9 +199,9 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
 
         res.json({ success: true, note, message: `${newImages.length} image(s) uploaded and compressed successfully` });
       } catch (uploadErr) {
-        console.error('[Notes] Cloudinary upload error:', uploadErr.message);
+        console.error('[Notes] Image storage error:', uploadErr.message);
         console.error('[Notes] Error stack:', uploadErr.stack);
-        res.status(500).json({ error: `Failed to upload images: ${uploadErr.message}` });
+        res.status(500).json({ error: `Failed to store images: ${uploadErr.message}` });
       }
     } else {
       res.status(400).json({ error: "No images provided" });
@@ -238,7 +240,8 @@ router.delete("/:noteId/images/:imageIndex", async (req, res) => {
     if (note.images && note.images[index]) {
       const imageToDelete = note.images[index];
       
-      // Delete from Cloudinary if publicId exists
+      // Delete from Cloudinary if publicId exists (skipped for interim-stored
+      // images, which have an empty publicId since they live inside MongoDB)
       if (imageToDelete.publicId) {
         try {
           await deleteImage(imageToDelete.publicId);
@@ -302,7 +305,8 @@ router.delete("/:noteId", async (req, res) => {
     const appointment = await Appointment.findById(note.appointment);
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    // Delete associated images from Cloudinary
+    // Delete associated images from Cloudinary (skipped for interim-stored
+    // images, which have an empty publicId)
     if (note.images && note.images.length > 0) {
       const deletePromises = note.images.map(image => {
         if (image.publicId) {

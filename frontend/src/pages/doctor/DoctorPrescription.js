@@ -119,9 +119,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
         formData.append('existingDocumentUrl', documentUrl);
       }
 
-      const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData);
 
       if (r.data.success) {
         setCurrent(r.data.prescription.prescriptions);
@@ -279,7 +277,11 @@ function DoctorPrescription({ appointmentId, patientId }) {
         <button className="rx-add-btn" onClick={addRow}>Add Medication</button>
         <div className="rx-save-group">
           {saved && <span className="rx-saved">Saved</span>}
-          <button className="rx-save-btn" onClick={handleSave} disabled={isSaving || current.length === 0}>
+          <button
+            className="rx-save-btn"
+            onClick={handleSave}
+            disabled={isSaving || (current.length === 0 && !prescriptionDocument && !documentUrl)}
+          >
             {isSaving ? 'Saving...' : 'Save Prescription'}
           </button>
         </div>

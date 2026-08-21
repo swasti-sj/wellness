@@ -249,6 +249,36 @@
   color: #1E0733;
 }
 
+.cashless-document-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+  padding: 0.7rem;
+  border: 1px solid #E0D0EF;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.cashless-document-preview img,
+.cashless-document-preview iframe,
+.cashless-document-preview object {
+  display: block;
+  width: 100%;
+  height: min(60vh, 520px);
+  border: 0;
+  border-radius: 6px;
+  background: #f8f5fb;
+  object-fit: contain;
+}
+
+.cashless-document-preview a {
+  align-self: flex-start;
+  color: #6C1B85;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
 .remarks-box {
   background: #fff;
   border: 1px solid #E0D0EF;

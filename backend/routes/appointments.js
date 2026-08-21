@@ -7,6 +7,8 @@ const Doctor = require("../models/Doctor");
 const Appointment = require('../models/Appointment');
 const Note = require("../models/Note");
 const Prescription = require("../models/Prescription");
+const Vital = require("../models/Vital");
+const Test = require("../models/Test");
 const mongoose = require("mongoose");
 const { logActivity, getClientIp, parseUserAgent } = require('../utils/audit');
 
@@ -47,9 +49,9 @@ router.post("/book", async (req, res) => {
       user: user._id,
       status: "booked",
       $or: [
-        { 
-          startDateTime: { $lt: new Date(endDateTime) }, 
-          endDateTime: { $gt: new Date(startDateTime) } 
+        {
+          startDateTime: { $lt: new Date(endDateTime) },
+          endDateTime: { $gt: new Date(startDateTime) }
         }
       ]
     });
@@ -149,14 +151,15 @@ router.post("/book", async (req, res) => {
       bookedBy: "user",
       dependant: dependant
         ? {
-            _id: dependant._id,
-            name: dependant.name,
-            age: dependant.age,
-            sex: dependant.sex,
-            relationship: dependant.relationship,
-            bloodGroup: dependant.bloodGroup,
-            phone: dependant.phone,
-          }
+          _id: dependant._id,
+          name: dependant.name,
+          age: dependant.age,
+          sex: dependant.sex,
+          relationship: dependant.relationship,
+          bloodGroup: dependant.bloodGroup,
+          phone: dependant.phone,
+          uhid: dependant.uhid,
+        }
         : undefined,
     });
     await appointment.save();
@@ -580,7 +583,7 @@ router.post("/doctor-book", async (req, res) => {
   try {
     console.log("[API] POST /doctor-book called");
 
-    const { token, patientEmail, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { token, patientEmail, dependantId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     // Verify doctor
@@ -593,14 +596,21 @@ router.post("/doctor-book", async (req, res) => {
     user = await User.findOne({ email: patientEmail });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const dependant = dependantId
+      ? user.dependants?.find((item) => item._id.toString() === dependantId)
+      : null;
+    if (dependantId && !dependant) {
+      return res.status(400).json({ error: "Dependant not found for this patient" });
+    }
+
     const overlappingAppointment = await Appointment.findOne({
       doctor: doctor._id,
       user: user._id,
       status: "booked",
       $or: [
-        { 
-          startDateTime: { $lt: new Date(endDateTime) }, 
-          endDateTime: { $gt: new Date(startDateTime) } 
+        {
+          startDateTime: { $lt: new Date(endDateTime) },
+          endDateTime: { $gt: new Date(startDateTime) }
         }
       ]
     });
@@ -618,8 +628,10 @@ router.post("/doctor-book", async (req, res) => {
       doctorResponse = await doctorCalendar.events.insert({
         calendarId: "primary",
         requestBody: {
-          summary: `Appointment with ${user.name || user.email}`,
-          description: `Patient: ${user.name || "Unknown"}\nEmail: ${user.email}\nPhone: ${user.phone || "Not provided"}`,
+          summary: dependant ? `Appointment with ${dependant.name}` : `Appointment with ${user.name || user.email}`,
+          description: dependant
+            ? `Dependant: ${dependant.name} (${dependant.relationship || "N/A"})\nPrimary Patient: ${user.name || "Unknown"}\nEmail: ${user.email}`
+            : `Patient: ${user.name || "Unknown"}\nEmail: ${user.email}\nPhone: ${user.phone || "Not provided"}`,
           location: "Wellness Center, IIT Dharwad",
           start: { dateTime: startDateTime },
           end: { dateTime: endDateTime },
@@ -632,13 +644,25 @@ router.post("/doctor-book", async (req, res) => {
     appointment = new Appointment({
       doctor: doctor._id,
       user: user._id,
-      doctorCalendarEventId: doctorResponse.data.id,
+      doctorCalendarEventId: doctorResponse?.data?.id || null,
       startDateTime,
       endDateTime,
       slotDay,
       slotTime,
       status: "booked",
-      bookedBy: "doctor"
+      bookedBy: "doctor",
+      dependant: dependant
+        ? {
+          _id: dependant._id,
+          name: dependant.name,
+          age: dependant.age,
+          sex: dependant.sex,
+          relationship: dependant.relationship,
+          bloodGroup: dependant.bloodGroup,
+          phone: dependant.phone,
+          uhid: dependant.uhid,
+        }
+        : undefined,
     });
     await appointment.save();
 
@@ -881,7 +905,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
 
       appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-      
+
       doctor = await Doctor.findById(appointment.doctor);
     } else if (decoded.role === 'receptionist') {
       const Receptionist = require("../models/Receptionist");
@@ -890,12 +914,12 @@ router.patch("/:appointmentId/status", async (req, res) => {
 
       appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
-      
+
       doctor = await Doctor.findById(appointment.doctor);
     }
 
     // Update status
-    const validStatuses = ["booked","attended","no show","cancelled by user","cancelled by doctor","cancelled by nurse","cancelled by receptionist","walk in","available"];
+    const validStatuses = ["booked", "attended", "no show", "cancelled by user", "cancelled by doctor", "cancelled by nurse", "cancelled by receptionist", "walk in", "available"];
     if (!validStatuses.includes(status)) {
       console.log("[API] PATCH Status Error: Invalid status received:", status);
       return res.status(400).json({ error: "Invalid status: " + status });
@@ -917,9 +941,9 @@ router.patch("/:appointmentId/status", async (req, res) => {
       await doctor.save();
     }
 
-    res.json({ 
-      success: true, 
-      message: `Appointment status updated to ${status}` 
+    res.json({
+      success: true,
+      message: `Appointment status updated to ${status}`
     });
 
   } catch (err) {
@@ -998,7 +1022,7 @@ router.get("/my-slots", async (req, res) => {
       return res.status(404).json({ error: "Doctor not found" });
     }
 
-    res.json({ 
+    res.json({
       slots: doctor.weeklySlots || [],
       message: "Slots retrieved successfully"
     });
@@ -1048,11 +1072,51 @@ router.get("/history", async (req, res) => {
       time: appt.slotTime || "-",
       status: appt.status,
     }));
-    
+
     res.json(formattedHistory);
   } catch (err) {
     console.error("Error fetching visit history:", err);
     res.status(500).json({ error: "Server error: " + err.message });
+  }
+});
+
+// GET /api/appointments/my-records — complete clinical records for the logged-in patient
+router.get("/my-records", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "Authorization header missing" });
+
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    if (decoded.role !== "patient") return res.status(403).json({ error: "Patient access only" });
+
+    const appointments = await Appointment.find({ user: decoded.id })
+      .populate("doctor", "name specialization")
+      .populate("user", "name email phone roll uhid")
+      .sort({ startDateTime: -1 })
+      .lean();
+
+    const records = await Promise.all(appointments.map(async (appointment) => {
+      const [vitals, notes, prescription, tests] = await Promise.all([
+        Vital.findOne({ appointment: appointment._id }).lean(),
+        Note.find({ appointment: appointment._id }).sort({ createdAt: -1 }).lean(),
+        Prescription.findOne({ appointment: appointment._id }).lean(),
+        Test.findOne({ appointment: appointment._id }).lean(),
+      ]);
+
+      return {
+        ...appointment,
+        vitals: vitals || null,
+        notes,
+        prescription: prescription || null,
+        tests: tests || null,
+      };
+    }));
+
+    res.json({ records });
+  } catch (err) {
+    console.error("Error fetching patient records:", err);
+    res.status(500).json({ error: "Unable to load patient records" });
   }
 });
 // GET /api/appointments/patient-history?query=neha
@@ -1166,7 +1230,7 @@ router.post("/nurse-book", async (req, res) => {
   try {
     console.log("[API] POST /nurse-book called");
 
-    const { token, patientEmail, patientPhone, doctorId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { token, patientEmail, patientPhone, dependantId, doctorId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
     if (!token) return res.status(400).json({ error: "Missing token" });
     if (!doctorId) return res.status(400).json({ error: "Doctor ID is required" });
 
@@ -1186,6 +1250,13 @@ router.post("/nurse-book", async (req, res) => {
     const user = await User.findOne({ email: patientEmail });
     if (!user) return res.status(404).json({ error: "Patient not found" });
 
+    const dependant = dependantId
+      ? user.dependants?.find((item) => item._id.toString() === dependantId)
+      : null;
+    if (dependantId && !dependant) {
+      return res.status(400).json({ error: "Dependant not found for this patient" });
+    }
+
     // Create appointment
     const appointment = new Appointment({
       doctor: doctor._id,
@@ -1195,7 +1266,19 @@ router.post("/nurse-book", async (req, res) => {
       slotDay,
       slotTime,
       status: "booked",
-      bookedBy: "nurse"
+      bookedBy: "nurse",
+      dependant: dependant
+        ? {
+          _id: dependant._id,
+          name: dependant.name,
+          age: dependant.age,
+          sex: dependant.sex,
+          relationship: dependant.relationship,
+          bloodGroup: dependant.bloodGroup,
+          phone: dependant.phone,
+          uhid: dependant.uhid,
+        }
+        : undefined,
     });
     await appointment.save();
 

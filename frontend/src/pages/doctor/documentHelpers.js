@@ -15,6 +15,7 @@ export const buildDocumentUrl = (url) => {
 
 export const getDocumentName = (url, fallback = "View document") => {
   if (!url) return fallback;
+  if (url.startsWith("data:")) return "Uploaded document";
   const parts = url.split("/");
   return parts[parts.length - 1] || fallback;
 };

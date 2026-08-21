@@ -353,3 +353,69 @@
     gap: 1rem;
   }
 }
+
+.patient-appointment-detail-modal {
+  width: min(1180px, calc(100vw - 2rem));
+  max-width: 1180px;
+  height: min(90vh, 900px);
+  max-height: 90vh;
+}
+
+.patient-appointment-detail-modal .modal-body {
+  padding: 1.2rem 1.5rem 2rem;
+}
+
+.patient-appointment-detail-modal .modal-sub-section {
+  margin-bottom: 0;
+}
+
+.patient-appointment-detail-modal .modal-sub-body.open {
+  max-height: none;
+}
+
+.patient-appointment-detail-modal .doctor-vitals.read-only {
+  border: none;
+  border-radius: 0;
+}
+
+.patient-modal-context {
+  margin-bottom: 0.9rem;
+}
+
+.patient-modal-sections {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.patient-modal-panel {
+  margin-top: 0;
+}
+
+.patient-appointment-actions {
+  justify-content: flex-start;
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .patient-appointment-detail-modal {
+    width: calc(100vw - 1rem);
+    height: calc(100vh - 1rem);
+    max-height: calc(100vh - 1rem);
+    border-radius: 12px;
+  }
+
+  .patient-appointment-detail-modal .modal-header-bar {
+    padding: 1rem 1.1rem 0.9rem;
+  }
+
+  .patient-appointment-detail-modal .modal-patient-name {
+    font-size: 1.15rem;
+  }
+
+  .patient-appointment-detail-modal .modal-body {
+    padding: 0.75rem;
+  }
+
+  .patient-modal-sections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
