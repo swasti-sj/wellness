@@ -18,7 +18,8 @@ export default function ReceptionistDashboard() {
     date: new Date().toISOString().split('T')[0],
     time: '',
     entryType: 'appointment', // 'appointment' | 'walkin'
-    remarks: 'None'
+    remarks: 'None',
+    dependantId: ''
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -31,6 +32,8 @@ export default function ReceptionistDashboard() {
   const [showAddEntryMobile, setShowAddEntryMobile] = useState(true);
   const [expandedAppointmentId, setExpandedAppointmentId] = useState(null);
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 760);
+  const [dependants, setDependants] = useState([]);
+  const [dependantsLoading, setDependantsLoading] = useState(false);
 
   // Date range filter (default: today → today + 7 days)
   const today = new Date();
@@ -46,6 +49,23 @@ export default function ReceptionistDashboard() {
 
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
+
+  useEffect(() => {
+    const patientIdentifier = formData.rollNo.trim();
+    setDependants([]);
+    setFormData((current) => ({ ...current, dependantId: '' }));
+    if (!patientIdentifier || formData.entryType !== 'appointment' || !token || !apiBaseUrl) return;
+
+    setDependantsLoading(true);
+    axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
+      params: { email: patientIdentifier },
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      setDependants(res.data.dependants || []);
+    }).catch(() => {
+      setDependants([]);
+    }).finally(() => setDependantsLoading(false));
+  }, [formData.rollNo, formData.entryType, apiBaseUrl, token]);
 
   useEffect(() => {
     const handleResize = () => setIsMobileView(window.innerWidth <= 760);
@@ -268,7 +288,8 @@ export default function ReceptionistDashboard() {
         email: '-',
         phone: '-',
         isWalkIn,
-        remarks: formData.remarks || 'None'
+        remarks: formData.remarks || 'None',
+        dependantId: formData.dependantId
       });
       if (response.data.success) {
         const newEntry = {
@@ -291,7 +312,8 @@ export default function ReceptionistDashboard() {
           date: new Date().toISOString().split('T')[0],
           time: '',
           entryType: 'appointment',
-          remarks: 'None'
+          remarks: 'None',
+          dependantId: ''
         });
         showMessage(isWalkIn ? 'Walk-in entry added successfully (record only)' : 'Entry added successfully');
       }
@@ -595,15 +617,29 @@ export default function ReceptionistDashboard() {
                   />
                 </div>
                 <div className="rd-form-group">
-                  <label>Roll No / Emp ID</label>
+                  <label>Email ID</label>
                   <input
                     type="text"
                     name="rollNo"
                     value={formData.rollNo}
                     onChange={handleFormChange}
-                    placeholder="e.g., 23001 or EMP-001"
+                    placeholder="Before @iitdh.ac.in"
                   />
                 </div>
+                {formData.entryType === 'appointment' && dependants.length > 0 && (
+                  <div className="rd-form-group">
+                    <label>Book For</label>
+                    <select name="dependantId" value={formData.dependantId} onChange={handleFormChange}>
+                      <option value="">Self</option>
+                      {dependantsLoading && <option disabled>Loading dependants...</option>}
+                      {dependants.map((dependant) => (
+                        <option key={dependant._id} value={dependant._id}>
+                          {dependant.name}{dependant.relationship ? ` (${dependant.relationship})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="rd-form-group">
                   <label>Category</label>
                   <select name="role" value={formData.role} onChange={handleFormChange}>

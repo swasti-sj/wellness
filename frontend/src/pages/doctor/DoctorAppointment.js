@@ -46,16 +46,15 @@ export default function DoctorAppointment({ apiBaseUrl }) {
   const location = useLocation();
 
   useEffect(() => {
-    const email = bookingData.patientEmail.trim();
-    const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const patientIdentifier = bookingData.patientEmail.trim();
     setDependants([]);
     setPatientCategory("");
     setBookingData((current) => ({ ...current, dependantId: "" }));
-    if (!isValidEmail || !token || !apiBaseUrl) return;
+    if (!patientIdentifier || !token || !apiBaseUrl) return;
 
     setDependantsLoading(true);
     axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
-      params: { email },
+      params: { email: patientIdentifier },
       headers: { Authorization: `Bearer ${token}` },
     }).then((res) => {
       setPatientCategory(res.data.patientCategory || "");
@@ -467,8 +466,9 @@ export default function DoctorAppointment({ apiBaseUrl }) {
             <div className="modal-body">
               <form onSubmit={handleBookAppointment} className="booking-form">
                 <div className="booking-field">
-                  <label>Patient Email</label>
-                  <input type="email" value={bookingData.patientEmail}
+                  <label>Patient Email ID</label>
+                  <input type="text" value={bookingData.patientEmail}
+                    placeholder="Before @iitdh.ac.in"
                     onChange={(e) => setBookingData({ ...bookingData, patientEmail: e.target.value })} required />
                 </div>
                 <div className="booking-field">
