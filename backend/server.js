@@ -181,12 +181,19 @@ app.get("/api/auth/google/callback",
       const allowed = await isEmailAllowed(SHEETS.doctor.sheetId, email);
       if (!allowed) return res.redirect(`${process.env.FRONTEND_URL}/others-login`);
 
-      let doctor = await Doctor.findOne({ email });
+      const normalizedEmail = email.toLowerCase();
+      let doctor = await Doctor.findOne({ email: normalizedEmail });
 
       if (!doctor) {
-        doctor = new Doctor({ name, email, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
+        doctor = new Doctor({ name, email: normalizedEmail, googleId, picture, googleAccessToken: accessToken, googleRefreshToken: refreshToken });
         await doctor.save();
         firstLogin = true;
+      } else {
+        doctor.googleId = googleId;
+        doctor.picture = picture;
+        doctor.googleAccessToken = accessToken;
+        if (refreshToken) doctor.googleRefreshToken = refreshToken;
+        await doctor.save();
       }
 
       await createSession({ userId: doctor._id, userName: doctor.name, userEmail: doctor.email, role: "doctor", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });

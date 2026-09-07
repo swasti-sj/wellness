@@ -1,6 +1,7 @@
 /node_modules
 .env
+*.xlsx
+*.xls
 
-# Uploaded files (prescriptions, lab documents, note images, etc.) — these
-# are patient health data and must never be committed to git.
+# Uploaded files — patient/medical data
 /uploads/
