@@ -3,7 +3,7 @@ import axios from "axios";
 import "../../styles/PatientProfile.css";
 import { useApi } from '../../context/ApiContext';
 
-const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Staff", "Outsourced Staff"];
+const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 
 function PatientProfile() {
   const [profile, setProfile] = useState(null);
@@ -11,6 +11,16 @@ function PatientProfile() {
   const [isSavingDependant, setIsSavingDependant] = useState(false);
   const [dependantError, setDependantError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileForm, setProfileForm] = useState({ age: '', sex: '', phone: '', emergencyContactNo: '', allergies: '' });
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+  const [editingDependantId, setEditingDependantId] = useState(null);
+  const [editingDependantForm, setEditingDependantForm] = useState({
+    name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: ''
+  });
+  const [editingDependantError, setEditingDependantError] = useState('');
+  const [isSavingDependantEdit, setIsSavingDependantEdit] = useState(false);
   const apiBaseUrl = useApi();
 
   const fetchProfile = async () => {
@@ -33,6 +43,93 @@ function PatientProfile() {
   const handleChangeDependant = (e) => {
     const { name, value } = e.target;
     setNewDependant((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const startDependantEdit = (dependant) => {
+    setEditingDependantId(dependant._id);
+    setEditingDependantForm({
+      name: dependant.name || '',
+      age: dependant.age || '',
+      sex: dependant.sex || '',
+      relationship: dependant.relationship || '',
+      bloodGroup: dependant.bloodGroup || '',
+      phone: dependant.phone || '',
+      allergies: dependant.allergies || '',
+    });
+    setEditingDependantError('');
+  };
+
+  const cancelDependantEdit = () => {
+    setEditingDependantId(null);
+    setEditingDependantForm({ name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
+    setEditingDependantError('');
+  };
+
+  const handleDependantEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditingDependantForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveDependantEdit = async (e) => {
+    e.preventDefault();
+    setIsSavingDependantEdit(true);
+    setEditingDependantError('');
+
+    try {
+      await axios.put(`${apiBaseUrl}/api/users/dependants/${editingDependantId}`, editingDependantForm, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      await fetchProfile();
+      cancelDependantEdit();
+    } catch (err) {
+      console.error('Failed to update dependant:', err);
+      setEditingDependantError(err.response?.data?.error || 'Unable to update dependant');
+    } finally {
+      setIsSavingDependantEdit(false);
+    }
+  };
+
+  const startProfileEdit = () => {
+    setProfileForm({
+      age: profile?.age || '',
+      sex: profile?.sex || '',
+      phone: profile?.phone || '',
+      emergencyContactNo: profile?.emergencyContactNo || '',
+      allergies: profile?.allergies || '',
+    });
+    setProfileError('');
+    setIsEditingProfile(true);
+  };
+
+  const handleProfileFormChange = (e) => {
+    const { name, value } = e.target;
+    setProfileForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSaveProfile = async (e) => {
+    e.preventDefault();
+    const normalizePhone = (value) => (value || '').replace(/\D/g, '');
+
+    if (normalizePhone(profile?.phone) && normalizePhone(profileForm.emergencyContactNo) && normalizePhone(profile?.phone) === normalizePhone(profileForm.emergencyContactNo)) {
+      setProfileError('Emergency contact number cannot be the same as your phone number.');
+      return;
+    }
+
+    setIsSavingProfile(true);
+    setProfileError('');
+
+    try {
+      await axios.post(`${apiBaseUrl}/api/users/profile`, profileForm, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      await fetchProfile();
+      setIsEditingProfile(false);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      setProfileError(err.response?.data?.error || 'Unable to update profile');
+    } finally {
+      setIsSavingProfile(false);
+    }
   };
 
   const handleAddDependant = async (e) => {
@@ -87,6 +184,7 @@ function PatientProfile() {
     { label: 'Age', value: profile.age || 'Not set' },
     { label: 'Sex', value: profile.sex || 'Not set' },
     { label: 'Phone', value: profile.phone || 'Not set' },
+    { label: 'Emergency Contact No.', value: profile.emergencyContactNo || 'Not set' },
     { label: 'Institutional ID', value: profile.roll || 'Not set' },
     { label: 'Patient Category', value: profile.patientCategory || 'Not set' },
     { label: 'Clinical Consent', value: profile.consentAccepted ? 'Accepted' : 'Not Accepted' },
@@ -116,6 +214,59 @@ function PatientProfile() {
             </div>
           ))}
         </div>
+
+        <div className="pp-profile-actions">
+          <button className="pp-add-dep-btn" onClick={startProfileEdit}>
+            {isEditingProfile ? 'Editing...' : 'Edit Profile'}
+          </button>
+        </div>
+
+        {isEditingProfile && (
+          <form className="pp-profile-edit-form" onSubmit={handleSaveProfile}>
+            <div className="pp-profile-form-grid">
+              <label className="pp-form-field">
+                <span>Age</span>
+                <input name="age" type="number" value={profileForm.age} onChange={handleProfileFormChange} min="0" max="120" />
+              </label>
+
+              <label className="pp-form-field">
+                <span>Sex</span>
+                <select name="sex" value={profileForm.sex} onChange={handleProfileFormChange}>
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </label>
+
+              <label className="pp-form-field">
+                <span>Phone Number</span>
+                <input name="phone" value={profileForm.phone} onChange={handleProfileFormChange} placeholder="e.g. +91 XXXXX XXXXX" />
+              </label>
+
+              <label className="pp-form-field">
+                <span>Emergency Contact No.</span>
+                <input name="emergencyContactNo" value={profileForm.emergencyContactNo} onChange={handleProfileFormChange} placeholder="e.g. +91 XXXXX XXXXX" />
+              </label>
+
+              <label className="pp-form-field pp-form-full">
+                <span>Allergies</span>
+                <input name="allergies" value={profileForm.allergies} onChange={handleProfileFormChange} placeholder="Known allergies" />
+              </label>
+            </div>
+
+            {profileError && <p className="pp-form-error">{profileError}</p>}
+
+            <div className="pp-profile-action-row">
+              <button type="button" className="pp-profile-cancel-btn" onClick={() => setIsEditingProfile(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="pp-dep-submit-btn" disabled={isSavingProfile}>
+                {isSavingProfile ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Dependants Section */}
         {canAddDependants && (
@@ -159,9 +310,63 @@ function PatientProfile() {
                         {dep.allergies && <span>Allergies: {dep.allergies}</span>}
                       </div>
                     )}
-                    <button className="pp-dep-remove-btn" onClick={() => handleDeleteDependant(dep._id)}>
-                      Remove
-                    </button>
+                    <div className="pp-dep-actions">
+                      <button className="pp-dep-edit-btn" onClick={() => startDependantEdit(dep)}>
+                        Edit
+                      </button>
+                      <button className="pp-dep-remove-btn" onClick={() => handleDeleteDependant(dep._id)}>
+                        Remove
+                      </button>
+                    </div>
+
+                    {editingDependantId === dep._id && (
+                      <form className="pp-dep-edit-form" onSubmit={handleSaveDependantEdit}>
+                        <div className="pp-dep-form-grid">
+                          <label className="pp-dep-field">
+                            <span>Name</span>
+                            <input name="name" value={editingDependantForm.name} onChange={handleDependantEditChange} />
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Relationship</span>
+                            <input name="relationship" value={editingDependantForm.relationship} onChange={handleDependantEditChange} />
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Age</span>
+                            <input name="age" type="number" min="0" max="120" value={editingDependantForm.age} onChange={handleDependantEditChange} />
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Sex</span>
+                            <select name="sex" value={editingDependantForm.sex} onChange={handleDependantEditChange}>
+                              <option value="">Select</option>
+                              <option value="Male">Male</option>
+                              <option value="Female">Female</option>
+                              <option value="Other">Other</option>
+                            </select>
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Phone</span>
+                            <input name="phone" value={editingDependantForm.phone} onChange={handleDependantEditChange} />
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Blood Group</span>
+                            <input name="bloodGroup" value={editingDependantForm.bloodGroup} onChange={handleDependantEditChange} />
+                          </label>
+                          <label className="pp-dep-field pp-dep-full">
+                            <span>Allergies</span>
+                            <input name="allergies" value={editingDependantForm.allergies} onChange={handleDependantEditChange} />
+                          </label>
+                        </div>
+                        {editingDependantError && <p className="pp-dep-error">{editingDependantError}</p>}
+                        <div className="pp-dep-form-footer">
+                          <button type="button" className="pp-profile-cancel-btn" onClick={cancelDependantEdit}>
+                            Cancel
+                          </button>
+                          <button type="submit" className="pp-dep-submit-btn" disabled={isSavingDependantEdit}>
+                            {isSavingDependantEdit ? 'Saving...' : 'Save'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
                   </div>
                 ))}
               </div>

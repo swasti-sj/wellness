@@ -11,7 +11,7 @@ const ReceptionistEntrySchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['Student', 'Staff', 'Faculty'],
+    enum: ['Student', 'Staff', 'Regular Staff', 'Contractual Staff', 'Faculty'],
     default: 'Student'
   },
   doctorId: {

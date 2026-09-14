@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 import { useApi } from '../../context/ApiContext';
 
-const PATIENT_CATEGORIES = ["Student", "Faculty", "Staff", "Outsourced Staff"];
+const PATIENT_CATEGORIES = ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 
 function InitialProfileForm() {
   const [form, setForm] = useState({
@@ -13,6 +13,7 @@ function InitialProfileForm() {
     sex: '',
     age: '',
     phone: '',
+    emergencyContactNo: '',
     patientCategory: '',
     consentAccepted: false,
   });
@@ -26,6 +27,13 @@ function InitialProfileForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const normalizePhone = (value) => (value || '').replace(/\D/g, '');
+    if (normalizePhone(form.phone) && normalizePhone(form.emergencyContactNo) && normalizePhone(form.phone) === normalizePhone(form.emergencyContactNo)) {
+      alert('Emergency contact number cannot be the same as your phone number.');
+      return;
+    }
+
     try {
       await axios.post(`${apiBaseUrl}/api/users/profile`, form, {
         headers: {
@@ -36,7 +44,7 @@ function InitialProfileForm() {
       navigate('/patdashboard', { replace: true });
     } catch (err) {
       console.error(err);
-      alert('Failed to save profile');
+      alert(err.response?.data?.error || 'Failed to save profile');
     }
   };
 
@@ -92,9 +100,14 @@ function InitialProfileForm() {
               <input name="age" type="number" value={form.age} onChange={handleChange} placeholder="Years" required />
             </label>
 
-            <label className="profile-span-2">
+            <label>
               Phone Number:
               <input name="phone" value={form.phone} onChange={handleChange} placeholder="e.g. +91 XXXXX XXXXX" required />
+            </label>
+
+            <label>
+              Emergency Contact No.:
+              <input name="emergencyContactNo" value={form.emergencyContactNo} onChange={handleChange} placeholder="e.g. +91 XXXXX XXXXX" required />
             </label>
           </div>
 

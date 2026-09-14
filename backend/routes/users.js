@@ -6,8 +6,8 @@ const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const { logActivity, getClientIp } = require('../utils/audit');
 
-const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Staff", "Outsourced Staff"];
-const PATIENT_CATEGORIES = ["Student", "Faculty", "Staff", "Outsourced Staff"];
+const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
+const PATIENT_CATEGORIES = ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 
 // GET /api/users/next-uhid — returns next sequential UHID like "0001", "0002" etc.
 router.get('/next-uhid', authMiddleware, async (req, res) => {
@@ -49,13 +49,19 @@ router.get('/patient-uhid/:patientId', authMiddleware, async (req, res) => {
   }
 });
 
+const normalizePhone = (value) => (value || '').replace(/\D/g, '');
+
 router.post('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name, roll, sex, age, phone, allergies, consentAccepted, patientCategory } = req.body;
+    const { name, roll, sex, age, phone, emergencyContactNo, allergies, consentAccepted, patientCategory } = req.body;
+
+    if (normalizePhone(phone) && normalizePhone(emergencyContactNo) && normalizePhone(phone) === normalizePhone(emergencyContactNo)) {
+      return res.status(400).json({ error: 'Emergency contact number cannot be the same as your phone number.' });
+    }
 
     const before = await User.findById(req.user.id).lean();
 
-    const updates = { name, roll, sex, age, phone, allergies, consentAccepted };
+    const updates = { name, roll, sex, age, phone, emergencyContactNo, allergies, consentAccepted };
     if (patientCategory) {
       if (!PATIENT_CATEGORIES.includes(patientCategory)) {
         return res.status(400).json({ error: 'Invalid patient category' });

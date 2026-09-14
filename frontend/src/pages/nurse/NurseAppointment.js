@@ -74,7 +74,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
       .finally(() => setDependantsLoading(false));
   }, [bookingData.patientEmail, apiBaseUrl, token]);
 
-  const patientCanHaveDependants = ["Faculty", "Staff", "Outsourced Staff"].includes(patientCategory);
+  const patientCanHaveDependants = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"].includes(patientCategory);
 
   // Reopen appointment modal when returning from TestPage
   useEffect(() => {

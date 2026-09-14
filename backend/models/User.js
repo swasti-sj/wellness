@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   sex: { type: String, enum: ["Male", "Female", "Other"] },
   age: Number,
   phone: String,
+  emergencyContactNo: { type: String, trim: true },
   uhid: String,
   allergies: String,
   consentAccepted: { type: Boolean, default: false },
@@ -20,7 +21,7 @@ const userSchema = new mongoose.Schema({
   googleRefreshToken: { type: String },
   patientCategory: {
     type: String,
-    enum: ["Student", "Faculty", "Staff", "Outsourced Staff"],
+    enum: ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"],
   },
   dependants: [{
     _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
