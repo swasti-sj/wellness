@@ -376,6 +376,18 @@ router.get('/:appointmentId', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+    // IDOR guard: a patient may only view their own appointment's tests, and
+    // a doctor only their own appointment. Nurses keep broad clinical access,
+    // matching the pattern already used in notes.js.
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found.' });
+    if (decoded.role === 'patient' && !appointment.user.equals(decoded.id)) {
+      return res.status(403).json({ error: 'You do not have permission to view this record.' });
+    }
+    if (decoded.role === 'doctor' && !appointment.doctor.equals(decoded.id)) {
+      return res.status(403).json({ error: 'You do not have permission to view this record.' });
+    }
+
     const test = await Test.findOne({ appointment: appointmentId });
     if (!test) {
       return res.json({

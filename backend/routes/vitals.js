@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
+const Appointment = require('../models/Appointment');
 const multer = require('multer');
 const { logActivity, getClientIp } = require('../utils/audit');
 const { uploadDocument, deleteImage } = require('../utils/cloudinary');
@@ -42,9 +43,20 @@ router.get("/:appointmentId", async (req, res) => {
     }
 
     const token = authHeader.split(" ")[1];
-    jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const { appointmentId } = req.params;
+
+    // IDOR guard: a patient may only view their own appointment's vitals, and
+    // a doctor only their own appointment. Nurses keep broad clinical access.
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) return res.status(404).json({ error: "Appointment not found." });
+    if (decoded.role === "patient" && !appointment.user.equals(decoded.id)) {
+      return res.status(403).json({ error: "You do not have permission to view this record." });
+    }
+    if (decoded.role === "doctor" && !appointment.doctor.equals(decoded.id)) {
+      return res.status(403).json({ error: "You do not have permission to view this record." });
+    }
 
     const vital = await Vital.findOne({ appointment: appointmentId });
 

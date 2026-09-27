@@ -209,7 +209,17 @@ router.get("/:appointmentId", async (req, res) => {
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // You can add logic here to verify if the user or doctor has access
+
+    // IDOR guard: a patient may only view their own appointment's prescription,
+    // and a doctor only their own appointment. Nurses keep broad clinical access.
+    const appointment = await Appointment.findById(appointmentId);
+    if (!appointment) return res.status(404).json({ error: "Appointment not found." });
+    if (decoded.role === "patient" && !appointment.user.equals(decoded.id)) {
+      return res.status(403).json({ error: "You do not have permission to view this record." });
+    }
+    if (decoded.role === "doctor" && !appointment.doctor.equals(decoded.id)) {
+      return res.status(403).json({ error: "You do not have permission to view this record." });
+    }
 
     const prescription = await Prescription.findOne({ appointment: appointmentId });
     if (!prescription) {
