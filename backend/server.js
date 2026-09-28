@@ -307,13 +307,29 @@ app.get("/api/auth/google/callback",
       let user = await User.findOne({ email });
 
       if (!user) {
-        user = new User({ googleId, email, name, picture, role: "patient" });
-        await user.save();
+        user = new User({
+          googleId,
+          email,
+          name,
+          picture,
+          googleAccessToken: accessToken,
+          googleRefreshToken: refreshToken,
+          role: "patient"
+        });
         firstLogin = true;
-      } else if (!user.profileComplete) {
-        // User exists but never finished the initial profile form — treat as first login
-        firstLogin = true;
+      } else {
+        user.googleId = googleId;
+        if (picture) user.picture = picture;
+        user.googleAccessToken = accessToken;
+        if (refreshToken) user.googleRefreshToken = refreshToken;
+
+        if (!user.profileComplete) {
+          // User exists but never finished the initial profile form — treat as first login
+          firstLogin = true;
+        }
       }
+
+      await user.save();
 
       token = jwt.sign({ id: user._id, name: user.name, email, role: "patient", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
