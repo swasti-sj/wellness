@@ -100,7 +100,6 @@ Since leaving Atlas also means losing its automatic managed backups, a replaceme
 ## 7. What's still left to do
 
 - **Field-level encryption** for specific sensitive fields (the "developers can't see data" requirement) — needs a decision on which fields, then implementation.
-- **CSV import of student data** — planned, not yet done.
 - Written data retention/deletion policy — discussed, deprioritized by the team for now.
 
 ---

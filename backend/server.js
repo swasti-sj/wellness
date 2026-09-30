@@ -322,11 +322,6 @@ app.get("/api/auth/google/callback",
         if (picture) user.picture = picture;
         user.googleAccessToken = accessToken;
         if (refreshToken) user.googleRefreshToken = refreshToken;
-
-        if (!user.profileComplete) {
-          // User exists but never finished the initial profile form — treat as first login
-          firstLogin = true;
-        }
       }
 
       await user.save();
