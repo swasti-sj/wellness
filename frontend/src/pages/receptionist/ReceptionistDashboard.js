@@ -1,9 +1,23 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import axios from 'axios';
 import Fuse from 'fuse.js';
 import ReceptionistNavbar from './ReceptionistNavbar';
 import '../../styles/receptionist/ReceptionistDashboard.css';
 import { useApi } from '../../context/ApiContext';
+
+// Accepts either the part before @iitdh.ac.in or a full email address
+const toFullEmail = (value) => {
+  const trimmed = (value || '').trim().toLowerCase();
+  if (!trimmed) return '';
+  return trimmed.includes('@') ? trimmed : `${trimmed}@iitdh.ac.in`;
+};
+
+// "Dependant (Relationship) — Patient", matching how appointment rows are labelled
+const withDependantLabel = (patientName, dependant) => (
+  dependant?.name
+    ? `${dependant.name} (${dependant.relationship || 'Dependant'}) — ${patientName}`
+    : patientName
+);
 
 export default function ReceptionistDashboard() {
   const [appointments, setAppointments] = useState([]);
@@ -11,7 +25,7 @@ export default function ReceptionistDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
-    rollNo: '',
+    email: '',
     role: 'Student',
     doctorId: '',
     doctorName: '',
@@ -24,7 +38,9 @@ export default function ReceptionistDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('success'); // 'success' | 'error'
+  const [messageType, setMessageType] = useState('success'); // 'success' | 'error' | 'info'
+  const messageTimerRef = useRef(null);
+  const messageSourceRef = useRef(null); // 'lookup' (email check) | 'action' (add/edit result)
   const [editingRowId, setEditingRowId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
@@ -34,6 +50,7 @@ export default function ReceptionistDashboard() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 760);
   const [dependants, setDependants] = useState([]);
   const [dependantsLoading, setDependantsLoading] = useState(false);
+  const [foundPatient, setFoundPatient] = useState(null); // existing patient matched by email
 
   // Date range filter (default: today → today + 7 days)
   const today = new Date();
@@ -50,22 +67,49 @@ export default function ReceptionistDashboard() {
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
 
+  // Look up the patient by email: auto-fill their name and load dependants
   useEffect(() => {
-    const patientIdentifier = formData.rollNo.trim();
+    const patientEmail = toFullEmail(formData.email);
     setDependants([]);
+    setFoundPatient(null);
     setFormData((current) => ({ ...current, dependantId: '' }));
-    if (!patientIdentifier || formData.entryType !== 'appointment' || !token || !apiBaseUrl) return;
+    clearLookupMessage();
+    if (!patientEmail || !token || !apiBaseUrl) return;
 
-    setDependantsLoading(true);
-    axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
-      params: { email: patientIdentifier },
-      headers: { Authorization: `Bearer ${token}` },
-    }).then((res) => {
-      setDependants(res.data.dependants || []);
-    }).catch(() => {
-      setDependants([]);
-    }).finally(() => setDependantsLoading(false));
-  }, [formData.rollNo, formData.entryType, apiBaseUrl, token]);
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      setDependantsLoading(true);
+      axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
+        params: { email: patientEmail },
+        headers: { Authorization: `Bearer ${token}` },
+      }).then((res) => {
+        if (cancelled) return;
+        const foundDependants = res.data.dependants || [];
+        setFoundPatient({ name: res.data.name || '', roll: res.data.roll || '' });
+        setDependants(foundDependants);
+        if (res.data.name) setFormData((current) => ({ ...current, name: res.data.name }));
+        const dependantNote = foundDependants.length
+          ? ` ${foundDependants.length} dependant${foundDependants.length > 1 ? 's' : ''} available in "Book For".`
+          : '';
+        showMessage(`Email found: ${res.data.name || patientEmail}. Name filled from records.${dependantNote}`, 'success', { source: 'lookup' });
+      }).catch((err) => {
+        if (cancelled) return;
+        setDependants([]);
+        if (err.response?.status === 404) {
+          showMessage('Email not in database. Enter the name. A new account will be created when you add an appointment.', 'info', { source: 'lookup' });
+        } else {
+          showMessage('Could not check this email right now. You can still add the entry.', 'error', { source: 'lookup' });
+        }
+      }).finally(() => {
+        if (!cancelled) setDependantsLoading(false);
+      });
+    }, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [formData.email, apiBaseUrl, token]);
 
   useEffect(() => {
     const handleResize = () => setIsMobileView(window.innerWidth <= 760);
@@ -138,7 +182,9 @@ export default function ReceptionistDashboard() {
       const entries = (response.data.entries || []).map(entry => ({
         _id: entry._id,
         appointmentId: entry.appointmentId || null,
-        patientName: entry.patientName,
+        patientName: withDependantLabel(entry.patientName, entry.dependant),
+        baseName: entry.patientName,
+        dependant: entry.dependant || null,
         roll: entry.roll,
         role: entry.role,
         doctorName: entry.doctorName || '-',
@@ -156,10 +202,21 @@ export default function ReceptionistDashboard() {
     }
   };
 
-  const showMessage = (text, type = 'success') => {
+  // Email-lookup messages stay until the email changes; add/edit results auto-hide
+  const showMessage = (text, type = 'success', { source = 'action' } = {}) => {
+    clearTimeout(messageTimerRef.current);
     setMessage(text);
     setMessageType(type);
-    setTimeout(() => setMessage(''), 3500);
+    messageSourceRef.current = source;
+    if (source !== 'lookup') {
+      messageTimerRef.current = setTimeout(() => setMessage(''), 3500);
+    }
+  };
+
+  const clearLookupMessage = () => {
+    if (messageSourceRef.current !== 'lookup') return;
+    setMessage('');
+    messageSourceRef.current = null;
   };
 
   const handleFormChange = (e) => {
@@ -201,7 +258,7 @@ export default function ReceptionistDashboard() {
   const handleEditRow = (item) => {
     setEditingRowId(item._id);
     setEditedValues({
-      patientName: item.patientName,
+      patientName: item.baseName ?? item.patientName,
       roll: item.roll,
       doctorName: item.doctorName,
       date: toLocalDateInput(item.date),
@@ -245,7 +302,15 @@ export default function ReceptionistDashboard() {
         a._id === itemId ? { ...a, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : a.date } : a
       ));
       setManualEntries(prev => prev.map(e =>
-        e._id === itemId ? { ...e, ...editedValues, date: editedValues.date ? new Date(editedValues.date).toISOString() : e.date } : e
+        e._id === itemId
+          ? {
+            ...e,
+            ...editedValues,
+            baseName: editedValues.patientName,
+            patientName: withDependantLabel(editedValues.patientName, e.dependant),
+            date: editedValues.date ? new Date(editedValues.date).toISOString() : e.date
+          }
+          : e
       ));
       setEditingRowId(null);
       setEditedValues({});
@@ -261,7 +326,7 @@ export default function ReceptionistDashboard() {
 
   const handleAddEntry = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || !formData.rollNo.trim()) {
+    if (!formData.email.trim() || !formData.name.trim()) {
       showMessage('Please fill in all required fields', 'error');
       return;
     }
@@ -276,16 +341,21 @@ export default function ReceptionistDashboard() {
       const appointmentDateRaw = formData.date || null;
       // If receptionist didn't enter time, set it to current time.
       const timeToSend = formData.time || new Date().toTimeString().slice(0, 5);
+      const patientEmail = toFullEmail(formData.email);
+      // Exact start instant in the receptionist's local timezone
+      const localStart = appointmentDateRaw ? new Date(`${appointmentDateRaw}T${timeToSend}`) : null;
+      const startDateTime = localStart && !isNaN(localStart.getTime()) ? localStart.toISOString() : null;
 
       const response = await axios.post(`${apiBaseUrl}/api/receptionist/entries`, {
         patientName: formData.name,
-        roll: formData.rollNo,
+        roll: foundPatient?.roll || patientEmail.split('@')[0],
         role: formData.role,
         doctorId: formData.doctorId,
         doctorName: formData.doctorName,
         appointmentDate: appointmentDateRaw,
         appointmentTime: timeToSend || null,
-        email: '-',
+        startDateTime,
+        email: patientEmail,
         phone: '-',
         isWalkIn,
         remarks: formData.remarks || 'None',
@@ -295,7 +365,9 @@ export default function ReceptionistDashboard() {
         const newEntry = {
           _id: response.data.entry._id,
           appointmentId: response.data.entry.appointmentId || null,
-          patientName: response.data.entry.patientName,
+          patientName: withDependantLabel(response.data.entry.patientName, response.data.entry.dependant),
+          baseName: response.data.entry.patientName,
+          dependant: response.data.entry.dependant || null,
           roll: response.data.entry.roll,
           role: response.data.entry.role,
           doctorName: response.data.entry.doctorName,
@@ -308,14 +380,21 @@ export default function ReceptionistDashboard() {
         };
         setManualEntries(prev => [newEntry, ...prev]);
         setFormData({
-          name: '', rollNo: '', role: 'Student', doctorId: '', doctorName: '',
+          name: '', email: '', role: 'Student', doctorId: '', doctorName: '',
           date: new Date().toISOString().split('T')[0],
           time: '',
           entryType: 'appointment',
           remarks: 'None',
           dependantId: ''
         });
-        showMessage(isWalkIn ? 'Walk-in entry added successfully (record only)' : 'Entry added successfully');
+        const bookedName = response.data.entry.patientName;
+        if (isWalkIn) {
+          showMessage(`Walk-in entry added for ${bookedName}.`);
+        } else if (response.data.accountCreated) {
+          showMessage(`New account created for ${patientEmail} and appointment booked.`);
+        } else {
+          showMessage(`Appointment booked for ${bookedName}.`);
+        }
       }
     } catch (error) {
       showMessage(error.response?.data?.error || 'Error adding entry', 'error');
@@ -606,6 +685,17 @@ export default function ReceptionistDashboard() {
                   </select>
                 </div>
                 <div className="rd-form-group">
+                  <label>Email ID <span className="rd-required">*</span></label>
+                  <input
+                    type="text"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleFormChange}
+                    placeholder="e.g. is23bm032@iitdh.ac.in"
+                    required
+                  />
+                </div>
+                <div className="rd-form-group">
                   <label>Patient Name <span className="rd-required">*</span></label>
                   <input
                     type="text"
@@ -616,17 +706,7 @@ export default function ReceptionistDashboard() {
                     required
                   />
                 </div>
-                <div className="rd-form-group">
-                  <label>Email ID</label>
-                  <input
-                    type="text"
-                    name="rollNo"
-                    value={formData.rollNo}
-                    onChange={handleFormChange}
-                    placeholder="Before @iitdh.ac.in"
-                  />
-                </div>
-                {formData.entryType === 'appointment' && dependants.length > 0 && (
+                {dependants.length > 0 && (
                   <div className="rd-form-group">
                     <label>Book For</label>
                     <select name="dependantId" value={formData.dependantId} onChange={handleFormChange}>

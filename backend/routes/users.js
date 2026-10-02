@@ -154,20 +154,21 @@ router.get('/dependants', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/users/patient-dependants?email=... — allows doctors/nurses to select a patient's dependant
+// GET /api/users/patient-dependants?email=... — allows doctors/nurses/receptionists to look up a patient and their dependants
 router.get('/patient-dependants', authMiddleware, async (req, res) => {
   try {
-    if (!['doctor', 'nurse'].includes(req.user?.role)) {
-      return res.status(403).json({ error: 'Only doctors and nurses can access patient dependants' });
+    if (!['doctor', 'nurse', 'receptionist'].includes(req.user?.role)) {
+      return res.status(403).json({ error: 'Only doctors, nurses and receptionists can access patient dependants' });
     }
 
     const email = req.query.email?.trim();
     if (!email) return res.status(400).json({ error: 'Patient email is required' });
 
-    const user = await User.findOne({ email }).select('patientCategory dependants');
+    const emailRegex = new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+    const user = await User.findOne({ email: emailRegex }).select('name roll patientCategory dependants');
     if (!user) return res.status(404).json({ error: 'Patient not found' });
 
-    res.json({ patientCategory: user.patientCategory, dependants: user.dependants || [] });
+    res.json({ name: user.name, roll: user.roll, patientCategory: user.patientCategory, dependants: user.dependants || [] });
   } catch (err) {
     console.error('Error fetching patient dependants:', err);
     res.status(500).json({ error: 'Failed to fetch patient dependants' });

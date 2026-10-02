@@ -33,6 +33,9 @@ export default function NurseNavbar() {
       if (menuOpen && navRef.current && !navRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -121,8 +124,6 @@ export default function NurseNavbar() {
           <div
             className="relative"
             ref={profileRef}
-            onMouseEnter={() => setShowProfileMenu(true)}
-            onMouseLeave={() => setShowProfileMenu(false)}
           >
             <button
               onClick={() => setShowProfileMenu((prev) => !prev)}

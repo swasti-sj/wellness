@@ -37,6 +37,16 @@ const ReceptionistEntrySchema = new mongoose.Schema({
   appointmentTime: {
     type: String
   },
+  dependant: {
+    _id: mongoose.Schema.Types.ObjectId,
+    name: String,
+    age: Number,
+    sex: { type: String, enum: ["Male", "Female", "Other"] },
+    relationship: String,
+    bloodGroup: String,
+    phone: String,
+    uhid: String,
+  },
   appointmentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Appointment",

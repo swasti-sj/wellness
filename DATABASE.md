@@ -20,7 +20,7 @@ This migration was done specifically in response to a faculty review comment on 
 |---|---|
 | Application server | VM `10.195.250.184` (`wellness.iitdh.ac.in`) |
 | Database engine | Percona Server for MongoDB 7.0, running as the `mongod` systemd service |
-| Database files | `/var/lib/mongodb` (the VM's own local disk — **never** the CCS network drive, see section 4) |
+| Database files | `/var/lib/mongodb` (the VM's own local disk — **never** the CCS network drive, see section 6) |
 | Database config | `/etc/mongod.conf` |
 | Encryption key (database) | `/etc/mongodb-encryption-keyfile` — root-only (`chmod 600`) |
 | Database port | `27017`, bound to `127.0.0.1` only — **not reachable from outside the VM** |
@@ -92,7 +92,12 @@ Since leaving Atlas also means losing its automatic managed backups, a replaceme
 ## 6. Why some things were built the way they were (worth knowing before changing them)
 
 - **Why Percona Server for MongoDB, not plain MongoDB?** Plain (Community Edition) MongoDB has no encryption-at-rest option — that's normally an Enterprise-only paid feature. Percona's distribution is fully compatible (same commands, same data format, same drivers) but includes it for free.
-- **Why isn't the database's data directory on the CCS network drive, if uploads/backups are?** It was actually tried — and **failed with a real crash**. MongoDB's storage engine cannot safely open its data files over a network filesystem (CIFS/SMB); this is a documented MongoDB limitation, not a configuration mistake. Static files (uploads, backup archives) are fine on network storage; a live database's active data files are not. **Do not attempt to move `dbPath` to `/mnt/ccs-wellness` again** — it will not work.
+- **Why isn't the database's data directory on the CCS network drive, if uploads/backups are?** It was actually tried — and **failed with a real crash**. MongoDB's storage engine cannot safely open its data files over a network filesystem (CIFS/SMB); this is a documented MongoDB limitation, not a configuration mistake:
+  ```
+  "error_str":"Operation not permitted"
+  "msg":"Failed to start up WiredTiger under any compatibility version."
+  ```
+  **Why this matters more than it might sound:** a database write is several steps (write data, update an index, mark it committed), and local disks guarantee those happen in order and fully-or-not-at-all, even on a crash. Network shares don't reliably guarantee that — a write can get interrupted or reordered, leaving a document **half-old, half-new**, with the database itself unaware anything went wrong. That's not a crash (loud, obvious, safe to recover from) — it's **silent corruption** (quiet, unnoticed, potentially acted on). For a health-records system, a doctor or nurse trusting a dosage/diagnosis field that's silently wrong is a patient-safety risk, not just an inconvenience — a risk not worth taking to save on a second disk. Static files (uploads, backup archives) don't have this problem — they're written once and read back later, no in-place multi-step updates — so they remain fine on network storage. **Do not attempt to move `dbPath` to `/mnt/ccs-wellness` again** — it will not work, and if it silently half-worked instead of crashing outright, that would be worse.
 - **Why is the database only reachable from `localhost`?** So it's never exposed to the internet or campus network directly — only the backend app (running on the same VM) can reach it.
 
 ---
@@ -100,6 +105,7 @@ Since leaving Atlas also means losing its automatic managed backups, a replaceme
 ## 7. What's still left to do
 
 - **Field-level encryption** for specific sensitive fields (the "developers can't see data" requirement) — needs a decision on which fields, then implementation.
+- **CSV import of student data** — planned, not yet done.
 - Written data retention/deletion policy — discussed, deprioritized by the team for now.
 
 ---

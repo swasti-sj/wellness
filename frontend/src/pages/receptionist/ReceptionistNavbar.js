@@ -33,6 +33,9 @@ export default function ReceptionistNavbar() {
       if (menuOpen && navRef.current && !navRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
     };
 
     window.addEventListener("resize", handleResize);
@@ -106,14 +109,12 @@ export default function ReceptionistNavbar() {
             )}
           </div>
 
-          <div
-            className="relative"
-            ref={profileRef}
-            onMouseEnter={() => setShowProfileMenu(true)}
-            onMouseLeave={() => setShowProfileMenu(false)}
-          >
+          <div className="relative" ref={profileRef}>
             <button
+              type="button"
               onClick={() => setShowProfileMenu((prev) => !prev)}
+              aria-haspopup="menu"
+              aria-expanded={showProfileMenu}
               aria-label="Receptionist profile"
               title={receptionist?.name || "Profile"}
               className="profile-btn"

@@ -430,6 +430,12 @@
   border-left: 4px solid var(--danger);
 }
 
+.rd-message--info {
+  background: #E3F2FD;
+  color: #1565C0;
+  border-left: 4px solid #1565C0;
+}
+
 @keyframes rdSlideIn {
   from {
     opacity: 0;

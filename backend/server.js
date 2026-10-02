@@ -304,7 +304,11 @@ app.get("/api/auth/google/callback",
         return res.redirect(`${process.env.FRONTEND_URL}/`);
       }
 
-      let user = await User.findOne({ email });
+      // Case-insensitive match so records pre-created by receptionist/doctor/nurse
+      // or imports (possibly stored with different casing) are reused, keeping
+      // their earlier appointments linked to this account.
+      const emailRegex = new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+      let user = await User.findOne({ email: emailRegex });
 
       if (!user) {
         user = new User({
@@ -319,6 +323,7 @@ app.get("/api/auth/google/callback",
         firstLogin = true;
       } else {
         user.googleId = googleId;
+        if (!user.name) user.name = name;
         if (picture) user.picture = picture;
         user.googleAccessToken = accessToken;
         if (refreshToken) user.googleRefreshToken = refreshToken;

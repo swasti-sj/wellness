@@ -10,6 +10,7 @@ export default function Navbar({ onNavSelect }) {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 992);
   const [menuOpen, setMenuOpen] = useState(false);
   const navRef = useRef(null);
+  const profileRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -22,6 +23,9 @@ export default function Navbar({ onNavSelect }) {
     const handleOutsideClick = (event) => {
       if (menuOpen && navRef.current && !navRef.current.contains(event.target)) {
         setMenuOpen(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
       }
     };
 
@@ -105,8 +109,7 @@ export default function Navbar({ onNavSelect }) {
           {!isMobile && (
             <div
               className="relative"
-              onMouseEnter={() => setShowProfileMenu(true)}
-              onMouseLeave={() => setShowProfileMenu(false)}
+              ref={profileRef}
             >
               <button
                 onClick={() => setShowProfileMenu((prev) => !prev)}

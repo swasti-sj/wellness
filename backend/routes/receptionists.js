@@ -50,7 +50,7 @@ router.post("/entries", async (req, res) => {
   try {
     console.log("[API] POST /receptionist/entries called");
 
-    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, email, phone, isWalkIn, remarks } = req.body;
+    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
 
     // Validate required fields
     if (!patientName || !roll || !doctorId || !doctorName) {
@@ -65,11 +65,39 @@ router.post("/entries", async (req, res) => {
 
     const isWalkInEntry = isWalkIn === true || isWalkIn === 'true';
 
+    // Find the patient by email only — no email match means the patient doesn't exist yet
+    const User = require('../models/User');
+    const cleanEmail = email && email !== '-' ? email.trim().toLowerCase() : null;
+    const emailRegex = cleanEmail
+      ? new RegExp(`^${cleanEmail.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
+      : null;
+    let patientUser = emailRegex ? await User.findOne({ email: emailRegex }) : null;
+
+    const dependant = dependantId
+      ? patientUser?.dependants?.find((item) => item._id.toString() === dependantId)
+      : null;
+    if (dependantId && !dependant) {
+      return res.status(400).json({ error: "Dependant not found for this patient" });
+    }
+    const dependantSnapshot = dependant
+      ? {
+        _id: dependant._id,
+        name: dependant.name,
+        age: dependant.age,
+        sex: dependant.sex,
+        relationship: dependant.relationship,
+        bloodGroup: dependant.bloodGroup,
+        phone: dependant.phone,
+        uhid: dependant.uhid,
+      }
+      : undefined;
+
     // =========================================================
-    // WALK-IN (no account) → ENTRY ONLY, no User/Appointment
+    // WALK-IN → ENTRY ONLY, no User/Appointment
     // =========================================================
     if (isWalkInEntry) {
       const walkInEntry = new ReceptionistEntry({
+        dependant: dependantSnapshot,
         patientName,
         roll,
         role: role || 'Student',
@@ -133,16 +161,15 @@ router.post("/entries", async (req, res) => {
       }
     }
 
-    // Create a local Date object (server's local timezone) matching the selected date.
-    const startDateTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
+    // Prefer the exact instant computed in the receptionist's browser (correct timezone);
+    // fall back to building it from date + time in the server's local timezone.
+    let startDateTime = startDateTimeRaw ? new Date(startDateTimeRaw) : null;
+    if (!startDateTime || isNaN(startDateTime.getTime())) {
+      startDateTime = new Date(`${dateStr}T${String(startHour).padStart(2, '0')}:${String(startMin).padStart(2, '0')}:00`);
+    }
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000);
 
-    // Find patient user by roll (the receptionist form only collects roll, not email)
-    const User = require('../models/User');
-    const cleanEmail = email && email !== '-' ? email : null;
-
-    let patientUser = roll ? await User.findOne({ roll }) : null;
-
+    const accountCreated = !patientUser;
     if (!patientUser) {
       // Create a proper user so the appointment is fully visible on patient side.
       // User model requires email, so generate a safe placeholder if none provided.
@@ -158,16 +185,21 @@ router.post("/entries", async (req, res) => {
       await patientUser.save();
     }
 
+    // Weekday name of the selected date (e.g. "Monday"), matching doctor weeklySlots
+    const [y, mo, d] = dateStr.split('-').map(Number);
+    const slotDay = new Date(y, mo - 1, d).toLocaleDateString('en-US', { weekday: 'long' });
+
     const Appointment = require('../models/Appointment');
     const appointment = new Appointment({
       doctor: doctor._id,
       user: patientUser._id,
       startDateTime,
       endDateTime,
-      slotDay: undefined,
+      slotDay,
       slotTime: appointmentTime || undefined,
       status: 'booked',
-      bookedBy: 'receptionist'
+      bookedBy: 'receptionist',
+      dependant: dependantSnapshot
     });
     await appointment.save();
 
@@ -196,7 +228,8 @@ router.post("/entries", async (req, res) => {
       success: true,
       message: "Entry added successfully",
       entry: newEntry,
-      appointmentId: appointment._id
+      appointmentId: appointment._id,
+      accountCreated
     });
 
   } catch (err) {

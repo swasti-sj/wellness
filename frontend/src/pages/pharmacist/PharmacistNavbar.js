@@ -106,8 +106,6 @@ export default function PharmacistNavbar() {
           <div
             className="relative"
             ref={profileRef}
-            onMouseEnter={() => setMenuOpen(true)}
-            onMouseLeave={() => setMenuOpen(false)}
           >
             <button
               className="profile-btn"
