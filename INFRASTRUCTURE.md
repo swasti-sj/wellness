@@ -79,12 +79,12 @@ git pull origin main          # get latest code from GitHub
 
 # --- Backend ---
 cd backend
-npm install                   # install any new packages
+npm ci                        # install exactly what package-lock.json lists (never rewrites it)
 pm2 restart backend --update-env   # restart with latest code + env
 
 # --- Frontend ---
 cd ../frontend
-npm install
+npm ci
 npm run build                 # produce fresh static files
 sudo rsync -av --delete build/ /var/www/html/   # deploy them
 sudo systemctl restart nginx
@@ -100,6 +100,8 @@ Then open https://wellness.iitdh.ac.in and confirm login + dashboard work.
 - **`.env` files are NOT in git** (they hold secrets). They live only on the VM. If a secret changes, edit `~/wellness/backend/.env` by hand — `git pull` never touches it.
 - **SSL certificates** live in `/etc/nginx/ssl/` (outside the project). Don't delete them; they only change when IITDH issues new ones.
 - If `git pull` reports a conflict, stop — don't force it — the VM may have local edits.
+- **Keep Node/npm versions the same on dev machines and the VM.** The VM runs **Node 20 / npm 10.8.2** (pinned in `.nvmrc`). A newer npm (e.g. npm 11 with Node 24) writes lockfiles that the VM's `npm ci` rejects (*"package.json and package-lock.json are not in sync … Missing: yaml@… from lock file"*). Either use Node 20 locally (nvm / nvm-windows: `nvm use 20`), or when adding/updating packages run npm at the VM's version: `npx npm@10.8.2 install <package>`.
+- **Use `npm ci`, not `npm install`, on the VM.** `npm install` can rewrite `package-lock.json` (different npm version/OS than the dev machine), and the next `git pull` then aborts with *"Your local changes to the following files would be overwritten by merge: backend/package-lock.json"*. If that happens, the lockfile edit is safe to discard — run `git checkout -- backend/package-lock.json frontend/package-lock.json`, then `git pull` again. Check with `git status` first that no *other* files are listed.
 
 ---
 
