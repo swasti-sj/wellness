@@ -119,14 +119,15 @@ export default function ReceptionistDashboard() {
   }, []);
 
   useEffect(() => {
-    const loadData = () => {
-      fetchAppointments();
-      fetchManualEntries();
-      fetchDoctors();
-    };
+    fetchAppointments();
+    fetchManualEntries();
+    fetchDoctors();
 
-    loadData();
-    const intervalId = setInterval(loadData, 60000); // Auto-refresh every 60s
+    // Auto-refresh every 60s in the background
+    const intervalId = setInterval(() => {
+      fetchAppointments({ silent: true });
+      fetchManualEntries();
+    }, 60000);
     return () => clearInterval(intervalId);
   }, []);
 
@@ -139,9 +140,10 @@ export default function ReceptionistDashboard() {
     }
   };
 
-  const fetchAppointments = async () => {
+  // silent: refresh in the background without replacing the table with the spinner
+  const fetchAppointments = async ({ silent = false } = {}) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`);
       const formatted = (response.data.appointments || []).map(appt => {
         const patient = appt.user || appt.fullData?.user;
@@ -167,12 +169,11 @@ export default function ReceptionistDashboard() {
         };
       });
       setAppointments(formatted);
-      setMessage('');
     } catch (error) {
       console.error('Error fetching appointments:', error);
       showMessage('Error loading appointments', 'error');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 
@@ -395,6 +396,9 @@ export default function ReceptionistDashboard() {
         } else {
           showMessage(`Appointment booked for ${bookedName}.`);
         }
+        // Appointment rows come from the appointments list, so reload both to show the new entry now
+        fetchAppointments({ silent: true });
+        fetchManualEntries();
       }
     } catch (error) {
       showMessage(error.response?.data?.error || 'Error adding entry', 'error');
