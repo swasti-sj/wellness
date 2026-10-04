@@ -275,71 +275,93 @@ router.get("/my-appointments", async (req, res) => {
       console.log("Skipping patient calendar checks: no OAuth client for user");
     }
 
-    for (const appt of appointments) {
-      let doctor = appt.doctor;
+    // Only verify an appointment against Google Calendar if it's upcoming
+    // (or very recently passed — a 24h buffer, so a cancellation right
+    // around appointment time still gets caught) and not already marked
+    // cancelled. Re-checking the full history on every single page load
+    // was the main cause of this endpoint being slow; genuinely old
+    // appointments don't need a live Google re-check every time (that's
+    // what /history is for, and it doesn't touch Google Calendar either).
+    // The checks that are still needed run in parallel, not one at a time.
+    const RECENT_PAST_BUFFER_MS = 24 * 60 * 60 * 1000;
+    const checkCutoff = new Date(Date.now() - RECENT_PAST_BUFFER_MS);
+    const needsCalendarCheck = (appt) =>
+      new Date(appt.startDateTime) >= checkCutoff &&
+      !appt.status.includes("cancelled") &&
+      (appt.patientCalendarEventId || appt.doctorCalendarEventId);
 
-      // --- Check patient calendar ---
-      if (appt.patientCalendarEventId && patientCalendar) {
-        try {
-          const event = await patientCalendar.events.get({
-            calendarId: "primary",
-            eventId: appt.patientCalendarEventId,
-          });
+    await Promise.all(
+      appointments.filter(needsCalendarCheck).map(async (appt) => {
+        const doctor = appt.doctor;
 
-          if (event.data.status === "cancelled") {
-            console.log("Patient event cancelled:", appt.patientCalendarEventId);
-            appt.status = "cancelled by user";
-            appt.patientCalendarEventId = null;
-            await appt.save();
-          }
-        } catch (err) {
-          if (err?.code === 404) {
-            console.log("Patient event missing:", appt.patientCalendarEventId);
-            appt.status = "cancelled by user";
-            appt.patientCalendarEventId = null;
-            await appt.save();
-          }
-        }
-      } else if (appt.patientCalendarEventId && !patientCalendar) {
-        console.log("Cannot check patient event (no OAuth client):", appt.patientCalendarEventId);
-      }
-
-      // --- Check doctor calendar ---
-      if (appt.doctorCalendarEventId && doctor) {
-        const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
-        if (doctorOAuth2Client) {
+        // --- Check patient calendar ---
+        if (appt.patientCalendarEventId && patientCalendar) {
           try {
-            const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
-            const event = await doctorCalendar.events.get({
+            const event = await patientCalendar.events.get({
               calendarId: "primary",
-              eventId: appt.doctorCalendarEventId,
+              eventId: appt.patientCalendarEventId,
             });
 
             if (event.data.status === "cancelled") {
-              console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
-              appt.status = "cancelled by doctor";
-              appt.doctorCalendarEventId = null;
+              console.log("Patient event cancelled:", appt.patientCalendarEventId);
+              appt.status = "cancelled by user";
+              appt.patientCalendarEventId = null;
               await appt.save();
             }
           } catch (err) {
             if (err?.code === 404) {
-              console.log("Doctor event missing:", appt.doctorCalendarEventId);
-              appt.status = "cancelled by doctor";
-              appt.doctorCalendarEventId = null;
+              console.log("Patient event missing:", appt.patientCalendarEventId);
+              appt.status = "cancelled by user";
+              appt.patientCalendarEventId = null;
               await appt.save();
             }
           }
-        } else {
-          console.log("Cannot check doctor event (no OAuth client):", appt.doctorCalendarEventId);
+        } else if (appt.patientCalendarEventId && !patientCalendar) {
+          console.log("Cannot check patient event (no OAuth client):", appt.patientCalendarEventId);
         }
-      }
 
-      // --- Free doctor slot if cancelled ---
+        // --- Check doctor calendar ---
+        if (appt.doctorCalendarEventId && doctor) {
+          const doctorOAuth2Client = await ensureFreshAccessToken(doctor, 'doctor');
+          if (doctorOAuth2Client) {
+            try {
+              const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+              const event = await doctorCalendar.events.get({
+                calendarId: "primary",
+                eventId: appt.doctorCalendarEventId,
+              });
+
+              if (event.data.status === "cancelled") {
+                console.log("Doctor event cancelled:", appt.doctorCalendarEventId);
+                appt.status = "cancelled by doctor";
+                appt.doctorCalendarEventId = null;
+                await appt.save();
+              }
+            } catch (err) {
+              if (err?.code === 404) {
+                console.log("Doctor event missing:", appt.doctorCalendarEventId);
+                appt.status = "cancelled by doctor";
+                appt.doctorCalendarEventId = null;
+                await appt.save();
+              }
+            }
+          } else {
+            console.log("Cannot check doctor event (no OAuth client):", appt.doctorCalendarEventId);
+          }
+        }
+      })
+    );
+
+    // --- Free doctor slots for already-cancelled appointments ---
+    // Cheap, local, no external API calls — still runs for every
+    // appointment, unlike the Google Calendar verification above.
+    for (const appt of appointments) {
+      const doctor = appt.doctor;
       if (!appt.patientCalendarEventId && !appt.doctorCalendarEventId && appt.status.includes("cancelled") && doctor) {
         const daySlot = doctor.weeklySlots.find(d => d.day === appt.slotDay);
         if (daySlot) {
           const timeSlot = daySlot.times.find(t => t.time === appt.slotTime);
-          if (timeSlot) {
+          if (timeSlot && timeSlot.status !== "available") {
             timeSlot.status = "available";
             timeSlot.appointmentId = null;
             await doctor.save();

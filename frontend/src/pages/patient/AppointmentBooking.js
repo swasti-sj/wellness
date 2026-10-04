@@ -103,7 +103,10 @@ export default function AppointmentBooking() {
 
       const calEvents = (res.data.appointments || []).map((ev) => ({
         id: ev._id,
-        title: `${ev.doctor?.name || "Doctor"} (${ev.status})`,
+        // Includes the time so it shows up both on the calendar chip and
+        // in react-big-calendar's built-in "+N more" day popup, which only
+        // ever renders each event's `title`.
+        title: `${moment(ev.startDateTime).format("hh:mm A")} — ${ev.doctor?.name || "Doctor"} (${ev.status})`,
         start: new Date(ev.startDateTime),
         end: new Date(ev.endDateTime),
         status: ev.status,

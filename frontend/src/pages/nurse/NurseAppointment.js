@@ -121,11 +121,15 @@ export default function NurseAppointment({ apiBaseUrl }) {
         const dependantLabel = dependant?.name
           ? `${dependant.name} (${dependant.relationship || "Dependant"})`
           : null;
+        // Include the time so it shows up both on the calendar chip and in
+        // react-big-calendar's built-in "+N more" day popup, which only
+        // ever renders each event's `title`.
+        const appointmentTime = format(new Date(appt.startDateTime), "hh:mm a");
         return {
           id: appt._id,
           title: dependantLabel
-            ? `${dependantLabel} — ${patientName} (${appt.status})`
-            : `${patientName} (${appt.status})`,
+            ? `${appointmentTime} — ${dependantLabel} — ${patientName} (${appt.status})`
+            : `${appointmentTime} — ${patientName} (${appt.status})`,
           start: new Date(appt.startDateTime),
           end: new Date(appt.endDateTime),
           status: appt.status,

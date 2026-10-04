@@ -107,9 +107,14 @@ export default function DoctorAppointment({ apiBaseUrl }) {
         const dependantLabel = dependant?.name
           ? `${dependant.name} (${dependant.relationship || "Dependant"})`
           : null;
+        // Include the time so it shows up both on the calendar chip and in
+        // react-big-calendar's built-in "+N more" day popup, which only
+        // ever renders each event's `title` — name/status alone wasn't
+        // enough to tell appointments apart on a busy day.
+        const appointmentTime = format(new Date(appt.startDateTime), "hh:mm a");
         const eventTitle = dependantLabel
-          ? `${dependantLabel} — ${patientDisplayName} (${appt.status})`
-          : `${patientDisplayName} (${appt.status})`;
+          ? `${appointmentTime} — ${dependantLabel} — ${patientDisplayName} (${appt.status})`
+          : `${appointmentTime} — ${patientDisplayName} (${appt.status})`;
 
         return {
           id: appt._id,
