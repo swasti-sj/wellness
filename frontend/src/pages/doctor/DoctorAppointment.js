@@ -504,7 +504,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   <label>Date</label>
                   <input type="date" value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                    min={new Date().toISOString().split("T")[0]} required />
+                    required />
                 </div>
                 <div className="booking-field">
                   <label>Time</label>

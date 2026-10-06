@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/ProfilePage.css';
 
+const WEEK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
 function DoctorProfilePage({ apiBaseUrl }) {
   const [profile, setProfile] = useState(null);
   const [editMode, setEditMode] = useState(false);
@@ -39,6 +41,15 @@ function DoctorProfilePage({ apiBaseUrl }) {
     setProfile({ ...profile, [e.target.name]: e.target.value });
   };
 
+  const startEditing = () => {
+    const weeklySlots = Array.isArray(profile.weeklySlots) ? profile.weeklySlots : [];
+    const missingDays = WEEK_DAYS
+      .filter((day) => !weeklySlots.some((slot) => slot.day === day))
+      .map((day) => ({ day, times: [] }));
+    setProfile({ ...profile, weeklySlots: [...weeklySlots, ...missingDays] });
+    setEditMode(true);
+  };
+
   const handleSlotChange = (dayIndex, timeIndex, field, value) => {
     const updatedSlots = profile.weeklySlots.map((slot, idx) => {
       if (idx !== dayIndex) return slot;
@@ -67,9 +78,17 @@ function DoctorProfilePage({ apiBaseUrl }) {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
-      await axios.put(`${apiBaseUrl}/api/doctors/profile`, profile, {
+      const profileToSave = {
+        ...profile,
+        weeklySlots: (profile.weeklySlots || []).map((slot) => ({
+          ...slot,
+          times: (slot.times || []).filter((timeSlot) => timeSlot.time),
+        })),
+      };
+      const res = await axios.put(`${apiBaseUrl}/api/doctors/profile`, profileToSave, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      setProfile(res.data);
       alert('Profile updated successfully!');
       setEditMode(false);
     } catch (err) {
@@ -162,7 +181,7 @@ function DoctorProfilePage({ apiBaseUrl }) {
 
           <div className="profile-buttons">
             {!editMode ? (
-              <button className="edit-btn" onClick={() => setEditMode(true)}>
+              <button className="edit-btn" onClick={startEditing}>
                 Edit Profile
               </button>
             ) : (

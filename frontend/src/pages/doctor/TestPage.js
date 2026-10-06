@@ -174,6 +174,7 @@ function TestPage({ apiBaseUrl }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
+  const [hasUnsavedTestChanges, setHasUnsavedTestChanges] = useState(false);
   const [labTestDocument, setLabTestDocument] = useState(null);
   const [labTestDocumentUrl, setLabTestDocumentUrl] = useState('');
 
@@ -190,19 +191,17 @@ function TestPage({ apiBaseUrl }) {
           params: { token }
         });
 
-        if (res.data.tests && res.data.tests.length > 0) {
-          const savedTests = res.data.tests;
+        const savedTests = res.data.tests || [];
+        setHasUnsavedTestChanges(false);
 
-          // Update categories with saved selections
-          const updatedCategories = TEST_CATEGORIES.map(cat => ({
-            ...cat,
-            tests: cat.tests.map(test => ({
-              name: test.name,
-              selected: savedTests.some(s => s.testName === test.name && s.selected)
-            }))
-          }));
-          setCategories(updatedCategories);
-        }
+        const updatedCategories = TEST_CATEGORIES.map(cat => ({
+          ...cat,
+          tests: cat.tests.map(test => ({
+            name: test.name,
+            selected: savedTests.some(s => s.testName === test.name && s.selected)
+          }))
+        }));
+        setCategories(updatedCategories);
         setLabTestDocumentUrl(res.data.labTestDocumentUrl || '');
       } catch (err) {
         console.error('Error fetching test data:', err);
@@ -219,6 +218,7 @@ function TestPage({ apiBaseUrl }) {
     updated[categoryIndex].tests[testIndex].selected = !updated[categoryIndex].tests[testIndex].selected;
     setCategories(updated);
     setSaved(false);
+    setHasUnsavedTestChanges(true);
   };
 
   const handleSelectAllInCategory = (categoryIndex, selected) => {
@@ -229,6 +229,7 @@ function TestPage({ apiBaseUrl }) {
     }));
     setCategories(updated);
     setSaved(false);
+    setHasUnsavedTestChanges(true);
   };
 
   const getSelectedTestsCount = () => {
@@ -292,6 +293,7 @@ function TestPage({ apiBaseUrl }) {
 
       if (response.data.success) {
         setSaved(true);
+        setHasUnsavedTestChanges(false);
         setLabTestDocument(null);
         setLabTestDocumentUrl(response.data.test?.labTestDocumentUrl || labTestDocumentUrl);
         // Navigate back and signal DoctorAppointment to open the Lab Tests section
@@ -404,7 +406,7 @@ function TestPage({ apiBaseUrl }) {
         <button
           className="save-tests-btn"
           onClick={handleSaveAll}
-          disabled={getSelectedTestsCount() === 0 && !labTestDocumentUrl}
+          disabled={getSelectedTestsCount() === 0 && !hasUnsavedTestChanges && !labTestDocumentUrl && !labTestDocument}
         >
           💾 Save Tests ({getSelectedTestsCount()})
         </button>

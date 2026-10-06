@@ -12,7 +12,7 @@ function PatientProfile() {
   const [dependantError, setDependantError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ age: '', sex: '', phone: '', emergencyContactNo: '', allergies: '' });
+  const [profileForm, setProfileForm] = useState({ age: '', sex: '', phone: '', emergencyContactNo: '', allergies: '', consentAccepted: false });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [editingDependantId, setEditingDependantId] = useState(null);
@@ -96,14 +96,15 @@ function PatientProfile() {
       phone: profile?.phone || '',
       emergencyContactNo: profile?.emergencyContactNo || '',
       allergies: profile?.allergies || '',
+      consentAccepted: Boolean(profile?.consentAccepted),
     });
     setProfileError('');
     setIsEditingProfile(true);
   };
 
   const handleProfileFormChange = (e) => {
-    const { name, value } = e.target;
-    setProfileForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setProfileForm((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
   };
 
   const handleSaveProfile = async (e) => {
@@ -191,6 +192,7 @@ function PatientProfile() {
   ];
 
   const canAddDependants = DEPENDANT_ALLOWED_CATEGORIES.includes(profile.patientCategory);
+  const consentLocked = Boolean(profile.consentFinalized || profile.consentAccepted);
 
   return (
     <div className="pp-container">
@@ -253,6 +255,27 @@ function PatientProfile() {
                 <span>Allergies</span>
                 <input name="allergies" value={profileForm.allergies} onChange={handleProfileFormChange} placeholder="Known allergies" />
               </label>
+            </div>
+
+            <div className="pp-consent-edit">
+              <p className="pp-consent-description">
+                By agreeing, you acknowledge that if you are granted a counseling or psychologist appointment, you may approach the counselor or psychologist directly without signing a register at the Health Center. You are voluntarily seeking counseling and consent to booking a counseling appointment. Your booking request is seen only by the counselor or psychologist. All communications are confidential.
+              </p>
+              <label className="pp-consent-check">
+                <input
+                  name="consentAccepted"
+                  type="checkbox"
+                  checked={Boolean(profileForm.consentAccepted)}
+                  onChange={handleProfileFormChange}
+                  disabled={consentLocked}
+                />
+                <span>I agree to the patient consent</span>
+              </label>
+              <p className="pp-consent-reminder">
+                {consentLocked
+                  ? 'Consent has been saved and cannot be changed.'
+                  : 'You can update consent once. After you accept and save your profile, it cannot be changed.'}
+              </p>
             </div>
 
             {profileError && <p className="pp-form-error">{profileError}</p>}

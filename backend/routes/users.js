@@ -61,7 +61,13 @@ router.post('/profile', authMiddleware, async (req, res) => {
 
     const before = await User.findById(req.user.id).lean();
 
-    const updates = { name, roll, sex, age, phone, emergencyContactNo, allergies, consentAccepted };
+    const updates = { name, roll, sex, age, phone, emergencyContactNo, allergies };
+    const consentAlreadyFinalized = Boolean(before?.consentFinalized || before?.consentAccepted);
+    if (!consentAlreadyFinalized && typeof consentAccepted === 'boolean' && consentAccepted !== Boolean(before?.consentAccepted)) {
+      updates.consentAccepted = consentAccepted;
+      updates.consentFinalized = true;
+    }
+
     if (patientCategory) {
       if (!PATIENT_CATEGORIES.includes(patientCategory)) {
         return res.status(400).json({ error: 'Invalid patient category' });

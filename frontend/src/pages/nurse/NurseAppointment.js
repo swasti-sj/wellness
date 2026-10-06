@@ -598,7 +598,6 @@ export default function NurseAppointment({ apiBaseUrl }) {
                     type="date"
                     value={bookingData.date}
                     onChange={(e) => setBookingData({ ...bookingData, date: e.target.value })}
-                    min={new Date().toISOString().split("T")[0]}
                     required
                   />
                 </div>

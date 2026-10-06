@@ -114,10 +114,15 @@ function InitialProfileForm() {
           <div className="consent-card">
             <div className="consent-copy">
               <h3>Patient Consent</h3>
-              <p>I agree to the processing of my medical data for clinical purposes.</p>
+              <p> By agreeing to this consent, you acknowledge that if you are granted a
+      counseling or psycologist  appointment, you may directly approach the counselor or psycologist  without
+      having to sign any registers at the Health Center. You are voluntarily
+      seeking counseling and consent to the booking of a counseling appointment.
+      Your booking request is seen only by the counselor or psycologist . All communications are
+      confidential.</p>
             </div>
             <label className="consent-check">
-              <input name="consentAccepted" type="checkbox" checked={form.consentAccepted} onChange={handleChange} required />
+              <input name="consentAccepted" type="checkbox" checked={form.consentAccepted} onChange={handleChange} />
               I Agree
             </label>
           </div>

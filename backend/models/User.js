@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
   uhid: String,
   allergies: String,
   consentAccepted: { type: Boolean, default: false },
+  consentFinalized: { type: Boolean, default: false },
   role: { type: String, default: 'patient' }, // Add role field
   isVerified: { type: Boolean, default: false }, // Add verification status
   profileComplete: { type: Boolean, default: false }, // true once initial profile form is submitted
