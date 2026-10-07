@@ -25,7 +25,6 @@ export default function ReceptionistDashboard() {
   const [doctors, setDoctors] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
     role: 'Student',
     doctorId: '',
     doctorName: '',
@@ -50,7 +49,8 @@ export default function ReceptionistDashboard() {
   const [isMobileView, setIsMobileView] = useState(window.innerWidth <= 760);
   const [dependants, setDependants] = useState([]);
   const [dependantsLoading, setDependantsLoading] = useState(false);
-  const [foundPatient, setFoundPatient] = useState(null); // existing patient matched by email
+  const [foundPatient, setFoundPatient] = useState(null);
+  const [patientIdentifier, setPatientIdentifier] = useState('');
 
   // Date range filter (default: today → today + 7 days)
   const today = new Date();
@@ -67,38 +67,48 @@ export default function ReceptionistDashboard() {
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
 
-  // Look up the patient by email: auto-fill their name and load dependants
+  // Look up patients by email or roll/staff ID and fill available record details
   useEffect(() => {
-    const patientEmail = toFullEmail(formData.email);
     setDependants([]);
+    setDependantsLoading(false);
     setFoundPatient(null);
-    setFormData((current) => ({ ...current, dependantId: '' }));
+    setFormData((current) => ({ ...current, name: '', dependantId: '' }));
     clearLookupMessage();
-    if (!patientEmail || !token || !apiBaseUrl) return;
+    const identifier = patientIdentifier.trim();
+    if (!identifier || !token || !apiBaseUrl) return;
 
     let cancelled = false;
     const timer = setTimeout(() => {
       setDependantsLoading(true);
       axios.get(`${apiBaseUrl}/api/users/patient-dependants`, {
-        params: { email: patientEmail },
+        params: { identifier },
         headers: { Authorization: `Bearer ${token}` },
       }).then((res) => {
         if (cancelled) return;
         const foundDependants = res.data.dependants || [];
-        setFoundPatient({ name: res.data.name || '', roll: res.data.roll || '' });
+        setFoundPatient(res.data);
         setDependants(foundDependants);
-        if (res.data.name) setFormData((current) => ({ ...current, name: res.data.name }));
+        const patientCategory = res.data.patientCategory || '';
+        const role = patientCategory === 'Faculty'
+          ? 'Faculty'
+          : patientCategory === 'Student' ? 'Student' : patientCategory ? 'Staff' : 'Student';
+        const remarks = ['Regular Staff', 'Contractual Staff', 'Outsourced Staff'].includes(patientCategory)
+          ? patientCategory
+          : 'None';
+        setFormData((current) => ({ ...current, name: res.data.name || '', role, remarks, dependantId: '' }));
         const dependantNote = foundDependants.length
           ? ` ${foundDependants.length} dependant${foundDependants.length > 1 ? 's' : ''} available in "Book For".`
           : '';
-        showMessage(`Email found: ${res.data.name || patientEmail}. Name filled from records.${dependantNote}`, 'success', { source: 'lookup' });
+        showMessage(`Patient found: ${res.data.name || res.data.email}. Details filled from records.${dependantNote}`, 'success', { source: 'lookup' });
       }).catch((err) => {
         if (cancelled) return;
         setDependants([]);
         if (err.response?.status === 404) {
-          showMessage('Email not in database. Enter the name. A new account will be created when you add an appointment.', 'info', { source: 'lookup' });
+          showMessage('No matching patient found. Enter the name; use an email address for a new account.', 'info', { source: 'lookup' });
+        } else if (err.response?.status === 409) {
+          showMessage(err.response.data.error, 'error', { source: 'lookup' });
         } else {
-          showMessage('Could not check this email right now. You can still add the entry.', 'error', { source: 'lookup' });
+          showMessage('Could not check this patient ID right now. You can still add the entry.', 'error', { source: 'lookup' });
         }
       }).finally(() => {
         if (!cancelled) setDependantsLoading(false);
@@ -109,7 +119,7 @@ export default function ReceptionistDashboard() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [formData.email, apiBaseUrl, token]);
+  }, [patientIdentifier, apiBaseUrl, token]);
 
   useEffect(() => {
     const handleResize = () => setIsMobileView(window.innerWidth <= 760);
@@ -327,7 +337,7 @@ export default function ReceptionistDashboard() {
 
   const handleAddEntry = async (e) => {
     e.preventDefault();
-    if (!formData.email.trim() || !formData.name.trim()) {
+    if (!patientIdentifier.trim() || !formData.name.trim()) {
       showMessage('Please fill in all required fields', 'error');
       return;
     }
@@ -342,7 +352,7 @@ export default function ReceptionistDashboard() {
       const appointmentDateRaw = formData.date || null;
       // If receptionist didn't enter time, set it to current time.
       const timeToSend = formData.time || new Date().toTimeString().slice(0, 5);
-      const patientEmail = toFullEmail(formData.email);
+      const patientEmail = foundPatient?.email || toFullEmail(patientIdentifier);
       // Exact start instant in the receptionist's local timezone
       const localStart = appointmentDateRaw ? new Date(`${appointmentDateRaw}T${timeToSend}`) : null;
       const startDateTime = localStart && !isNaN(localStart.getTime()) ? localStart.toISOString() : null;
@@ -357,7 +367,7 @@ export default function ReceptionistDashboard() {
         appointmentTime: timeToSend || null,
         startDateTime,
         email: patientEmail,
-        phone: '-',
+        phone: foundPatient?.phone || '-',
         isWalkIn,
         remarks: formData.remarks || 'None',
         dependantId: formData.dependantId
@@ -381,13 +391,14 @@ export default function ReceptionistDashboard() {
         };
         setManualEntries(prev => [newEntry, ...prev]);
         setFormData({
-          name: '', email: '', role: 'Student', doctorId: '', doctorName: '',
+          name: '', role: 'Student', doctorId: '', doctorName: '',
           date: new Date().toISOString().split('T')[0],
           time: '',
           entryType: 'appointment',
           remarks: 'None',
           dependantId: ''
         });
+        setPatientIdentifier('');
         const bookedName = response.data.entry.patientName;
         if (isWalkIn) {
           showMessage(`Walk-in entry added for ${bookedName}.`);
@@ -689,13 +700,17 @@ export default function ReceptionistDashboard() {
                   </select>
                 </div>
                 <div className="rd-form-group">
-                  <label>Email ID <span className="rd-required">*</span></label>
+                  <label>Email / Roll No. / Employee ID / Staff ID <span className="rd-required">*</span></label>
                   <input
                     type="text"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                    placeholder="e.g. is23bm032@iitdh.ac.in"
+                    value={patientIdentifier}
+                    onChange={(e) => {
+                      setPatientIdentifier(e.target.value);
+                      setFoundPatient(null);
+                      setDependants([]);
+                      setFormData((current) => ({ ...current, name: '', dependantId: '' }));
+                    }}
+                    placeholder="Enter email or institutional ID"
                     required
                   />
                 </div>
@@ -736,6 +751,8 @@ export default function ReceptionistDashboard() {
                   <label>Remarks</label>
                   <select name="remarks" value={formData.remarks} onChange={handleFormChange}>
                     <option value="None">None</option>
+                    <option value="Regular Staff">Regular Staff</option>
+                    <option value="Contractual Staff">Contractual Staff</option>
                     <option value="Outsourced Staff">Outsourced Staff</option>
                     <option value="Dependant">Dependant</option>
                   </select>

@@ -160,21 +160,45 @@ router.get('/dependants', authMiddleware, async (req, res) => {
   }
 });
 
-// GET /api/users/patient-dependants?email=... — allows doctors/nurses/receptionists to look up a patient and their dependants
+// GET /api/users/patient-dependants?identifier=... — look up a patient by email or roll/staff ID
 router.get('/patient-dependants', authMiddleware, async (req, res) => {
   try {
     if (!['doctor', 'nurse', 'receptionist'].includes(req.user?.role)) {
       return res.status(403).json({ error: 'Only doctors, nurses and receptionists can access patient dependants' });
     }
 
-    const email = req.query.email?.trim();
-    if (!email) return res.status(400).json({ error: 'Patient email is required' });
+    const identifier = req.query.identifier ?? req.query.email;
+    if (typeof identifier !== 'string' || !identifier.trim()) {
+      return res.status(400).json({ error: 'Patient email or ID is required' });
+    }
 
-    const emailRegex = new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
-    const user = await User.findOne({ email: emailRegex }).select('name roll patientCategory dependants');
-    if (!user) return res.status(404).json({ error: 'Patient not found' });
+    const value = identifier.trim();
+    const escapedValue = value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const lookupConditions = value.includes('@')
+      ? [{ email: new RegExp(`^${escapedValue}$`, 'i') }]
+      : [
+        { roll: new RegExp(`^${escapedValue}$`, 'i') },
+        { email: new RegExp(`^${escapedValue}@iitdh\\.ac\\.in$`, 'i') }
+      ];
+    const users = await User.find({ $or: lookupConditions })
+      .select('name email roll patientCategory phone sex age emergencyContactNo uhid dependants')
+      .limit(2);
+    if (!users.length) return res.status(404).json({ error: 'Patient not found' });
+    if (users.length > 1) return res.status(409).json({ error: 'This ID matches multiple patient records. Search by email instead.' });
 
-    res.json({ name: user.name, roll: user.roll, patientCategory: user.patientCategory, dependants: user.dependants || [] });
+    const [user] = users;
+    res.json({
+      name: user.name,
+      email: user.email,
+      roll: user.roll,
+      patientCategory: user.patientCategory,
+      phone: user.phone,
+      sex: user.sex,
+      age: user.age,
+      emergencyContactNo: user.emergencyContactNo,
+      uhid: user.uhid,
+      dependants: user.dependants || []
+    });
   } catch (err) {
     console.error('Error fetching patient dependants:', err);
     res.status(500).json({ error: 'Failed to fetch patient dependants' });

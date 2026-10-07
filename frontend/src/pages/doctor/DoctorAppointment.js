@@ -16,6 +16,30 @@ import CustomToolbar from "./CustomToolbar";
 
 const localizer = momentLocalizer(moment);
 
+const AppointmentSubSection = ({ id, icon, title, subtitle, isOpen, onToggle, children }) => (
+  <div className="modal-sub-section">
+    <button
+      type="button"
+      className={`modal-sub-toggle${isOpen ? " open" : ""}`}
+      onClick={onToggle}
+      aria-expanded={isOpen}
+      aria-controls={`appointment-section-${id}`}
+    >
+      <div className="modal-sub-left">
+        <span className="modal-sub-icon">{icon}</span>
+        <div>
+          <div className="modal-sub-title">{title}</div>
+          {subtitle && <div className="modal-sub-subtitle">{subtitle}</div>}
+        </div>
+      </div>
+      <span className="modal-sub-chevron">▼</span>
+    </button>
+    <div id={`appointment-section-${id}`} className={`modal-sub-body${isOpen ? " open" : ""}`}>
+      {children}
+    </div>
+  </div>
+);
+
 export default function DoctorAppointment({ apiBaseUrl }) {
   const [appointments, setAppointments] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -226,33 +250,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
     }
   };
 
-  // ── Sub-section accordion for the bottom part of the modal ──────
   const toggleSub = (key) => setOpenSubSection((p) => (p === key ? null : key));
-
-  const SubSection = ({ id, icon, title, subtitle, children }) => {
-    const isOpen = openSubSection === id;
-    return (
-      <div className="modal-sub-section">
-        <button
-          type="button"
-          className={`modal-sub-toggle${isOpen ? " open" : ""}`}
-          onClick={() => toggleSub(id)}
-        >
-          <div className="modal-sub-left">
-            <span className="modal-sub-icon">{icon}</span>
-            <div>
-              <div className="modal-sub-title">{title}</div>
-              {subtitle && <div className="modal-sub-subtitle">{subtitle}</div>}
-            </div>
-          </div>
-          <span className="modal-sub-chevron">▼</span>
-        </button>
-        <div className={`modal-sub-body${isOpen ? " open" : ""}`}>
-          {children}
-        </div>
-      </div>
-    );
-  };
 
   // ── Event color getter ───────────────────────────────────────────
   const eventStyleGetter = (event) => {
@@ -402,31 +400,34 @@ export default function DoctorAppointment({ apiBaseUrl }) {
               <div className="modal-divider" />
 
               {/* ── Case Sheet (DoctorVitals — already has its own accordion) ── */}
-              <SubSection id="casesheet" icon="📋" title="Case Sheet" subtitle="Basic details, vitals, medical history, treatment">
+              <AppointmentSubSection id="casesheet" icon="📋" title="Case Sheet" subtitle="Basic details, vitals, medical history, treatment" isOpen={openSubSection === "casesheet"} onToggle={() => toggleSub("casesheet")}>
                 <DoctorVitals
+                  key={selectedEvent.id}
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
                   dependantUhid={selectedEvent.dependant?.uhid}
                   apiBaseUrl={apiBaseUrl}
                 />
-              </SubSection>
+              </AppointmentSubSection>
 
               {/* ── Clinical Notes ── */}
-              <SubSection id="notes" icon="🗒️" title="Clinical Notes" subtitle="Doctor's running notes for this visit">
-                <DoctorNote appointmentId={selectedEvent.id} />
-              </SubSection>
+              <AppointmentSubSection id="notes" icon="🗒️" title="Clinical Notes" subtitle="Doctor's running notes for this visit" isOpen={openSubSection === "notes"} onToggle={() => toggleSub("notes")}>
+                <DoctorNote key={selectedEvent.id} appointmentId={selectedEvent.id} />
+              </AppointmentSubSection>
 
               {/* ── Prescription ── */}
-              <SubSection id="prescription" icon="💊" title="Prescription" subtitle="Medicines, dosage, frequency">
+              <AppointmentSubSection id="prescription" icon="💊" title="Prescription" subtitle="Medicines, dosage, frequency" isOpen={openSubSection === "prescription"} onToggle={() => toggleSub("prescription")}>
                 <DoctorPrescription
+                  key={selectedEvent.id}
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
                 />
-              </SubSection>
+              </AppointmentSubSection>
 
               {/* ── Tests ── */}
-              <SubSection id="tests" icon="🧪" title="Lab Tests" subtitle="Ordered investigations">
+              <AppointmentSubSection id="tests" icon="🧪" title="Lab Tests" subtitle="Ordered investigations" isOpen={openSubSection === "tests"} onToggle={() => toggleSub("tests")}>
                 <SelectedTestsSummary
+                  key={selectedEvent.id}
                   appointmentId={selectedEvent.id}
                   onEditClick={() =>
                     navigate(
@@ -441,17 +442,17 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                     )
                   }
                 />
-              </SubSection>
+              </AppointmentSubSection>
 
               {/* ── Hospital Referral ── */}
-              <SubSection id="referral" icon="🏥" title="Hospital Referral" subtitle="Refer to external hospital">
-                <DoctorHospitalReferral appointmentId={selectedEvent.id} />
-              </SubSection>
+              <AppointmentSubSection id="referral" icon="🏥" title="Hospital Referral" subtitle="Refer to external hospital" isOpen={openSubSection === "referral"} onToggle={() => toggleSub("referral")}>
+                <DoctorHospitalReferral key={selectedEvent.id} appointmentId={selectedEvent.id} />
+              </AppointmentSubSection>
 
               {/* ── Certificate ── */}
-              <SubSection id="certificate" icon="📜" title="Medical Certificate" subtitle="Issue fitness / medical certificate">
-                <DoctorCertificate appointmentId={selectedEvent.id} />
-              </SubSection>
+              <AppointmentSubSection id="certificate" icon="📜" title="Medical Certificate" subtitle="Issue fitness / medical certificate" isOpen={openSubSection === "certificate"} onToggle={() => toggleSub("certificate")}>
+                <DoctorCertificate key={selectedEvent.id} appointmentId={selectedEvent.id} />
+              </AppointmentSubSection>
 
             </div>{/* end modal-body */}
           </div>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/DoctorVitals.css';
 import DocumentUpload from './documentUpload';
@@ -61,6 +61,8 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
   const [caseSheetDocumentUrl, setCaseSheetDocumentUrl] = useState('');
   const [formData, setFormData] = useState(initialFormData);
   const [recordLoaded, setRecordLoaded] = useState(false);
+  const formEditVersionRef = useRef(0);
+  const documentEditVersionRef = useRef(0);
 
 
   const mapVitalToFormData = (v) => ({
@@ -114,8 +116,8 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
           }
         }
 
-        setFormData(mapped);
-        setCaseSheetDocumentUrl(v.caseSheetDocumentUrl || '');
+        if (formEditVersionRef.current === 0) setFormData(mapped);
+        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrl(v.caseSheetDocumentUrl || '');
       } else {
         // No saved vital yet — still fetch UHID for the blank form
         if (patientId && apiBaseUrl) {
@@ -123,7 +125,9 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
             const uhidRes = await axios.get(`${apiBaseUrl}/api/users/patient-uhid/${patientId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            setFormData((prev) => ({ ...prev, uhid: dependantUhid || uhidRes.data?.uhid || '' }));
+            if (formEditVersionRef.current === 0) {
+              setFormData((prev) => ({ ...prev, uhid: dependantUhid || uhidRes.data?.uhid || '' }));
+            }
           } catch (uhidErr) {
             console.warn('Could not fetch patient UHID:', uhidErr.message);
           }
@@ -142,14 +146,16 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
             const uhidRes = await axios.get(`${apiBaseUrl}/api/users/patient-uhid/${patientId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            setFormData({ ...initialFormData, uhid: dependantUhid || uhidRes.data?.uhid || '' });
+            if (formEditVersionRef.current === 0) {
+              setFormData({ ...initialFormData, uhid: dependantUhid || uhidRes.data?.uhid || '' });
+            }
           } catch {
-            setFormData(initialFormData);
+            if (formEditVersionRef.current === 0) setFormData(initialFormData);
           }
-        } else {
+        } else if (formEditVersionRef.current === 0) {
           setFormData(initialFormData);
         }
-        setCaseSheetDocumentUrl('');
+        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrl('');
       } else {
         setRecordLoaded(true);
       }
@@ -164,10 +170,13 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
   const handleInputChange = (e) => {
     if (readOnly) return;
     const { name, value } = e.target;
+    formEditVersionRef.current += 1;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSaveVitals = async () => {
+    const submittedFormEditVersion = formEditVersionRef.current;
+    const submittedDocumentEditVersion = documentEditVersionRef.current;
     try {
       setLoading(true);
       setMessage('');
@@ -189,14 +198,16 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
       });
 
       if (res.data.success) {
-        setMessage('Case sheet saved successfully.');
         setExistingVitalId(res.data.vital?._id || existingVitalId);
-        setCaseSheetDocument(null);
-        setCaseSheetDocumentUrl(res.data.vital?.caseSheetDocumentUrl || caseSheetDocumentUrl);
-        if (res.data.vital) {
-          setFormData(mapVitalToFormData(res.data.vital));
+        if (documentEditVersionRef.current === submittedDocumentEditVersion) {
+          setCaseSheetDocument(null);
+          setCaseSheetDocumentUrl(res.data.vital?.caseSheetDocumentUrl || caseSheetDocumentUrl);
         }
-        await fetchVitals();
+        setMessage(formEditVersionRef.current === submittedFormEditVersion
+          && documentEditVersionRef.current === submittedDocumentEditVersion
+          ? 'Case sheet saved successfully.'
+          : 'Saved. Newer edits remain on the form; save again to keep them.');
+        setRecordLoaded(true);
       }
     } catch (err) {
       setMessage(err.response?.data?.error || 'Failed to save case sheet.');
@@ -312,10 +323,12 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
             onFileChange={(e) => {
               const file = e.target.files?.[0];
               if (!file) return;
+              documentEditVersionRef.current += 1;
               setCaseSheetDocument(file);
               setCaseSheetDocumentUrl(URL.createObjectURL(file));
             }}
             onRemove={() => {
+              documentEditVersionRef.current += 1;
               setCaseSheetDocument(null);
               setCaseSheetDocumentUrl('');
             }}
@@ -330,7 +343,14 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
           <button className="save-case-btn" onClick={handleSaveVitals} disabled={loading}>
             {loading ? 'Saving...' : existingVitalId ? 'Update Case Sheet' : 'Save Case Sheet'}
           </button>
-          {message && <p className={message.toLowerCase().includes('successfully') ? 'msg-success' : 'msg-error'}>{message}</p>}
+          <p
+            aria-live="polite"
+            className={message
+              ? message.toLowerCase().includes('successfully') ? 'msg-success' : 'msg-error'
+              : 'msg-placeholder'}
+          >
+            {message || '\u00a0'}
+          </p>
         </div>
       )}
     </div>

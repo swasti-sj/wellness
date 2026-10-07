@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import Fuse from 'fuse.js';
 import '../../styles/doctor/DoctorPrescription.css';
@@ -18,6 +18,8 @@ function DoctorPrescription({ appointmentId, patientId }) {
   const [prescriptionDocument, setPrescriptionDocument] = useState(null);
   const [bookNo, setBookNo] = useState('');
   const [prescriptionNo, setPrescriptionNo] = useState('');
+  const editVersionRef = useRef(0);
+  const documentEditVersionRef = useRef(0);
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
   useEffect(() => {
@@ -51,6 +53,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
   }, [appointmentId, patientId, token]);
 
   const updateRow = (index, field, value) => {
+    editVersionRef.current += 1;
     setCurrent((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [field]: value };
@@ -68,6 +71,7 @@ function DoctorPrescription({ appointmentId, patientId }) {
   };
 
   const selectMedicine = (i, med) => {
+    editVersionRef.current += 1;
     setCurrent((prev) => {
       const next = [...prev];
       next[i] = {
@@ -83,16 +87,19 @@ function DoctorPrescription({ appointmentId, patientId }) {
   };
 
   const addRow = () => {
+    editVersionRef.current += 1;
     setCurrent((prev) => [...prev, { medication: '', dosage: '', frequency: '', notes: '', quantity: 1, status: 'new', source: 'INHOUSE' }]);
     setSaved(false);
   };
 
   const removeRow = (i) => {
+    editVersionRef.current += 1;
     setCurrent((prev) => prev.filter((_, index) => index !== i));
     setSaved(false);
   };
 
   const togglePrev = (rx, checked) => {
+    editVersionRef.current += 1;
     if (checked) {
       if (!current.some((p) => p.medication === rx.medication)) {
         setCurrent((prev) => [...prev, { ...rx, status: 'continued' }]);
@@ -104,6 +111,8 @@ function DoctorPrescription({ appointmentId, patientId }) {
   };
 
   const handleSave = async () => {
+    const submittedEditVersion = editVersionRef.current;
+    const submittedDocumentEditVersion = documentEditVersionRef.current;
     setError('');
     setSaving(true);
     try {
@@ -122,12 +131,13 @@ function DoctorPrescription({ appointmentId, patientId }) {
       const r = await axios.post(`${apiBaseUrl}/api/prescriptions/save`, formData);
 
       if (r.data.success) {
-        setCurrent(r.data.prescription.prescriptions);
-        setDocumentUrl(r.data.prescription.documentUrl || '');
-        setBookNo(r.data.prescription.bookNo || '');
-        setPrescriptionNo(r.data.prescription.prescriptionNo || '');
-        setPrescriptionDocument(null);
-        setSaved(true);
+        if (documentEditVersionRef.current === submittedDocumentEditVersion) {
+          setDocumentUrl(r.data.prescription.documentUrl || '');
+          setPrescriptionDocument(null);
+        }
+        const noNewerEdits = editVersionRef.current === submittedEditVersion
+          && documentEditVersionRef.current === submittedDocumentEditVersion;
+        setSaved(noNewerEdits);
         setTimeout(() => setSaved(false), 3000);
       }
     } catch (e) {
@@ -175,11 +185,11 @@ function DoctorPrescription({ appointmentId, patientId }) {
         <div className="rx-row" style={{ gridTemplateColumns: '1fr 1fr', alignItems: 'end' }}>
           <div className="rx-med-container">
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>Book No.</label>
-            <input value={bookNo} onChange={(e) => { setBookNo(e.target.value); setSaved(false); }} placeholder="Enter book number" />
+            <input value={bookNo} onChange={(e) => { editVersionRef.current += 1; setBookNo(e.target.value); setSaved(false); }} placeholder="Enter book number" />
           </div>
           <div className="rx-med-container">
             <label style={{ display: 'block', marginBottom: '0.35rem', fontWeight: 600 }}>Prescription No.</label>
-            <input value={prescriptionNo} onChange={(e) => { setPrescriptionNo(e.target.value); setSaved(false); }} placeholder="Enter prescription number" />
+            <input value={prescriptionNo} onChange={(e) => { editVersionRef.current += 1; setPrescriptionNo(e.target.value); setSaved(false); }} placeholder="Enter prescription number" />
           </div>
         </div>
       </div>
@@ -191,11 +201,13 @@ function DoctorPrescription({ appointmentId, patientId }) {
         onFileChange={(e) => {
           const file = e.target.files?.[0];
           if (!file) return;
+          documentEditVersionRef.current += 1;
           setPrescriptionDocument(file);
           setDocumentUrl(URL.createObjectURL(file));
           setSaved(false);
         }}
         onRemove={() => {
+          documentEditVersionRef.current += 1;
           setPrescriptionDocument(null);
           setDocumentUrl('');
           setSaved(false);

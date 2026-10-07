@@ -540,6 +540,18 @@
   border-left: 3px solid var(--success);
 }
 
+.vitals-save-row > p {
+  min-height: 2.2rem;
+  margin: 0;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
+.msg-placeholder {
+  visibility: hidden;
+}
+
 .msg-error {
   color: var(--danger);
   font-size: 0.88rem;
