@@ -106,7 +106,7 @@ export default function AppointmentBooking() {
         // Includes the time so it shows up both on the calendar chip and
         // in react-big-calendar's built-in "+N more" day popup, which only
         // ever renders each event's `title`.
-        title: `${moment(ev.startDateTime).format("hh:mm A")} — ${ev.doctor?.name || "Doctor"} (${ev.status})`,
+        title: `${moment(ev.startDateTime).format("hh:mm A")} — ${ev.doctor?.name || ev.doctorName || "Doctor"} (${ev.status})`,
         start: new Date(ev.startDateTime),
         end: new Date(ev.endDateTime),
         status: ev.status,
@@ -484,10 +484,10 @@ export default function AppointmentBooking() {
             <div className="modal-header-bar">
               <button className="close-btn" onClick={() => setSelectedEvent(null)} title="Close">x</button>
               <div className="modal-patient-name">
-                {selectedEvent.appointment?.dependant?.name || selectedEvent.appointment?.doctor?.name || "Appointment"}
+                {selectedEvent.appointment?.dependant?.name || selectedEvent.appointment?.doctor?.name || selectedEvent.appointment?.doctorName || "Appointment"}
               </div>
               <div className="modal-meta">
-                <span><strong>Doctor:</strong> {selectedEvent.appointment?.doctor?.name || "N/A"}</span>
+                <span><strong>Doctor:</strong> {selectedEvent.appointment?.doctor?.name || selectedEvent.appointment?.doctorName || "N/A"}</span>
                 {selectedEvent.appointment?.dependant?.name && (
                   <>
                     <span><strong>UHID:</strong> {selectedEvent.appointment.dependant.uhid || "N/A"}</span>

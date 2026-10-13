@@ -150,15 +150,14 @@ export default function NurseAppointment({ apiBaseUrl }) {
         const appointmentTime = format(new Date(appt.startDateTime), "hh:mm a");
         return {
           id: appt._id,
-          title: dependantLabel
-            ? `${appointmentTime} — ${dependantLabel} — ${patientName} (${appt.status})`
-            : `${appointmentTime} — ${patientName} (${appt.status})`,
+          title: `${appointmentTime} — ${dependantLabel ? `${dependantLabel} — ` : ""}${patientName}${appt.doctorName ? ` — ${appt.doctor?.name || appt.doctorName}` : ""} (${appt.status})`,
           start: new Date(appt.startDateTime),
           end: new Date(appt.endDateTime),
           status: appt.status,
           patient,
           patientName,
           doctor: appt.doctor,
+          doctorName: appt.doctor?.name || appt.doctorName || "",
           dependant,
           dependantLabel,
           slotDay: appt.slotDay,
@@ -422,8 +421,8 @@ export default function NurseAppointment({ apiBaseUrl }) {
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
                 <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>
-                {selectedEvent.doctor && (
-                  <span><strong>Doctor:</strong> Dr. {selectedEvent.doctor.name || "—"}</span>
+                {(selectedEvent.doctor?.name || selectedEvent.doctorName) && (
+                  <span><strong>Doctor:</strong> {selectedEvent.doctor?.name || selectedEvent.doctorName}</span>
                 )}
                 <span>
                   <span className={`modal-status-badge ${selectedEvent.status?.toLowerCase().includes("cancel") ? "cancelled" : selectedEvent.status?.replace(" ", "-").toLowerCase()}`}>

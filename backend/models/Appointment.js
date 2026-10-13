@@ -1,7 +1,8 @@
 const mongoose = require("mongoose");
 
 const AppointmentSchema = new mongoose.Schema({
-  doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", required: true },
+  doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Doctor", default: null },
+  doctorName: { type: String, default: '' },
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   doctorCalendarEventId: { type: String, default: null }, // doctor’s Google event id
   patientCalendarEventId: { type: String, default: null }, // patient’s Google event id

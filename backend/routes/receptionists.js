@@ -53,14 +53,19 @@ router.post("/entries", async (req, res) => {
     const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
 
     // Validate required fields
-    if (!patientName || !roll || !doctorId || !doctorName) {
+    const isSdmBooking = doctorId === 'sdm';
+    if (!patientName || !roll || (!isSdmBooking && (!doctorId || !doctorName))) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    // Verify doctor exists
-    const doctor = await Doctor.findById(doctorId);
-    if (!doctor) {
-      return res.status(404).json({ error: "Doctor not found" });
+    let doctor = null;
+    let selectedDoctorName = 'SDM';
+    if (!isSdmBooking) {
+      doctor = await Doctor.findById(doctorId);
+      if (!doctor) {
+        return res.status(404).json({ error: "Doctor not found" });
+      }
+      selectedDoctorName = doctor.name;
     }
 
     const isWalkInEntry = isWalkIn === true || isWalkIn === 'true';
@@ -101,8 +106,8 @@ router.post("/entries", async (req, res) => {
         patientName,
         roll,
         role: role || 'Student',
-        doctorId,
-        doctorName,
+        doctorId: doctor?._id || null,
+        doctorName: selectedDoctorName,
         appointmentDate: appointmentDate ? new Date(appointmentDate) : new Date(),
         appointmentTime: appointmentTime || null,
         email: email || "-",
@@ -191,7 +196,8 @@ router.post("/entries", async (req, res) => {
 
     const Appointment = require('../models/Appointment');
     const appointment = new Appointment({
-      doctor: doctor._id,
+      doctor: doctor?._id || null,
+      doctorName: isSdmBooking ? selectedDoctorName : '',
       user: patientUser._id,
       startDateTime,
       endDateTime,
@@ -208,8 +214,8 @@ router.post("/entries", async (req, res) => {
       roll,
       appointmentId: appointment._id,
       role: role || 'Student',
-      doctorId,
-      doctorName,
+      doctorId: doctor?._id || null,
+      doctorName: selectedDoctorName,
       appointmentDate: startDateTime,
       appointmentTime: appointmentTime || null,
       email: email || "-",

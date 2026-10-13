@@ -166,7 +166,7 @@ export default function ReceptionistDashboard() {
           _id: appt._id,
           patientName: dependantLabel ? `${dependantLabel} — ${patientName}` : patientName,
           roll: appt.user?.roll || '-',
-          doctorName: appt.doctor?.name || 'Unknown',
+          doctorName: appt.doctor?.name || appt.doctorName || 'Unknown',
           doctorId: appt.doctor?._id || '',
           email: appt.user?.email || '-',
           phone: appt.user?.phone || '-',
@@ -237,7 +237,7 @@ export default function ReceptionistDashboard() {
       setFormData(prev => ({
         ...prev,
         doctorId: value,
-        doctorName: selectedDoctor ? selectedDoctor.name : ''
+        doctorName: value === 'sdm' ? 'SDM' : selectedDoctor ? selectedDoctor.name : ''
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -766,6 +766,7 @@ export default function ReceptionistDashboard() {
                         {d.name}{d.specialization ? ` (${d.specialization})` : ''}
                       </option>
                     ))}
+                    <option value="sdm">SDM</option>
                   </select>
                 </div>
                 {formData.entryType === 'appointment' && (

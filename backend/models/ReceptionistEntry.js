@@ -17,7 +17,7 @@ const ReceptionistEntrySchema = new mongoose.Schema({
   doctorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Doctor",
-    required: true
+    default: null
   },
   doctorName: {
     type: String,

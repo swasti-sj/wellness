@@ -426,7 +426,9 @@ router.delete("/:appointmentId/cancel", async (req, res) => {
     if (appointment.user._id.toString() !== user._id.toString())
       return res.status(403).json({ error: "This appointment does not belong to you" });
 
-    const doctor = await Doctor.findById(appointment.doctor._id);
+    const doctor = appointment.doctor
+      ? await Doctor.findById(appointment.doctor._id)
+      : null;
 
     // Time since booking
     const now = new Date();
@@ -812,7 +814,7 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
     const appointment = await Appointment.findById(appointmentId).populate("user");
     if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-    if (appointment.doctor.toString() !== doctor._id.toString()) {
+    if (!appointment.doctor || appointment.doctor.toString() !== doctor._id.toString()) {
       return res.status(403).json({ error: "This appointment does not belong to you" });
     }
 
@@ -917,7 +919,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
       appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-      if (appointment.doctor.toString() !== doctor._id.toString()) {
+      if (!appointment.doctor || appointment.doctor.toString() !== doctor._id.toString()) {
         return res.status(403).json({ error: "This appointment does not belong to you" });
       }
     } else if (decoded.role === 'nurse') {
@@ -928,7 +930,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
       appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-      doctor = await Doctor.findById(appointment.doctor);
+      doctor = appointment.doctor ? await Doctor.findById(appointment.doctor) : null;
     } else if (decoded.role === 'receptionist') {
       const Receptionist = require("../models/Receptionist");
       const receptionist = await Receptionist.findById(decoded.id);
@@ -937,7 +939,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
       appointment = await Appointment.findById(appointmentId);
       if (!appointment) return res.status(404).json({ error: "Appointment not found" });
 
-      doctor = await Doctor.findById(appointment.doctor);
+      doctor = appointment.doctor ? await Doctor.findById(appointment.doctor) : null;
     }
 
     // Update status
