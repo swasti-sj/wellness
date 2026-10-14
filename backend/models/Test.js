@@ -32,6 +32,8 @@ const TestSchema = new Schema({
     ambulanceUsed: { type: Boolean, default: false },
     cashlessFormUsed: { type: Boolean, default: false },
     cashlessFormDocumentUrl: { type: String, default: '' },
+    referralFormUsed: { type: Boolean, default: false },
+    referralFormDocumentUrl: { type: String, default: '' },
     staffWent: { type: String, default: '' },
     remarks: { type: String, default: '' }
   },

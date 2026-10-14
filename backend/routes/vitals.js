@@ -74,7 +74,10 @@ router.get("/:appointmentId", async (req, res) => {
 // =============================
 // CREATE / UPDATE VITALS
 // =============================
-router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
+router.post("/save", upload.fields([
+  { name: "caseSheetDocument", maxCount: 1 },
+  { name: "caseSheetDocuments", maxCount: 10 }
+]), async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -102,21 +105,22 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
       return res.status(403).json({ error: "Access denied. Only doctors and nurses can save vitals." });
     }
 
-    const debugFile = req.file
-      ? [{
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-        }]
-      : [];
+    const uploadedCaseSheetFiles = [
+      ...(req.files?.caseSheetDocument || []),
+      ...(req.files?.caseSheetDocuments || [])
+    ];
 
     const debugFiles = {
-      fileReceived: debugFile,
+      fileReceived: uploadedCaseSheetFiles.map((file) => ({
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+      })),
       bodyHasKeys: Object.keys(req.body || {}),
     };
     console.log('[Upload Debug][/api/vitals/save] debugFiles=', JSON.stringify(debugFiles));
 
-    const { appointmentId, patientId, existingCaseSheetDocumentUrl, targetSizeKB: rawTargetSizeKB, ...caseData } = req.body;
+    const { appointmentId, patientId, existingCaseSheetDocumentUrl, existingCaseSheetDocumentUrls, targetSizeKB: rawTargetSizeKB, ...caseData } = req.body;
 
 
     if (!appointmentId || !patientId) {
@@ -134,30 +138,48 @@ router.post("/save", upload.single("caseSheetDocument"), async (req, res) => {
 
     Object.assign(vital, caseData);
 
-    // Store the case sheet document
-    if (req.file) {
+    const parseExistingCaseSheetUrls = () => {
+      if (existingCaseSheetDocumentUrls) {
+        try {
+          const parsed = typeof existingCaseSheetDocumentUrls === "string"
+            ? JSON.parse(existingCaseSheetDocumentUrls)
+            : existingCaseSheetDocumentUrls;
+          if (Array.isArray(parsed)) return parsed.filter(Boolean);
+        } catch {
+          return [];
+        }
+      }
+      if (typeof existingCaseSheetDocumentUrl === "string" && existingCaseSheetDocumentUrl) {
+        return [existingCaseSheetDocumentUrl];
+      }
+      return [];
+    };
+
+    // Store one or more case sheet documents.
+    if (uploadedCaseSheetFiles.length > 0) {
       try {
         // The user can choose how small the stored file should be (10-100 KB).
         let targetSizeKB = parseInt(rawTargetSizeKB, 10);
         if (!Number.isFinite(targetSizeKB)) targetSizeKB = 100;
         targetSizeKB = Math.min(Math.max(targetSizeKB, 10), 100);
 
-        // Compressed and written to the institute-allocated disk storage;
-        // only the returned URL is saved in MongoDB.
-        if (req.file.mimetype.startsWith('image/')) {
-          const saved = await saveCompressedImageToDisk(req.file.buffer, 'wellness/vitals', req.file.originalname, { targetSizeKB });
-          vital.caseSheetDocumentUrl = saved.url;
-        } else {
-          const saved = await saveRawFileToDisk(req.file.buffer, 'wellness/vitals', req.file.originalname, req.file.mimetype);
-          vital.caseSheetDocumentUrl = saved.url;
+        const savedUrls = [];
+        for (const file of uploadedCaseSheetFiles) {
+          const saved = file.mimetype.startsWith('image/')
+            ? await saveCompressedImageToDisk(file.buffer, 'wellness/vitals', file.originalname, { targetSizeKB })
+            : await saveRawFileToDisk(file.buffer, 'wellness/vitals', file.originalname, file.mimetype);
+          savedUrls.push(saved.url);
         }
+        vital.caseSheetDocumentUrls = [...parseExistingCaseSheetUrls(), ...savedUrls];
+        vital.caseSheetDocumentUrl = vital.caseSheetDocumentUrls[0] || '';
         vital.caseSheetDocumentPublicId = '';
       } catch (uploadErr) {
         console.error('Case sheet document storage error:', uploadErr.message);
         return res.status(500).json({ error: `File storage failed: ${uploadErr.message}` });
       }
-    } else if (typeof existingCaseSheetDocumentUrl === "string") {
-      vital.caseSheetDocumentUrl = existingCaseSheetDocumentUrl;
+    } else if (existingCaseSheetDocumentUrls || typeof existingCaseSheetDocumentUrl === "string") {
+      vital.caseSheetDocumentUrls = parseExistingCaseSheetUrls();
+      vital.caseSheetDocumentUrl = vital.caseSheetDocumentUrls[0] || '';
       if (req.body.existingCaseSheetDocumentPublicId) {
         vital.caseSheetDocumentPublicId = req.body.existingCaseSheetDocumentPublicId;
       }

@@ -139,22 +139,65 @@
 /* ── Save button ── */
 .save-referral-btn {
   align-self: flex-start;
-  padding: 0.5rem 1.3rem;
-  background: linear-gradient(135deg, #4A1060 0%, #C8860A 100%);
+  padding: 0.75rem 2rem;
+  background: linear-gradient(135deg, #1E8A55 0%, #2CB870 100%);
   color: #fff;
   border: none;
   border-radius: 8px;
   font-family: 'DM Sans', sans-serif;
-  font-size: 0.84rem;
+  font-size: 0.9rem;
   font-weight: 700;
+  letter-spacing: 0.3px;
   cursor: pointer;
-  box-shadow: 0 3px 12px rgba(74, 16, 96, 0.22);
-  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(30, 138, 85, 0.25);
+  transition: all 0.22s ease;
 }
 
 .save-referral-btn:hover {
-  box-shadow: 0 5px 16px rgba(74, 16, 96, 0.32);
-  transform: translateY(-1px);
+  background: linear-gradient(135deg, #186840 0%, #1E8A55 100%);
+  box-shadow: 0 6px 20px rgba(30, 138, 85, 0.35);
+  transform: translateY(-2px);
+}
+
+.save-referral-btn:active {
+  transform: translateY(0);
+}
+
+.save-referral-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+  box-shadow: none;
+}
+
+.referral-save-status {
+  min-height: 2.2rem;
+  margin: 0;
+  padding: 0.5rem 0.9rem;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  border-radius: 7px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.referral-save-status.success {
+  color: #1E8A55;
+  background: #E8F8EF;
+  border-left: 3px solid #1E8A55;
+}
+
+.referral-save-status.error {
+  color: #B8243A;
+  background: #FDE8EB;
+  border-left: 3px solid #B8243A;
+}
+
+.referral-save-status.saving {
+  color: #7A6890;
+  background: #FAF4FF;
+  border-left: 3px solid #9B4DC8;
 }
 
 .hospital-referral .save-confirmation {
@@ -357,6 +400,7 @@
 .form-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
   margin-top: 0.5rem;
 }
@@ -375,4 +419,9 @@
 
 .cancel-edit-btn:hover {
   color: #1E0733;
+}
+
+.cancel-edit-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }

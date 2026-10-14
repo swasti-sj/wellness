@@ -562,6 +562,32 @@
   border-left: 3px solid var(--danger);
 }
 
+.case-sheet-multi-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.case-sheet-document-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.case-sheet-document-item {
+  position: relative;
+  border: 1px solid rgba(74, 16, 96, 0.12);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.8rem;
+}
+
+.case-sheet-remove-btn {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 1;
+}
+
 /* ── Responsive ── */
 @media (max-width: 768px) {
 

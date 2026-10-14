@@ -514,9 +514,9 @@
 
 /* Modal is dark purple header here, so text needs to be the dark variant from pills, and background the pastel */
 .modal-status-badge.booked {
-  background: #FFF7E6;
-  border-color: #C8860A;
-  color: #9A6408;
+  background: #EAF2FF;
+  border-color: #2563EB;
+  color: #1D4ED8;
 }
 
 .modal-status-badge.attended {
@@ -538,9 +538,9 @@
 }
 
 .modal-status-badge.walk-in {
-  background: #F4E9F9;
-  border-color: #6C1B85;
-  color: #4A1060;
+  background: #FFF7E6;
+  border-color: #C8860A;
+  color: #9A6408;
 }
 
 /* Close button */

@@ -494,15 +494,23 @@
 }
 
 .ph-status.booked {
-  border-color: var(--border-gold);
-  background: var(--gold-soft);
-  color: var(--gold);
+  border-color: #93C5FD;
+  background: #EAF2FF;
+  color: #1D4ED8;
 }
 
 .ph-status.attended {
   border-color: #B8DEC9;
   background: #E8F6EF;
   color: var(--success);
+}
+
+.ph-status.walk.in,
+.ph-status.walk-in,
+.ph-status[class*="walk"] {
+  border-color: var(--border-gold);
+  background: var(--gold-soft);
+  color: var(--gold);
 }
 
 .ph-cancel-btn {

@@ -44,7 +44,8 @@ const VitalSchema = new mongoose.Schema({
   spO2: Number,
   bmi: Number,
   notes: String,
-  caseSheetDocumentUrl: { type: String, default: "" }
+  caseSheetDocumentUrl: { type: String, default: "" },
+  caseSheetDocumentUrls: { type: [String], default: [] }
 
 }, { timestamps: true });
 

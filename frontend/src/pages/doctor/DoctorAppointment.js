@@ -256,7 +256,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
   const eventStyleGetter = (event) => {
     const status = event.status?.toLowerCase() || "booked";
 
-    let c = { bg: "#FFF7E6", border: "#C8860A", text: "#9A6408" }; // Default: booked
+    let c = { bg: "#EAF2FF", border: "#2563EB", text: "#1D4ED8" }; // Default: booked
 
     if (status === "attended") {
       c = { bg: "#E8F6EF", border: "#1E8A55", text: "#166640" };
@@ -265,7 +265,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
     } else if (status === "no show") {
       c = { bg: "#F0F0F4", border: "#5A5A70", text: "#3A3A50" };
     } else if (status === "walk in") {
-      c = { bg: "#F4E9F9", border: "#6C1B85", text: "#4A1060" };
+      c = { bg: "#FFF7E6", border: "#C8860A", text: "#9A6408" };
     }
 
     return {

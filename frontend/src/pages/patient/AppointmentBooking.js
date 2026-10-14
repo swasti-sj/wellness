@@ -333,7 +333,8 @@ export default function AppointmentBooking() {
                 {record.tests.hospitalReferral.staffWent && <small>Staff: {record.tests.hospitalReferral.staffWent}</small>}
               </article>
             ) : <p className="ph-empty">No hospital referral has been recorded.</p>}
-            <PatientDocumentPreview title="Referral Document" url={record.tests?.hospitalReferral?.cashlessFormDocumentUrl} emptyMessage="No referral document uploaded." />
+            <PatientDocumentPreview title="SDM Cashless Form" url={record.tests?.hospitalReferral?.cashlessFormDocumentUrl} emptyMessage="No cashless form uploaded." />
+            <PatientDocumentPreview title="Referral Form" url={record.tests?.hospitalReferral?.referralFormDocumentUrl} emptyMessage="No referral form uploaded." />
           </div>
         )}
 
@@ -455,9 +456,11 @@ export default function AppointmentBooking() {
             onView={(v) => setView(v)}
             components={{ toolbar: CustomToolbar }}
             eventPropGetter={(event) => {
-              let background = "linear-gradient(45deg, #89288f, #ff7b00)";
+              let background = "linear-gradient(45deg, #2563eb, #60a5fa)";
               if (event.status === "booked")
-                background = "linear-gradient(45deg, #ffb300, #ff7b00)";
+                background = "linear-gradient(45deg, #2563eb, #60a5fa)";
+              if (event.status === "walk in")
+                background = "linear-gradient(45deg, #f59e0b, #fcd34d)";
               if (event.status === "attended")
                 background = "linear-gradient(45deg, #28a745, #6dd47e)";
               if (event.status === "cancelled")

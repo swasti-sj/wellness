@@ -193,7 +193,8 @@ export default function VisitHistory() {
                                                         <div className="ph-section-panel ph-read-panel">
                                                             {appointment.tests?.tests?.length ? <ul className="ph-test-list">{appointment.tests.tests.filter((test) => test.selected !== false).map((test) => <li key={test._id || test.testName}>{test.testName}</li>)}</ul> : <p className="ph-empty">No tests recorded.</p>}
                                                             <PatientDocumentPreview title="Lab Test Document" url={appointment.tests?.labTestDocumentUrl} emptyMessage="No lab test document uploaded." />
-                                                            <PatientDocumentPreview title="Referral Document" url={appointment.tests?.hospitalReferral?.cashlessFormDocumentUrl} emptyMessage="No referral document uploaded." />
+                                                            <PatientDocumentPreview title="SDM Cashless Form" url={appointment.tests?.hospitalReferral?.cashlessFormDocumentUrl} emptyMessage="No cashless form uploaded." />
+                                                            <PatientDocumentPreview title="Referral Form" url={appointment.tests?.hospitalReferral?.referralFormDocumentUrl} emptyMessage="No referral form uploaded." />
                                                             <PatientDocumentPreview title="Medical Certificate" url={appointment.tests?.certificate?.imageUrl} emptyMessage="No medical certificate uploaded." />
                                                         </div>
                                                     )}

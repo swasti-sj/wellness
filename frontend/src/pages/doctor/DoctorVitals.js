@@ -57,13 +57,20 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
   const [message, setMessage] = useState('');
   const [existingVitalId, setExistingVitalId] = useState(null);
   const [openSection, setOpenSection] = useState('basic');
-  const [caseSheetDocument, setCaseSheetDocument] = useState(null);
-  const [caseSheetDocumentUrl, setCaseSheetDocumentUrl] = useState('');
+  const [caseSheetDocuments, setCaseSheetDocuments] = useState([]);
+  const [caseSheetDocumentUrls, setCaseSheetDocumentUrls] = useState([]);
+  const existingCaseSheetDocumentCount = Math.max(caseSheetDocumentUrls.length - caseSheetDocuments.length, 0);
   const [formData, setFormData] = useState(initialFormData);
   const [recordLoaded, setRecordLoaded] = useState(false);
   const formEditVersionRef = useRef(0);
   const documentEditVersionRef = useRef(0);
 
+  const getCaseSheetUrls = (v = {}) => {
+    if (Array.isArray(v.caseSheetDocumentUrls) && v.caseSheetDocumentUrls.length > 0) {
+      return v.caseSheetDocumentUrls.filter(Boolean);
+    }
+    return v.caseSheetDocumentUrl ? [v.caseSheetDocumentUrl] : [];
+  };
 
   const mapVitalToFormData = (v) => ({
     department: v.department || '',
@@ -117,7 +124,7 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
         }
 
         if (formEditVersionRef.current === 0) setFormData(mapped);
-        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrl(v.caseSheetDocumentUrl || '');
+        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrls(getCaseSheetUrls(v));
       } else {
         // No saved vital yet — still fetch UHID for the blank form
         if (patientId && apiBaseUrl) {
@@ -155,7 +162,7 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
         } else if (formEditVersionRef.current === 0) {
           setFormData(initialFormData);
         }
-        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrl('');
+        if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrls([]);
       } else {
         setRecordLoaded(true);
       }
@@ -185,11 +192,14 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
       payload.append('patientId', patientId);
       Object.entries(formData).forEach(([key, value]) => payload.append(key, value ?? ''));
 
-      if (caseSheetDocument) {
-        payload.append('caseSheetDocument', caseSheetDocument);
-      } else if (caseSheetDocumentUrl) {
-        payload.append('existingCaseSheetDocumentUrl', caseSheetDocumentUrl);
+      const existingCaseSheetUrls = caseSheetDocumentUrls.slice(0, Math.max(caseSheetDocumentUrls.length - caseSheetDocuments.length, 0));
+      payload.append('existingCaseSheetDocumentUrls', JSON.stringify(existingCaseSheetUrls));
+      if (existingCaseSheetUrls[0]) {
+        payload.append('existingCaseSheetDocumentUrl', existingCaseSheetUrls[0]);
       }
+      caseSheetDocuments.forEach((file) => {
+        payload.append('caseSheetDocuments', file);
+      });
 
       const res = await axios.post(`${apiBaseUrl}/api/vitals/save`, payload, {
         headers: {
@@ -200,8 +210,8 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
       if (res.data.success) {
         setExistingVitalId(res.data.vital?._id || existingVitalId);
         if (documentEditVersionRef.current === submittedDocumentEditVersion) {
-          setCaseSheetDocument(null);
-          setCaseSheetDocumentUrl(res.data.vital?.caseSheetDocumentUrl || caseSheetDocumentUrl);
+          setCaseSheetDocuments([]);
+          setCaseSheetDocumentUrls(getCaseSheetUrls(res.data.vital || { caseSheetDocumentUrls }));
         }
         setMessage(formEditVersionRef.current === submittedFormEditVersion
           && documentEditVersionRef.current === submittedDocumentEditVersion
@@ -309,32 +319,70 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
 
       <AccSection id="documents" title="Case Sheet Documents" subtitle={readOnly ? "Supporting case sheet files" : "Upload supporting case sheet files"} openSection={openSection} toggleSection={setOpenSection}>
         {readOnly ? (
-          <DocumentUpload
-            label="Case Sheet Document"
-            previewUrl={caseSheetDocumentUrl}
-            isEditing={false}
-            emptyMessage="No case sheet document uploaded."
-          />
+          <div className="case-sheet-document-list">
+            {caseSheetDocumentUrls.length ? caseSheetDocumentUrls.map((url, index) => (
+              <DocumentUpload
+                key={`${url}-${index}`}
+                label={`Case Sheet Document ${index + 1}`}
+                previewUrl={url}
+                isEditing={false}
+                emptyMessage="No case sheet document uploaded."
+              />
+            )) : <p>No case sheet document uploaded.</p>}
+          </div>
         ) : (
-          <DocumentUpload
-            label="Upload Case Sheet Document"
-            previewUrl={caseSheetDocumentUrl}
-            selectedFile={caseSheetDocument}
-            onFileChange={(e) => {
-              const file = e.target.files?.[0];
-              if (!file) return;
-              documentEditVersionRef.current += 1;
-              setCaseSheetDocument(file);
-              setCaseSheetDocumentUrl(URL.createObjectURL(file));
-            }}
-            onRemove={() => {
-              documentEditVersionRef.current += 1;
-              setCaseSheetDocument(null);
-              setCaseSheetDocumentUrl('');
-            }}
-            uploading={loading}
-            isEditing
-          />
+          <div className="case-sheet-multi-upload">
+            <label className="upload-label">Upload Case Sheet Documents</label>
+            <div className="file-upload-container">
+              <input
+                type="file"
+                multiple
+                accept=".pdf,image/*"
+                className="file-input"
+                disabled={loading}
+                onChange={(e) => {
+                  const files = Array.from(e.target.files || []);
+                  if (!files.length) return;
+                  documentEditVersionRef.current += 1;
+                  setCaseSheetDocuments((prev) => [...prev, ...files]);
+                  setCaseSheetDocumentUrls((prev) => [...prev, ...files.map((file) => URL.createObjectURL(file))]);
+                  e.target.value = '';
+                }}
+              />
+              <div className="upload-instructions">
+                <span>{loading ? 'Uploading...' : 'Click to upload one or more files'}</span>
+                <span className="file-types">PDF, PNG, JPG, JPEG</span>
+              </div>
+            </div>
+
+            <div className="case-sheet-document-list">
+              {caseSheetDocumentUrls.length ? caseSheetDocumentUrls.map((url, index) => (
+                <div className="case-sheet-document-item" key={`${url}-${index}`}>
+                  <DocumentUpload
+                    label={`Case Sheet Document ${index + 1}`}
+                    previewUrl={url}
+                    selectedFile={index >= existingCaseSheetDocumentCount ? caseSheetDocuments[index - existingCaseSheetDocumentCount] : null}
+                    isEditing={false}
+                    emptyMessage="No case sheet document uploaded."
+                  />
+                  <button
+                    type="button"
+                    className="remove-doc-btn case-sheet-remove-btn"
+                    onClick={() => {
+                      documentEditVersionRef.current += 1;
+                      setCaseSheetDocumentUrls((prev) => prev.filter((_, i) => i !== index));
+                      if (index >= existingCaseSheetDocumentCount) {
+                        setCaseSheetDocuments((prev) => prev.filter((_, i) => i !== index - existingCaseSheetDocumentCount));
+                      }
+                    }}
+                    title="Remove document"
+                  >
+                    x
+                  </button>
+                </div>
+              )) : <p>No case sheet document uploaded.</p>}
+            </div>
+          </div>
         )}
       </AccSection>
 

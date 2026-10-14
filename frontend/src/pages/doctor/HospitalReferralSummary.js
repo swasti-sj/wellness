@@ -53,6 +53,7 @@ function HospitalReferralSummary({ appointmentId }) {
         <p><strong>Hospital:</strong> {referral.hospitalName || 'N/A'}</p>
         <p><strong>Ambulance Used:</strong> {referral.ambulanceUsed ? 'Yes' : 'No'}</p>
         <p><strong>Cashless Form:</strong> {referral.cashlessFormUsed ? 'Yes' : 'No'}</p>
+        <p><strong>Referral Form:</strong> {referral.referralFormUsed || Boolean(referral.referralFormDocumentUrl) ? 'Yes' : 'No'}</p>
         <p><strong>Staff Went:</strong> {referral.staffWent || 'N/A'}</p>
         <p><strong>Remarks:</strong> {referral.remarks || 'N/A'}</p>
         {referral.cashlessFormUsed && referral.cashlessFormDocumentUrl && (
@@ -60,6 +61,14 @@ function HospitalReferralSummary({ appointmentId }) {
             <strong>Cashless Form Document:</strong>{' '}
             <a href={buildDocumentUrl(referral.cashlessFormDocumentUrl)} target="_blank" rel="noreferrer">
               {getDocumentName(referral.cashlessFormDocumentUrl, 'View cashless form')}
+            </a>
+          </p>
+        )}
+        {(referral.referralFormUsed || referral.referralFormDocumentUrl) && referral.referralFormDocumentUrl && (
+          <p>
+            <strong>Referral Form Document:</strong>{' '}
+            <a href={buildDocumentUrl(referral.referralFormDocumentUrl)} target="_blank" rel="noreferrer">
+              {getDocumentName(referral.referralFormDocumentUrl, 'View referral form')}
             </a>
           </p>
         )}

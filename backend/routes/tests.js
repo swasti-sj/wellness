@@ -185,7 +185,8 @@ router.get('/categories', (req, res) => {
 router.post('/save', upload.fields([
   { name: 'certificateImage', maxCount: 1 },
   { name: 'labTestDocument', maxCount: 1 },
-  { name: 'cashlessFormDocument', maxCount: 1 }
+  { name: 'cashlessFormDocument', maxCount: 1 },
+  { name: 'referralFormDocument', maxCount: 1 }
 ]), async (req, res) => {
   try {
     const { token, appointmentId } = req.body;
@@ -228,6 +229,7 @@ router.post('/save', upload.fields([
     const certificateImage = req.files?.certificateImage?.[0];
     const labTestDocument = req.files?.labTestDocument?.[0];
     const cashlessFormDocument = req.files?.cashlessFormDocument?.[0];
+    const referralFormDocument = req.files?.referralFormDocument?.[0];
 
     // The user can choose how small the stored document should be. Lab test
     // and cashless form documents default to 100KB max (like prescriptions);
@@ -285,6 +287,22 @@ router.post('/save', upload.fields([
         hospitalReferral.cashlessFormDocumentUrl = req.body.existingCashlessFormDocumentUrl;
         if (req.body.existingCashlessFormDocumentPublicId) {
           hospitalReferral.cashlessFormDocumentPublicId = req.body.existingCashlessFormDocumentPublicId;
+        }
+      }
+
+      if (referralFormDocument) {
+        if (referralFormDocument.mimetype.startsWith('image/')) {
+          const saved = await saveCompressedImageToDisk(referralFormDocument.buffer, 'wellness/tests', referralFormDocument.originalname, { targetSizeKB: documentTargetSizeKB });
+          hospitalReferral.referralFormDocumentUrl = saved.url;
+        } else {
+          const saved = await saveRawFileToDisk(referralFormDocument.buffer, 'wellness/tests', referralFormDocument.originalname, referralFormDocument.mimetype);
+          hospitalReferral.referralFormDocumentUrl = saved.url;
+        }
+        hospitalReferral.referralFormDocumentPublicId = '';
+      } else if (req.body.existingReferralFormDocumentUrl) {
+        hospitalReferral.referralFormDocumentUrl = req.body.existingReferralFormDocumentUrl;
+        if (req.body.existingReferralFormDocumentPublicId) {
+          hospitalReferral.referralFormDocumentPublicId = req.body.existingReferralFormDocumentPublicId;
         }
       }
     } catch (uploadErr) {
