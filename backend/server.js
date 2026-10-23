@@ -16,7 +16,10 @@ require("dotenv").config();
 // trusted group). Missing on a local dev machine is fine — routes that
 // touch encrypted fields simply won't work locally without it, everything
 // else runs normally.
-require("dotenv").config({ path: ".env.encryption" });
+// Resolved from __dirname (not process.cwd()) so it's found regardless of
+// which directory PM2 actually launched the process from — same fix as
+// the /uploads static path earlier in this file.
+require("dotenv").config({ path: require("path").join(__dirname, ".env.encryption") });
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
 const passport = require("passport");
