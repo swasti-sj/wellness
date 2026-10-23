@@ -79,4 +79,12 @@ TestSchema.post(['findOne', 'findOneAndUpdate'], function (doc) {
   decryptTestDoc(doc);
 });
 
+// Also decrypt immediately after test.save() — pre('save') scrambles
+// these fields on that same in-memory document, and a route that responds
+// with the just-saved object directly would otherwise send ciphertext
+// straight back to the frontend.
+TestSchema.post('save', function (doc) {
+  decryptTestDoc(doc);
+});
+
 module.exports = mongoose.model('Test', TestSchema);

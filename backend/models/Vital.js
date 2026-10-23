@@ -89,4 +89,11 @@ VitalSchema.post(['findOne', 'findOneAndUpdate'], function (doc) {
   decryptVitalDoc(doc);
 });
 
+// Also decrypt immediately after vital.save() — vitals.js saves directly
+// via .save() (not findOneAndUpdate), so without this the just-saved
+// in-memory document would still hold ciphertext when sent in the response.
+VitalSchema.post('save', function (doc) {
+  decryptVitalDoc(doc);
+});
+
 module.exports = mongoose.model('Vital', VitalSchema);

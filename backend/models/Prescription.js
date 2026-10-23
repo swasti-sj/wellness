@@ -90,4 +90,11 @@ PrescriptionSchema.post(['findOne', 'findOneAndUpdate'], function (doc) {
   decryptPrescriptionDoc(doc);
 });
 
+// Also decrypt immediately after prescription.save() — same reasoning as
+// the other models: pre('save') scrambles the in-memory document, and a
+// route returning that object directly would otherwise send ciphertext.
+PrescriptionSchema.post('save', function (doc) {
+  decryptPrescriptionDoc(doc);
+});
+
 module.exports = mongoose.model('Prescription', PrescriptionSchema);

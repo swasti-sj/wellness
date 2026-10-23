@@ -55,4 +55,12 @@ NoteSchema.post(["findOne", "findOneAndUpdate"], function (doc) {
   decryptNoteDoc(doc);
 });
 
+// Also decrypt immediately after note.save() — pre('save') scrambles
+// `text` on that same in-memory document, and routes that respond with
+// the just-saved object (instead of re-fetching it) would otherwise send
+// the encrypted version straight back to the frontend.
+NoteSchema.post("save", function (doc) {
+  decryptNoteDoc(doc);
+});
+
 module.exports = mongoose.model("Note", NoteSchema);
