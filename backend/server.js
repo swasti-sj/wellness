@@ -10,6 +10,13 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 require("dotenv").config();
+// Loaded separately from the main .env on purpose: FIELD_ENCRYPTION_KEY
+// stays out of the shared project config every developer has, and instead
+// only exists in this second file on the VM (chmod 600, held by a small
+// trusted group). Missing on a local dev machine is fine — routes that
+// touch encrypted fields simply won't work locally without it, everything
+// else runs normally.
+require("dotenv").config({ path: ".env.encryption" });
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
 const passport = require("passport");

@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encryptField, decryptField } = require('../utils/fieldEncryption');
 const Schema = mongoose.Schema;
 
 const PrescriptionItemSchema = new Schema({
@@ -53,5 +54,40 @@ const PrescriptionSchema = new Schema({
   bookNo: { type: String, default: '' },
   prescriptionNo: { type: String, default: '' }
 }, { timestamps: true });
+
+// Only the free-text medical fields get encrypted — medication name,
+// dosage, frequency, notes. `medicine` (stock reference), `quantity`,
+// `status`, and `source` are deliberately left alone: they're either
+// read by stock-deduction/enum validation logic elsewhere in the app,
+// which would break against ciphertext.
+const SENSITIVE_ITEM_FIELDS = ['medication', 'dosage', 'frequency', 'notes'];
+
+PrescriptionSchema.pre('save', function (next) {
+  if (this.isModified('prescriptions') && Array.isArray(this.prescriptions)) {
+    this.prescriptions.forEach((item) => {
+      SENSITIVE_ITEM_FIELDS.forEach((field) => {
+        if (item[field]) item[field] = encryptField(item[field]);
+      });
+    });
+  }
+  next();
+});
+
+function decryptPrescriptionDoc(doc) {
+  if (!doc || !Array.isArray(doc.prescriptions)) return;
+  doc.prescriptions.forEach((item) => {
+    SENSITIVE_ITEM_FIELDS.forEach((field) => {
+      if (item[field]) item[field] = decryptField(item[field]);
+    });
+  });
+}
+
+PrescriptionSchema.post(['find'], function (docs) {
+  (docs || []).forEach(decryptPrescriptionDoc);
+});
+
+PrescriptionSchema.post(['findOne', 'findOneAndUpdate'], function (doc) {
+  decryptPrescriptionDoc(doc);
+});
 
 module.exports = mongoose.model('Prescription', PrescriptionSchema);

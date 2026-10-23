@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { encryptField, decryptField } = require("../utils/fieldEncryption");
 
 const NoteSchema = new mongoose.Schema({
   appointment: { 
@@ -25,5 +26,33 @@ const NoteSchema = new mongoose.Schema({
     }
   }]
 }, { timestamps: true });
+
+// Encrypt the clinical note text before it's written to MongoDB — anyone
+// with direct database access (but not the FIELD_ENCRYPTION_KEY) sees
+// only ciphertext, not the note itself.
+NoteSchema.pre("save", function (next) {
+  if (this.isModified("text")) {
+    this.text = encryptField(this.text);
+  }
+  next();
+});
+
+// Decrypt it back for legitimate app requests. Runs after any find/findOne
+// so every route automatically gets readable text without needing its own
+// decrypt logic. Plain-text notes saved before this existed are returned
+// unchanged (decryptField only acts on values tagged "enc:").
+function decryptNoteDoc(doc) {
+  if (doc && typeof doc.text !== "undefined") {
+    doc.text = decryptField(doc.text);
+  }
+}
+
+NoteSchema.post(["find"], function (docs) {
+  (docs || []).forEach(decryptNoteDoc);
+});
+
+NoteSchema.post(["findOne", "findOneAndUpdate"], function (doc) {
+  decryptNoteDoc(doc);
+});
 
 module.exports = mongoose.model("Note", NoteSchema);
