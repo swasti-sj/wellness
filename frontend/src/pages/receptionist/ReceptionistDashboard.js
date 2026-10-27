@@ -28,6 +28,7 @@ export default function ReceptionistDashboard() {
     role: 'Student',
     doctorId: '',
     doctorName: '',
+    sdmDoctorName: '',
     date: new Date().toISOString().split('T')[0],
     time: '',
     entryType: 'appointment', // 'appointment' | 'walkin'
@@ -237,7 +238,8 @@ export default function ReceptionistDashboard() {
       setFormData(prev => ({
         ...prev,
         doctorId: value,
-        doctorName: value === 'sdm' ? 'SDM' : selectedDoctor ? selectedDoctor.name : ''
+        doctorName: value === 'sdm' ? 'SDM' : selectedDoctor ? selectedDoctor.name : '',
+        sdmDoctorName: ''
       }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
@@ -345,6 +347,10 @@ export default function ReceptionistDashboard() {
       showMessage('Please select a doctor', 'error');
       return;
     }
+    if (formData.doctorId === 'sdm' && !formData.sdmDoctorName.trim()) {
+      showMessage('Please enter the SDM doctor name', 'error');
+      return;
+    }
     try {
       const isWalkIn = formData.entryType === 'walkin';
       // Send the raw date string (YYYY-MM-DD) so the backend builds a local Date
@@ -363,6 +369,7 @@ export default function ReceptionistDashboard() {
         role: formData.role,
         doctorId: formData.doctorId,
         doctorName: formData.doctorName,
+        sdmDoctorName: formData.sdmDoctorName,
         appointmentDate: appointmentDateRaw,
         appointmentTime: timeToSend || null,
         startDateTime,
@@ -391,7 +398,7 @@ export default function ReceptionistDashboard() {
         };
         setManualEntries(prev => [newEntry, ...prev]);
         setFormData({
-          name: '', role: 'Student', doctorId: '', doctorName: '',
+          name: '', role: 'Student', doctorId: '', doctorName: '', sdmDoctorName: '',
           date: new Date().toISOString().split('T')[0],
           time: '',
           entryType: 'appointment',
@@ -769,6 +776,20 @@ export default function ReceptionistDashboard() {
                     <option value="sdm">SDM</option>
                   </select>
                 </div>
+                {formData.doctorId === 'sdm' && (
+                  <div className="rd-form-group">
+                    <label>SDM Doctor Name <span className="rd-required">*</span></label>
+                    <input
+                      type="text"
+                      name="sdmDoctorName"
+                      value={formData.sdmDoctorName}
+                      onChange={handleFormChange}
+                      placeholder="Enter doctor name"
+                      maxLength={100}
+                      required
+                    />
+                  </div>
+                )}
                 {formData.entryType === 'appointment' && (
                   <>
                     <div className="rd-form-group">

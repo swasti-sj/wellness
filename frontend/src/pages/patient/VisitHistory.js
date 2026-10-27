@@ -115,7 +115,7 @@ export default function VisitHistory() {
                                                 <div>
                                                     <span className="ph-appt-date">{formatDate(appointment.startDateTime)}</span>
                                                     <span className="ph-appt-meta">
-                                                        Dr. {appointment.doctor?.name || "Unknown"} · {appointment.doctor?.specialization || "General care"}
+                                                        Dr. {appointment.doctor?.name || appointment.doctorName || "Unknown"} · {appointment.doctor?.specialization || "General care"}
                                                         {dependant?.name ? ` · For ${dependant.name}` : ""}
                                                     </span>
                                                 </div>

@@ -50,16 +50,17 @@ router.post("/entries", async (req, res) => {
   try {
     console.log("[API] POST /receptionist/entries called");
 
-    const { patientName, roll, role, doctorId, doctorName, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
+    const { patientName, roll, role, doctorId, doctorName, sdmDoctorName, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
 
     // Validate required fields
     const isSdmBooking = doctorId === 'sdm';
+    const cleanSdmDoctorName = typeof sdmDoctorName === 'string' ? sdmDoctorName.trim() : '';
     if (!patientName || !roll || (!isSdmBooking && (!doctorId || !doctorName))) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     let doctor = null;
-    let selectedDoctorName = 'SDM';
+    let selectedDoctorName = cleanSdmDoctorName ? `SDM (${cleanSdmDoctorName})` : 'SDM';
     if (!isSdmBooking) {
       doctor = await Doctor.findById(doctorId);
       if (!doctor) {

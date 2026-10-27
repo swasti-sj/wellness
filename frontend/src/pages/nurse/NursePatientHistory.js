@@ -234,7 +234,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
                 <tr key={a._id} style={{ background: i % 2 === 0 ? "#fff" : "#FAF4FF" }}>
                   <td style={td}>{i + 1}</td>
                   <td style={td}>{formatDate(a.startDateTime)}</td>
-                  <td style={td}>{a.doctor?.name ? `Dr. ${a.doctor.name}` : "—"}</td>
+                  <td style={td}>{a.doctor?.name ? `Dr. ${a.doctor.name}` : a.doctorName ? `Dr. ${a.doctorName}` : "—"}</td>
                   <td style={td}>{a.status}</td>
                 </tr>
               ))}
@@ -492,7 +492,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
                         <div className="nph-appt-top" onClick={() => toggleApptExpand(a._id)}>
                           <div className="nph-appt-left">
                             <span className="nph-appt-date">{formatDate(a.startDateTime)}</span>
-                            {a.doctor && <span className="nph-appt-doctor">Dr. {a.doctor.name || "—"}</span>}
+                            <span className="nph-appt-doctor">{a.doctor?.name ? `Dr. ${a.doctor.name}` : a.doctorName ? `Dr. ${a.doctorName}` : "—"}</span>
                           </div>
                           <div className="nph-appt-right">
                             <span className={`nph-badge nph-badge--${(a.status || "").toLowerCase().replace(/\s+/g, "-").replace(/cancelled.*/, "cancelled")}`}>

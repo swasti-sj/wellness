@@ -193,10 +193,10 @@ export default function Dashboard() {
         {upcomingAppointment ? (
           <div className="appointment-card">
             <p>
-              <strong>Doctor:</strong> {upcomingAppointment.doctor?.name || "Unknown"}
+              <strong>Doctor:</strong> {upcomingAppointment.doctor?.name || upcomingAppointment.doctorName || "Unknown"}
             </p>
             <p>
-              <strong>Specialization:</strong> {upcomingAppointment.doctor?.specialization || "-"}
+              <strong>Specialization:</strong> {upcomingAppointment.doctor?.specialization || (upcomingAppointment.doctorName ? "SDM" : "-")}
             </p>
             <p>
               <strong>Date & time:</strong> {formatDateTime(upcomingAppointment.startDateTime)}
@@ -218,10 +218,10 @@ export default function Dashboard() {
         {lastVisit ? (
           <div className="appointment-card">
             <p>
-              <strong>Doctor:</strong> {lastVisit.doctor?.name || "Unknown"}
+              <strong>Doctor:</strong> {lastVisit.doctor?.name || lastVisit.doctorName || "Unknown"}
             </p>
             <p>
-              <strong>Specialization:</strong> {lastVisit.doctor?.specialization || "-"}
+              <strong>Specialization:</strong> {lastVisit.doctor?.specialization || (lastVisit.doctorName ? "SDM" : "-")}
             </p>
             <p>
               <strong>Date & time:</strong> {formatDateTime(lastVisit.startDateTime)}
