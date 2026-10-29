@@ -173,11 +173,46 @@ openssl enc -d -aes-256-cbc -pbkdf2 -in <backup>.tar.gz.enc -out backup.tar.gz -
 tar -xzf backup.tar.gz
 ```
 
-**Still open (tracked separately, not yet done):** field-level encryption for specific sensitive fields (so even a holder of valid DB credentials can't read them), and a written data-retention/deletion policy.
+**Still open (tracked separately, not yet done):** a written data-retention/deletion policy. Field-level encryption (below, section 7) is now done.
 
 ---
 
-## 7. Uploaded file storage (CCS network drive)
+## 7. Field-level encryption (sensitive clinical data)
+
+Database encryption at rest (section 6) protects against someone stealing the disk; authentication protects against unauthenticated access — but **anyone with a valid database login can still read everything through a normal query.** Field-level encryption closes that specific gap: it scrambles individual sensitive fields *inside the application*, before they ever reach MongoDB, so even a holder of valid DB credentials sees only ciphertext for these fields unless they also hold a separate, more tightly-held key.
+
+**What's encrypted:**
+
+| Model | Field(s) | Deliberately left plain |
+|---|---|---|
+| `Note` | `text` | — |
+| `Test` | `hospitalReferral.remarks`, `certificate.clinicalDetails` | everything else (test names, booleans, document URLs) |
+| `Prescription` | `medication`, `dosage`, `frequency`, `notes` (per item) | `quantity`, `medicine` (stock ref), `status`, `source` — read directly by stock-deduction logic and enum validation, which would break against ciphertext |
+| `Vital` | `pastMedicalHistory`, `medicalAllergy`, `chiefComplaints`, `systemicExamination`, `generalPhysicalExamination`, `investigations`, `treatmentAdvice`, `notes` | the actual measurements (blood pressure, weight, pulse, BMI, etc.) — plain numbers |
+
+**How it works:**
+- `backend/utils/fieldEncryption.js` — AES-256-GCM via Node's built-in `crypto` module (no extra dependency). Each encrypted value is tagged `enc:...`, so legacy plain-text data (saved before this existed) keeps working unchanged until it's next edited.
+- Wired into each model via Mongoose hooks — `pre('save')` encrypts right before writing, `post('find')` / `post('findOne')` / `post('findOneAndUpdate')` / `post('save')` decrypt right after reading (or immediately after saving). Every route gets correct behavior automatically — nothing route-specific to remember.
+- **The `post('save')` hook matters for a non-obvious reason:** `pre('save')` encrypts in place on the same in-memory document. Without a matching decrypt immediately after, a route that responds with the just-saved object directly (common pattern: `await note.save(); res.json({ note })`) would send the raw ciphertext straight to the frontend. Confirmed live once — a new note displayed as `enc:Rq9XYfl+...` instead of its actual text — before this hook was added to all four models.
+
+**Where the key lives:**
+- `FIELD_ENCRYPTION_KEY` — a 64-character hex string (32 bytes), generated with `openssl rand -hex 32`.
+- Lives **only** in `backend/.env.encryption` on the VM — deliberately a *separate* file from the shared `.env` every developer already has for local setup. Never committed (in `.gitignore`), never part of the normal onboarding flow.
+- Loaded in `server.js` via `require("dotenv").config({ path: require("path").join(__dirname, ".env.encryption") })` — resolved from `__dirname`, not the process's working directory, for the same reason as the `/uploads` static path (section 1): PM2's launch directory isn't guaranteed, so a relative path silently fails to find the file. (This was a real bug once — the first deploy used a relative path and the key never loaded, failing with "FIELD_ENCRYPTION_KEY is not set" until fixed.)
+- **File permissions matter in a specific way:** the key file must be readable by whatever OS user the backend process actually runs as (`wc`, confirmed via `ps aux`) — a `root`-only `chmod 600` file (created via `sudo nano`) is *not* readable by the app process itself, since `wc` isn't root. This was also a real, confirmed bug on first deploy. Fixed with `sudo chown wc:wc .env.encryption` (keeping `chmod 600`).
+- **For a more deliberate access boundary than "whoever has the `wc` login":** create a dedicated Linux group (e.g. `enckey`), add only the app's service account (`wc`) and specific trusted individual accounts to it, then `chown root:enckey .env.encryption` + `chmod 640`. This only meaningfully restricts access if the shared `wc` login itself stops being handed out freely — group permissions alone don't exclude anyone who can still log in as `wc`.
+
+**The honest limit of this protection** (worth remembering, not a flaw specific to this setup): whoever holds `FIELD_ENCRYPTION_KEY` can always decrypt — that's unavoidable for any field that needs to be genuinely readable again by the app. This isn't "nobody can ever read it," it's **narrowing *who* can** from "every developer with the shared project `.env`" down to "whoever can read this one specific, separately-held file" — ideally a small, deliberately chosen group, not the same set of people as general VM access.
+
+**Manual check anytime:**
+```bash
+mongosh -u <username> -p --authenticationDatabase admin --eval "db.getSiblingDB('medapp').notes.find().sort({_id:-1}).limit(1).pretty()"
+```
+The stored `text` (or other encrypted field) should show `enc:...` — scrambled — confirming encryption is active at the database level, while the app itself displays the real text normally to a logged-in user.
+
+---
+
+## 8. Uploaded file storage (CCS network drive)
 
 Uploaded files (prescriptions, lab test documents, vitals case sheets, note images, certificates) are compressed with `sharp` and written to disk by `backend/utils/diskStorage.js`, instead of being stored inside MongoDB or sent to Cloudinary. The actual storage lives on an institute-provided network share, not on the VM's own disk.
 
@@ -201,7 +236,7 @@ Uploaded files (prescriptions, lab test documents, vitals case sheets, note imag
 
 ---
 
-## 8. Keeping the server healthy (auto-maintenance)
+## 9. Keeping the server healthy (auto-maintenance)
 
 The VM has a **20 GB disk**. The site once went down repeatedly because the disk filled to 100% (a full disk crashes PM2 → backend dies → 502). We put automatic safeguards in place so it can't fill up again:
 
@@ -225,7 +260,7 @@ pm2 logs backend --lines 30   # recent backend activity / errors
 
 ---
 
-## 9. Troubleshooting quick reference
+## 10. Troubleshooting quick reference
 
 | Symptom | Likely cause | Check / fix |
 |---|---|---|
@@ -239,6 +274,8 @@ pm2 logs backend --lines 30   # recent backend activity / errors
 | **No recent file in `/mnt/ccs-wellness/mongo-backups/`** | Backup cron didn't run or failed | `cat /var/log/mongo-backup.log`; run `sudo /usr/local/bin/mongo-backup.sh` manually and watch for errors; confirm `sudo crontab -l` still has the entry |
 | **File upload fails / 500 error on save** | CCS network share not mounted, or `backend/uploads` symlink missing/broken | `mount \| grep ccs-wellness` (remount with `sudo mount -a` if missing); `ls -la ~/wellness/backend/uploads` (should show `-> /mnt/ccs-wellness`, recreate with `ln -s /mnt/ccs-wellness ~/wellness/backend/uploads` if not) |
 | **Uploaded file saves but 404s when viewed** | `backend/uploads` isn't a symlink to the CCS mount — files landed on local VM disk instead | Check `ls -la ~/wellness/backend/uploads`; if it's a real folder instead of a symlink, files inside need to be moved onto `/mnt/ccs-wellness` before re-creating the symlink |
+| **"FIELD_ENCRYPTION_KEY is not set" when saving a note/prescription/test/vital** | `.env.encryption` either doesn't exist, or exists but isn't readable by the account the backend actually runs as | `ls -la ~/wellness/backend/.env.encryption` — confirm it exists; `ps aux \| grep "node.*server.js"` to see which user owns the running process; if the file is owned by a different user (e.g. `root` from a `sudo nano`), `sudo chown wc:wc .env.encryption` (or whichever user actually runs the process) then `pm2 restart backend --update-env` |
+| **A note/prescription/test/vital displays as `enc:...` gibberish in the app itself** (not just in the raw database) | A route responded with a document straight out of `.save()` before the `post('save')` decrypt hook ran — check that the relevant model actually has a `post('save')` hook, not just `post('find')`/`post('findOne')` | Confirm the model's `post('save')` hook exists (see section 7); `pm2 restart backend --update-env` after any model change |
 
 **Connect to the server:** `ssh wc@10.195.250.184` (plain SSH — avoid VS Code Remote-SSH; it copies ~3 GB onto the server and can fill the disk).
 
