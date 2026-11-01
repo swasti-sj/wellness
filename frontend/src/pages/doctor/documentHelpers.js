@@ -10,7 +10,10 @@ export const buildDocumentUrl = (url) => {
   ) {
     return url;
   }
-  return `${API_BASE}${url}`;
+  // Uploaded files are served behind the login check at /api/uploads (nginx
+  // always forwards /api/ to the backend). Older records store "/uploads/...".
+  const path = url.startsWith("/uploads/") ? `/api${url}` : url;
+  return `${API_BASE}${path}`;
 };
 
 export const getDocumentName = (url, fallback = "View document") => {

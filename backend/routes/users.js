@@ -8,6 +8,9 @@ const { logActivity, getClientIp } = require('../utils/audit');
 
 const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 const PATIENT_CATEGORIES = ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
+// Never send these back to the browser — the Google tokens grant access to
+// the patient's Google Calendar
+const PRIVATE_FIELDS = '-password -googleAccessToken -googleRefreshToken';
 
 // GET /api/users/next-uhid — returns next sequential UHID like "0001", "0002" etc.
 router.get('/next-uhid', authMiddleware, async (req, res) => {
@@ -88,7 +91,7 @@ router.post('/profile', authMiddleware, async (req, res) => {
       req.user.id,
       updates,
       { new: true }
-    );
+    ).select(PRIVATE_FIELDS);
 
     // Audit: user profile updated (only record meaningful differences)
     try {
@@ -127,7 +130,7 @@ router.post('/profile', authMiddleware, async (req, res) => {
 
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    let user = await User.findById(req.user.id).select('-password');
+    let user = await User.findById(req.user.id).select(PRIVATE_FIELDS);
 
     // If user has no UHID yet, generate and assign one now
     if (user && !user.uhid) {
@@ -139,7 +142,7 @@ router.get('/profile', authMiddleware, async (req, res) => {
         req.user.id,
         { uhid: newUhid },
         { new: true }
-      ).select('-password');
+      ).select(PRIVATE_FIELDS);
     }
 
     res.json(user);
@@ -305,6 +308,10 @@ router.delete('/dependants/:dependantId', authMiddleware, async (req, res) => {
 // GET /api/users/patients — list all registered patients (for pharmacist issue form)
 router.get('/patients', authMiddleware, async (req, res) => {
   try {
+    // Staff only — this lists every patient's contact details
+    if (!['doctor', 'nurse', 'receptionist', 'pharmacist'].includes(req.user?.role)) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
     const { search, limit = 100 } = req.query;
     let query = {};
     if (search && search.trim()) {

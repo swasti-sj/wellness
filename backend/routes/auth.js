@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const { endSession, logActivity } = require('../utils/audit');
+const { clearFileCookie } = require('../utils/fileAccess');
 
 router.post('/logout', authMiddleware, async (req, res) => {
   try {
@@ -23,6 +24,7 @@ router.post('/logout', authMiddleware, async (req, res) => {
       });
     }
 
+    clearFileCookie(res);
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
     console.error('Logout error:', err);

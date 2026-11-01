@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useApi } from '../../context/ApiContext';
+import { buildDocumentUrl } from './documentHelpers';
 import "../../styles/doctor/DoctorNote.css";
 
 function DoctorNote({ appointmentId }) {
@@ -122,14 +123,6 @@ const apiBase = useApi();
   const fmt = (d) => new Date(d).toLocaleString('en-IN', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
   });
-
-  const buildDocumentUrl = (url) => {
-    if (!url) return "";
-    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("blob:") || url.startsWith("data:")) {
-      return url;
-    }
-    return `${apiBase}${url}`;
-  };
 
   return (
     <div className="dn-root">

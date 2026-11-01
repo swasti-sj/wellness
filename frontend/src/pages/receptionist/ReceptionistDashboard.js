@@ -67,6 +67,7 @@ export default function ReceptionistDashboard() {
 
   const token = localStorage.getItem('token');
   const apiBaseUrl = useApi();
+  const authHeaders = { headers: { Authorization: `Bearer ${token}` } };
 
   // Look up patients by email or roll/staff ID and fill available record details
   useEffect(() => {
@@ -155,7 +156,7 @@ export default function ReceptionistDashboard() {
   const fetchAppointments = async ({ silent = false } = {}) => {
     try {
       if (!silent) setLoading(true);
-      const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`);
+      const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`, authHeaders);
       const formatted = (response.data.appointments || []).map(appt => {
         const patient = appt.user || appt.fullData?.user;
         const dependant = appt.dependant || appt.fullData?.dependant || null;
@@ -190,7 +191,7 @@ export default function ReceptionistDashboard() {
 
   const fetchManualEntries = async () => {
     try {
-      const response = await axios.get(`${apiBaseUrl}/api/receptionist/entries`);
+      const response = await axios.get(`${apiBaseUrl}/api/receptionist/entries`, authHeaders);
       const entries = (response.data.entries || []).map(entry => ({
         _id: entry._id,
         appointmentId: entry.appointmentId || null,
@@ -252,7 +253,7 @@ export default function ReceptionistDashboard() {
 
     try {
       if (manualEntry) {
-        await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: newStatus });
+        await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: newStatus }, authHeaders);
       } else if (appointmentEntry) {
         const token = localStorage.getItem('token');
         await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: newStatus, token });
@@ -297,11 +298,11 @@ export default function ReceptionistDashboard() {
           appointmentDate: editedValues.date || null,
           appointmentTime: editedValues.time || null,
           remarks: editedValues.remarks || 'None'
-        });
+        }, authHeaders);
 
         // Update status if changed during edit
         if (editedValues.status && editedValues.status !== manualEntry.status) {
-          await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: editedValues.status });
+          await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: editedValues.status }, authHeaders);
         }
       } else if (appointmentEntry) {
         // For standard appointments, only update status if it was modified
@@ -378,7 +379,7 @@ export default function ReceptionistDashboard() {
         isWalkIn,
         remarks: formData.remarks || 'None',
         dependantId: formData.dependantId
-      });
+      }, authHeaders);
       if (response.data.success) {
         const newEntry = {
           _id: response.data.entry._id,

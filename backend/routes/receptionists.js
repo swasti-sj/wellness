@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middleware/auth');
+const { requireReceptionist } = require('../middleware/auth');
 const Receptionist = require('../models/Receptionist');
 const ReceptionistEntry = require('../models/ReceptionistEntry');
 const Doctor = require('../models/Doctor');
@@ -46,7 +47,7 @@ router.post('/profile', authMiddleware, async (req, res) => {
 // ===============================
 
 // CREATE - Add new receptionist entry
-router.post("/entries", async (req, res) => {
+router.post("/entries", authMiddleware, requireReceptionist, async (req, res) => {
   try {
     console.log("[API] POST /receptionist/entries called");
 
@@ -246,7 +247,7 @@ router.post("/entries", async (req, res) => {
 });
 
 // READ - Get all receptionist entries
-router.get("/entries", async (req, res) => {
+router.get("/entries", authMiddleware, requireReceptionist, async (req, res) => {
   try {
     console.log("[API] GET /receptionist/entries called");
 
@@ -266,7 +267,7 @@ router.get("/entries", async (req, res) => {
 });
 
 // UPDATE - Update receptionist entry
-router.patch("/entries/:entryId", async (req, res) => {
+router.patch("/entries/:entryId", authMiddleware, requireReceptionist, async (req, res) => {
   try {
     console.log("[API] PATCH /receptionist/entries/:entryId called");
 
@@ -317,7 +318,7 @@ router.patch("/entries/:entryId", async (req, res) => {
 });
 
 // DELETE - Remove receptionist entry
-router.delete("/entries/:entryId", async (req, res) => {
+router.delete("/entries/:entryId", authMiddleware, requireReceptionist, async (req, res) => {
   try {
     console.log("[API] DELETE /receptionist/entries/:entryId called");
 
@@ -340,7 +341,7 @@ router.delete("/entries/:entryId", async (req, res) => {
 });
 
 // UPDATE STATUS - Update entry status
-router.patch("/entries/:entryId/status", async (req, res) => {
+router.patch("/entries/:entryId/status", authMiddleware, requireReceptionist, async (req, res) => {
   try {
     console.log("[API] PATCH /receptionist/entries/:entryId/status called");
 

@@ -47,7 +47,6 @@ function getModuleFromUrl(url) {
         appointments: 'Appointments',
         doctors: 'Doctors',
         users: 'Users',
-        trialread: 'TrialRead',
         notes: 'Notes',
         prescriptions: 'Prescriptions',
         referrals: 'Referrals',

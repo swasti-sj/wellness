@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useApi } from "../../context/ApiContext";
+import { buildDocumentUrl } from "./documentHelpers";
 function CertificateSummary({ appointmentId }) {
   const [certificate, setCertificate] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -54,7 +55,7 @@ function CertificateSummary({ appointmentId }) {
       {certificate.imageUrl && (
         <div className="certificate-image-preview">
           <img
-            src={certificate.imageUrl}
+            src={buildDocumentUrl(certificate.imageUrl)}
             alt="Certificate"
             style={{ maxWidth: "100%", borderRadius: "8px", marginTop: "0.5rem" }}
           />

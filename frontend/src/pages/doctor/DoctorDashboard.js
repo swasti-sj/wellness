@@ -7,105 +7,57 @@ import {
   BarChart, Bar
 } from "recharts";
 import { useApi } from "../../context/ApiContext";
-export default function DoctorDashboard() {
+
+const SEX_COLORS = ["#8884d8", "#82ca9d", "#ffc658", "#bbbbbb"];
+const STATUS_COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#a05195", "#d45087", "#665191", "#2f4b7c", "#888888"];
+
+// Shared by the doctor and nurse dashboards — only the endpoint and copy differ
+export default function DoctorDashboard({
+  endpoint = "/api/doctor-dashboard",
+  title = "Welcome to Doctor Dashboard",
+  subtitle = "Here’s an overview of your patients and appointments",
+}) {
   const [sexData, setSexData] = useState([]);
   const [weeklyData, setWeeklyData] = useState([]);
   const [monthlyData, setMonthlyData] = useState([]);
   const [ageData, setAgeData] = useState([]);
   const [statusData, setStatusData] = useState([]);
+  const [year, setYear] = useState(new Date().getFullYear());
+  const [totalPatients, setTotalPatients] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const apiBaseUrl = useApi();
+
   useEffect(() => {
-    // 🧪 MOCK DATA — Use this until your backend is ready
-    const mockData = {
-      sexStats: [
-        { _id: "Male", count: 45 },
-        { _id: "Female", count: 55 },
-      ],
-      weeklyStats: [
-        { week: "Week 1", count: 15 },
-        { week: "Week 2", count: 25 },
-        { week: "Week 3", count: 18 },
-        { week: "Week 4", count: 30 },
-      ],
-      monthlyStats: [
-        { month: "Jan", patients: 80 },
-        { month: "Feb", patients: 95 },
-        { month: "Mar", patients: 110 },
-        { month: "Apr", patients: 130 },
-      ],
-      ageStats: [
-        { range: "0-18", count: 10 },
-        { range: "19-35", count: 45 },
-        { range: "36-50", count: 30 },
-        { range: "51+", count: 15 },
-      ],
-      statusStats: [
-        { _id: "Completed", count: 60 },
-        { _id: "Pending", count: 25 },
-        { _id: "Cancelled", count: 15 },
-      ],
-    };
+    if (!apiBaseUrl) return;
+    const token = localStorage.getItem("token");
+    axios
+      .get(`${apiBaseUrl}${endpoint}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        const data = res.data;
 
-    // 🧩 Format each dataset for Recharts
-    setSexData(mockData.sexStats.map((i) => ({ name: i._id, value: i.count })));
-    setWeeklyData(mockData.weeklyStats.map((i) => ({ week: i.week, patients: i.count })));
-    setMonthlyData(mockData.monthlyStats.map((i) => ({ month: i.month, patients: i.patients })));
-    setAgeData(mockData.ageStats.map((i) => ({ range: i.range, count: i.count })));
-    setStatusData(mockData.statusStats.map((i) => ({ name: i._id, value: i.count })));
-
-    setLoading(false);
-  }, []);
-
-  // useEffect(() => {
-  //   axios
-  //     .get(`${apiBaseUrl}/api/dashboard/doctor-dashboard`)
-  //     .then((res) => {
-  //       const data = res.data;
-
-  //       // 🧩 Format each dataset for Recharts
-  //       setSexData(
-  //         data.sexStats.map((item) => ({
-  //           name: item._id,
-  //           value: item.count,
-  //         }))
-  //       );
-
-  //       setWeeklyData(
-  //         data.weeklyStats.map((item) => ({
-  //           week: item.week,
-  //           patients: item.count,
-  //         }))
-  //       );
-
-  //       setMonthlyData(
-  //         data.monthlyStats.map((item) => ({
-  //           month: item.month,
-  //           patients: item.patients,
-  //         }))
-  //       );
-
-  //       setAgeData(
-  //         data.ageStats.map((item) => ({
-  //           range: item.range,
-  //           count: item.count,
-  //         }))
-  //       );
-
-  //       setStatusData(
-  //         data.statusStats.map((item) => ({
-  //           name: item._id,
-  //           value: item.count,
-  //         }))
-  //       );
-
-  //       setLoading(false);
-  //     })
-  //     .catch((err) => {
-  //       console.error("Dashboard fetch error:", err);
-  //       setLoading(false);
-  //     });
-  // }, []);
+        // 🧩 Format each dataset for Recharts
+        setSexData(data.sexStats.map((i) => ({ name: i._id, value: i.count })));
+        setWeeklyData(data.weeklyStats.map((i) => ({ week: i.week, patients: i.count })));
+        setMonthlyData(data.monthlyStats.map((i) => ({ month: i.month, patients: i.patients })));
+        setAgeData(data.ageStats.map((i) => ({ range: i.range, count: i.count })));
+        setStatusData(
+          data.statusStats.map((i) => ({
+            name: i._id ? i._id.charAt(0).toUpperCase() + i._id.slice(1) : "Unknown",
+            value: i.count,
+          }))
+        );
+        setYear(data.year);
+        setTotalPatients(data.totalPatients);
+      })
+      .catch((err) => {
+        console.error("Dashboard fetch error:", err);
+        setError("Could not load dashboard data. Please try again later.");
+      })
+      .finally(() => setLoading(false));
+  }, [apiBaseUrl, endpoint]);
 
   if (loading) {
     return (
@@ -115,12 +67,21 @@ export default function DoctorDashboard() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="doctor-dashboard-content">
+        <h2>{title}</h2>
+        <p>{error}</p>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* ✅ Dashboard Header */}
       <div className="doctor-dashboard-content">
-        <h2>Welcome to Doctor Dashboard</h2>
-        <p>Here’s an overview of your patients and appointments.</p>
+        <h2>{title}</h2>
+        <p>{subtitle} ({totalPatients} unique patients).</p>
       </div>
 
       {/* ✅ Gender Distribution Pie */}
@@ -137,9 +98,9 @@ export default function DoctorDashboard() {
               outerRadius={100}
               label
             >
-              <Cell fill="#8884d8" />
-              <Cell fill="#82ca9d" />
-              <Cell fill="#ffc658" />
+              {sexData.map((_, i) => (
+                <Cell key={i} fill={SEX_COLORS[i % SEX_COLORS.length]} />
+              ))}
             </Pie>
             <Tooltip />
             <Legend />
@@ -149,7 +110,7 @@ export default function DoctorDashboard() {
 
       {/* ✅ Weekly Patients Trend */}
       <section className="chart-section">
-        <h2 className="chart-title">Weekly Patient Trend (Current Year)</h2>
+        <h2 className="chart-title">Weekly Appointment Trend ({year})</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={weeklyData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -164,7 +125,7 @@ export default function DoctorDashboard() {
 
       {/* ✅ Monthly Appointments */}
       <section className="chart-section">
-        <h2 className="chart-title">Monthly Appointment Overview</h2>
+        <h2 className="chart-title">Monthly Appointment Overview ({year})</h2>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={monthlyData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -206,10 +167,9 @@ export default function DoctorDashboard() {
               outerRadius={100}
               label
             >
-              <Cell fill="#0088FE" />
-              <Cell fill="#00C49F" />
-              <Cell fill="#FFBB28" />
-              <Cell fill="#FF8042" />
+              {statusData.map((_, i) => (
+                <Cell key={i} fill={STATUS_COLORS[i % STATUS_COLORS.length]} />
+              ))}
             </Pie>
             <Tooltip />
             <Legend />

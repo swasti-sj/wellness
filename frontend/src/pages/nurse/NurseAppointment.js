@@ -135,7 +135,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
   const fetchAppointments = async () => {
     try {
       const res = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`, {
-        params: { token },
+        headers: { Authorization: `Bearer ${token}` },
       });
       const formatted = res.data.appointments.map((appt) => {
         const patient = appt.user || appt.fullData?.user;

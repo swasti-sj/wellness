@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import "../../styles/Dashboard.css";
 import { useApi } from "../../context/ApiContext";
+import { buildDocumentUrl } from "../doctor/documentHelpers";
 export default function Dashboard() {
   const [doctors, setDoctors] = useState([]);
   const [upcomingAppointment, setUpcomingAppointment] = useState(null);
@@ -250,7 +251,7 @@ export default function Dashboard() {
                 {lastVisitPrescription.documentUrl && (
                   <div className="prescription-document">
                     <a
-                      href={lastVisitPrescription.documentUrl}
+                      href={buildDocumentUrl(lastVisitPrescription.documentUrl)}
                       target="_blank"
                       rel="noreferrer"
                       className="document-link"

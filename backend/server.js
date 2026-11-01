@@ -34,6 +34,7 @@ const Pharmacist = require("./models/Pharmacist");
 const { isEmailAllowed } = require("./utils/googleSheetAuth");
 const { createSession, getClientIp, parseUserAgent, uuidv4 } = require('./utils/audit');
 const auditLogger = require('./middleware/auditLogger');
+const { setFileCookie, requireFileAccess } = require('./utils/fileAccess');
 
 const app = express();
 
@@ -43,7 +44,6 @@ const adminAuditRoutes = require('./routes/adminAudit');
 const appointmentRoutes = require("./routes/appointments");
 const doctorRoutes = require("./routes/doctors");
 const userRoutes = require("./routes/users");
-const trialreadRoutes = require("./routes/trialread");
 const noteRoutes = require("./routes/notes");
 const prescriptionRoutes = require("./routes/prescriptions");
 const referralRoutes = require("./routes/referrals");
@@ -72,7 +72,13 @@ app.use(auditLogger);
 // Resolved from __dirname (not process.cwd()) so it matches wherever
 // diskStorage.js actually writes files, regardless of how/where the
 // process was started (local dev vs PM2 on the VM).
-app.use('/uploads', express.static(require('path').join(__dirname, 'uploads')));
+// Uploads hold patient medical documents, so they require the login cookie.
+// /api/uploads is the path the frontend uses — nginx always proxies /api/ to
+// this server, so the check can't be bypassed by nginx serving files itself.
+// /uploads is kept (also protected) for any old links.
+const uploadsStatic = express.static(require('path').join(__dirname, 'uploads'));
+app.use('/api/uploads', requireFileAccess, uploadsStatic);
+app.use('/uploads', requireFileAccess, uploadsStatic);
 
 app.use(session({
   secret: process.env.SESSION_SECRET || "my_secret_key",
@@ -210,6 +216,7 @@ app.get("/api/auth/google/callback",
 
       token = jwt.sign({ id: doctor._id, name: doctor.name, email, role: "doctor", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+      setFileCookie(res, token);
       return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`);
     }
 
@@ -229,6 +236,7 @@ app.get("/api/auth/google/callback",
 
       token = jwt.sign({ id: nurse._id, name: nurse.name, email, role: "nurse", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+      setFileCookie(res, token);
       return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`);
     }
 
@@ -248,6 +256,7 @@ app.get("/api/auth/google/callback",
 
       token = jwt.sign({ id: r._id, name: r.name, email, role: "receptionist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+      setFileCookie(res, token);
       return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`);
     }
 
@@ -267,6 +276,7 @@ app.get("/api/auth/google/callback",
 
       token = jwt.sign({ id: p._id, name: p.name, email, role: "pharmacist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+      setFileCookie(res, token);
       return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`);
     }
 
@@ -303,6 +313,7 @@ app.get("/api/auth/google/callback",
         { expiresIn: "1d" }
       );
 
+      setFileCookie(res, token);
       return res.redirect(
         `${process.env.FRONTEND_URL}/login?token=${token}&role=admin&firstLogin=${firstLogin}`
       );
@@ -343,6 +354,7 @@ app.get("/api/auth/google/callback",
 
       token = jwt.sign({ id: user._id, name: user.name, email, role: "patient", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
+      setFileCookie(res, token);
       return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=patient&firstLogin=${firstLogin}`);
     }
   });
@@ -358,7 +370,6 @@ app.use('/api/auth', authRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/trialread", trialreadRoutes);
 app.use("/api/notes", noteRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/referrals", referralRoutes);

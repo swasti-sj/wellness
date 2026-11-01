@@ -11,6 +11,7 @@ const Vital = require("../models/Vital");
 const Test = require("../models/Test");
 const mongoose = require("mongoose");
 const { logActivity, getClientIp, parseUserAgent } = require('../utils/audit');
+const authMiddleware = require('../middleware/auth');
 
 // ===============================
 // PATIENT BOOK APPOINTMENT ENDPOINT
@@ -977,8 +978,12 @@ router.patch("/:appointmentId/status", async (req, res) => {
 });
 
 // Get ALL appointments from ALL doctors (for receptionist)
-router.get("/all-appointments", async (req, res) => {
+router.get("/all-appointments", authMiddleware, async (req, res) => {
   try {
+    // Clinic-wide list with patient contact details — front-desk staff only
+    if (!['nurse', 'receptionist'].includes(req.user?.role)) {
+      return res.status(403).json({ error: "Access denied" });
+    }
     console.log("[API] GET /all-appointments called");
 
     // Fetch all appointments and populate user and doctor details

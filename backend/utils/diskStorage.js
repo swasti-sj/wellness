@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { compressToTargetSize, DOCUMENT_COMPRESSION_CONFIG } = require('./cloudinary');
 
 /**
@@ -40,7 +41,7 @@ async function saveCompressedImageToDisk(fileBuffer, folder, fileName, options =
   console.log(`[DiskStorage] Compressed to ${Math.round(buffer.length / 1024)}KB at ${width}x${height}, quality ${quality}`);
 
   const dir = await ensureFolder(folder);
-  const name = `${Date.now()}-${safeFileName(fileName)}.webp`;
+  const name = `${Date.now()}-${crypto.randomBytes(12).toString('hex')}-${safeFileName(fileName)}.webp`;
   const filePath = path.join(dir, name);
 
   await fs.promises.writeFile(filePath, buffer);
@@ -57,7 +58,7 @@ async function saveCompressedImageToDisk(fileBuffer, folder, fileName, options =
 async function saveRawFileToDisk(fileBuffer, folder, fileName, mimetype) {
   const dir = await ensureFolder(folder);
   const ext = mimetype === 'application/pdf' ? '.pdf' : path.extname(fileName || '') || '';
-  const name = `${Date.now()}-${safeFileName(fileName)}${ext}`;
+  const name = `${Date.now()}-${crypto.randomBytes(12).toString('hex')}-${safeFileName(fileName)}${ext}`;
   const filePath = path.join(dir, name);
 
   await fs.promises.writeFile(filePath, fileBuffer);
