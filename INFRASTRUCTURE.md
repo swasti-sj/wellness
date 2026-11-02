@@ -53,9 +53,11 @@ As of November 2026, VM login is split into three separate accounts with deliber
 
 | Account | Who uses it | What it can do | SSH |
 |---|---|---|---|
-| **`swasti`** | Admin (project lead) only | Full, unrestricted `sudo` — can edit `mongod.conf`, read `.env.encryption`, manage all accounts, everything | `ssh swasti@10.195.250.184` |
+| **`admin`** | Admin (project lead) only | Full, unrestricted `sudo` — can edit `mongod.conf`, read `.env.encryption`, manage all accounts, everything | `ssh admin@10.195.250.184` |
 | **`wc`** | Nobody logs in anymore — **password locked** (`passwd -l wc`) | N/A for humans. Still exists purely as the account the backend process actually runs under (PM2/`node server.js`) | Not usable — login disabled |
 | **`devteam`** | The whole dev team, shared login, for deploying | Can run exactly **one thing** via `sudo`: `/usr/local/bin/deploy-wellness.sh`. Nothing else — no general `sudo`, not in the `enckey` group, cannot read or edit any system file | `ssh devteam@10.195.250.184` |
+
+**Account history, for future reference:** `admin` replaced an earlier personal admin account (`swasti`) — same role, just renamed to be ownership-neutral rather than tied to one person's name. The old account was retired the same way `wc` was (`sudo passwd -l swasti`), not deleted outright.
 
 **What a developer actually does to deploy:**
 ```bash
@@ -111,7 +113,7 @@ sudo /usr/local/bin/deploy-wellness.sh
 ```
 See section 3 for exactly what that script does and why `devteam` can only run that one thing.
 
-**The manual sequence** (what the script actually runs — useful if something in it needs debugging, or for admin work as `swasti`):
+**The manual sequence** (what the script actually runs — useful if something in it needs debugging, or for admin work as `admin`):
 
 ```bash
 cd ~/wellness
@@ -316,12 +318,12 @@ pm2 logs backend --lines 30   # recent backend activity / errors
 | **Uploaded file saves but 404s when viewed** | `backend/uploads` isn't a symlink to the CCS mount — files landed on local VM disk instead | Check `ls -la ~/wellness/backend/uploads`; if it's a real folder instead of a symlink, files inside need to be moved onto `/mnt/ccs-wellness` before re-creating the symlink |
 | **"FIELD_ENCRYPTION_KEY is not set" when saving a note/prescription/test/vital** | `.env.encryption` either doesn't exist, or exists but isn't readable by the account the backend actually runs as | `ls -la ~/wellness/backend/.env.encryption` — confirm it exists; `ps aux \| grep "node.*server.js"` to see which user owns the running process; if the file is owned by a different user (e.g. `root` from a `sudo nano`), `sudo chown wc:wc .env.encryption` (or whichever user actually runs the process) then `pm2 restart backend --update-env` |
 | **A note/prescription/test/vital displays as `enc:...` gibberish in the app itself** (not just in the raw database) | A route responded with a document straight out of `.save()` before the `post('save')` decrypt hook ran — check that the relevant model actually has a `post('save')` hook, not just `post('find')`/`post('findOne')` | Confirm the model's `post('save')` hook exists (see section 8); `pm2 restart backend --update-env` after any model change |
-| **`devteam` gets "command not allowed" / "not in the sudoers file" for anything other than the deploy script** | Expected, not a bug — `devteam`'s `sudo` is intentionally restricted to exactly `/usr/local/bin/deploy-wellness.sh` (section 3) | If a developer genuinely needs something more (e.g. the deploy script itself needs editing), that's admin (`swasti`) work, not something to widen `devteam`'s permissions for |
-| **Can't log into `wc` anymore** | Expected — its password was intentionally locked (section 3) once `devteam`/`swasti` were set up | Use `devteam` (deploying) or `swasti` (admin) instead; `wc` still runs the app in the background, it's just not a login anyone uses |
+| **`devteam` gets "command not allowed" / "not in the sudoers file" for anything other than the deploy script** | Expected, not a bug — `devteam`'s `sudo` is intentionally restricted to exactly `/usr/local/bin/deploy-wellness.sh` (section 3) | If a developer genuinely needs something more (e.g. the deploy script itself needs editing), that's admin (`admin`) work, not something to widen `devteam`'s permissions for |
+| **Can't log into `wc` anymore** | Expected — its password was intentionally locked (section 3) once `devteam`/`admin` were set up | Use `devteam` (deploying) or `admin` (admin work) instead; `wc` still runs the app in the background, it's just not a login anyone uses |
 
 **Connect to the server:**
 - Deploying code: `ssh devteam@10.195.250.184`
-- Admin work (config, database, accounts): `ssh swasti@10.195.250.184`
+- Admin work (config, database, accounts): `ssh admin@10.195.250.184`
 - (Plain SSH either way — avoid VS Code Remote-SSH; it copies ~3 GB onto the server and can fill the disk.)
 
 ---
