@@ -26,7 +26,7 @@ flowchart TD
 
 **In one sentence:** nginx receives every request, serves the website files directly, and forwards API calls to the Node backend, which talks to a self-hosted, encrypted MongoDB running on the same VM, Google, and the institute's CCS network storage for uploaded files and database backups.
 
-> **Why the database moved off Atlas:** MongoDB Atlas's free tier caps storage at 512 MB, and we wanted headroom independent of that cap. Self-hosting required deliberate care — see section 6 for why plain MongoDB Community Edition and the CCS network drive were both rejected along the way, and what replaced them.
+> **Why the database moved off Atlas:** MongoDB Atlas's free tier caps storage at 512 MB, and we wanted headroom independent of that cap. Self-hosting required deliberate care — see section 7 for why plain MongoDB Community Edition and the CCS network drive were both rejected along the way, and what replaced them.
 
 > **Note:** Cloudinary integration code still exists in `backend/utils/cloudinary.js` but is **not used** — all image/document uploads (prescriptions, lab tests, vitals case sheets, note images) are compressed and saved to disk via `backend/utils/diskStorage.js` instead, which is cost-free and keeps large files out of the (storage-limited) MongoDB Atlas database.
 
@@ -47,7 +47,40 @@ Key idea: the **frontend is not a running program** — it's just static files (
 
 ---
 
-## 3. How a request flows
+## 3. VM accounts & access
+
+As of November 2026, VM login is split into three separate accounts with deliberately different levels of access — set up specifically so that a compromised or careless deploy-access account can't touch encryption, authentication, or any other security control (see section 8 for why this mattered).
+
+| Account | Who uses it | What it can do | SSH |
+|---|---|---|---|
+| **`swasti`** | Admin (project lead) only | Full, unrestricted `sudo` — can edit `mongod.conf`, read `.env.encryption`, manage all accounts, everything | `ssh swasti@10.195.250.184` |
+| **`wc`** | Nobody logs in anymore — **password locked** (`passwd -l wc`) | N/A for humans. Still exists purely as the account the backend process actually runs under (PM2/`node server.js`) | Not usable — login disabled |
+| **`devteam`** | The whole dev team, shared login, for deploying | Can run exactly **one thing** via `sudo`: `/usr/local/bin/deploy-wellness.sh`. Nothing else — no general `sudo`, not in the `enckey` group, cannot read or edit any system file | `ssh devteam@10.195.250.184` |
+
+**What a developer actually does to deploy:**
+```bash
+ssh devteam@10.195.250.184
+sudo /usr/local/bin/deploy-wellness.sh
+```
+That one script (root-owned, at `/usr/local/bin/deploy-wellness.sh`) does the entire deploy — `git pull`, `npm install` for both backend and frontend, `npm run build`, rebuilds and syncs the frontend to `/var/www/html/`, restarts the backend via PM2, and restarts nginx. The script itself runs as root (that's how it's permitted to restart nginx / write to `/var/www/html/`), but internally drops to `sudo -u wc` for the git/npm/pm2 steps, since those need to run against `wc`'s actual files and PM2 process list.
+
+To just check on the app without a full deploy:
+```bash
+sudo -u wc pm2 logs backend
+sudo -u wc pm2 list
+```
+
+**Why `devteam` can't touch anything sensitive, concretely:** its only sudo permission is defined in `/etc/sudoers.d/wellness-devteam` as one exact line —
+```
+devteam ALL=(root) NOPASSWD: /usr/local/bin/deploy-wellness.sh
+```
+— `sudo` refuses anything not on that list. `devteam` was also never added to the `enckey` group (section 8), so it has no read access to the encryption key either way, independent of `sudo` entirely. Concretely: `sudo nano /etc/mongod.conf` and `cat ~wc/wellness/backend/.env.encryption` both fail for `devteam`, by design — this was tested, not just assumed.
+
+**Adding a new teammate:** they just use the existing shared `devteam` login — no new account needed per person, unless you specifically want per-person audit trails later.
+
+---
+
+## 4. How a request flows
 
 **Loading the website (e.g. the login page):**
 1. Browser requests `https://wellness.iitdh.ac.in/`
@@ -69,9 +102,16 @@ Key idea: the **frontend is not a running program** — it's just static files (
 
 ---
 
-## 4. Deployment (how to push updates)
+## 5. Deployment (how to push updates)
 
-All commands run on the VM over SSH (`ssh wc@10.195.250.184`). Standard sequence:
+**The easy way — what you'll normally do:**
+```bash
+ssh devteam@10.195.250.184
+sudo /usr/local/bin/deploy-wellness.sh
+```
+See section 3 for exactly what that script does and why `devteam` can only run that one thing.
+
+**The manual sequence** (what the script actually runs — useful if something in it needs debugging, or for admin work as `swasti`):
 
 ```bash
 cd ~/wellness
@@ -79,12 +119,12 @@ git pull origin main          # get latest code from GitHub
 
 # --- Backend ---
 cd backend
-npm ci                        # install exactly what package-lock.json lists (never rewrites it)
+npm install                        # install exactly what package-lock.json lists (never rewrites it)
 pm2 restart backend --update-env   # restart with latest code + env
 
 # --- Frontend ---
 cd ../frontend
-npm ci
+npm install
 npm run build                 # produce fresh static files
 sudo rsync -av --delete build/ /var/www/html/   # deploy them
 sudo systemctl restart nginx
@@ -105,7 +145,7 @@ Then open https://wellness.iitdh.ac.in and confirm login + dashboard work.
 
 ---
 
-## 5. Configuration & secrets
+## 6. Configuration & secrets
 
 **Backend `~/wellness/backend/.env`** (key values):
 ```
@@ -119,16 +159,16 @@ JWT_SECRET=<secret>
 SESSION_SECRET=<secret>
 ```
 
-**MongoDB connection note (historical):** before the September 2026 migration (see section 6), this pointed at a MongoDB Atlas cluster using a non-SRV connection string, to work around an intermittent DNS issue (`querySrv ESERVFAIL`) with the `+srv` form. Now that MongoDB runs locally, that DNS dependency no longer applies — `localhost` never needs DNS resolution.
+**MongoDB connection note (historical):** before the September 2026 migration (see section 7), this pointed at a MongoDB Atlas cluster using a non-SRV connection string, to work around an intermittent DNS issue (`querySrv ESERVFAIL`) with the `+srv` form. Now that MongoDB runs locally, that DNS dependency no longer applies — `localhost` never needs DNS resolution.
 
 **External services the backend uses:**
 - **Google OAuth + Calendar API** — login and appointment calendar events
 - **CCS network storage** — image/document uploads and database backups (Cloudinary code still exists but is unused — see section 1)
-- ~~MongoDB Atlas~~ — retired; database is now self-hosted on the VM (section 6)
+- ~~MongoDB Atlas~~ — retired; database is now self-hosted on the VM (section 7)
 
 ---
 
-## 6. Self-hosted MongoDB (database)
+## 7. Self-hosted MongoDB (database)
 
 As of September 2026, the database was migrated off MongoDB Atlas (cloud, free-tier capped at 512 MB) onto the VM itself, running **Percona Server for MongoDB** — a free, drop-in-compatible distribution of MongoDB that (unlike plain MongoDB Community Edition) includes encryption at rest. Two things were deliberately ruled out along the way, worth recording so they aren't tried again:
 
@@ -160,7 +200,7 @@ net:
 - `/usr/local/bin/mongo-backup.sh` runs `mongodump` (using credentials from `/etc/mongodb-backup.conf`, root-only, `chmod 600` — keeps the password out of `ps aux` and out of the script itself), compresses the result, **encrypts it** (AES-256, key at `/etc/mongodb-backup-encryption-key`, root-only), and saves the resulting `.tar.gz.enc` to **`/mnt/ccs-wellness/mongo-backups/`** (the CCS network drive — safe for this, since a backup is just an encrypted file, not a live database).
 - Keeps only the **last 4 backups**, deleting older ones automatically.
 - Logs each run to `/var/log/mongo-backup.log`.
-- Scheduled via root's crontab: `0 4 * * 0 /usr/local/bin/mongo-backup.sh` (Sundays, 4 AM — an hour after the existing disk-cleanup cron in section 8, to avoid overlap).
+- Scheduled via root's crontab: `0 4 * * 0 /usr/local/bin/mongo-backup.sh` (Sundays, 4 AM — an hour after the existing disk-cleanup cron in section 10, to avoid overlap).
 
 **Manual backup/restore anytime:**
 ```bash
@@ -173,13 +213,13 @@ openssl enc -d -aes-256-cbc -pbkdf2 -in <backup>.tar.gz.enc -out backup.tar.gz -
 tar -xzf backup.tar.gz
 ```
 
-**Still open (tracked separately, not yet done):** a written data-retention/deletion policy. Field-level encryption (below, section 7) is now done.
+**Still open (tracked separately, not yet done):** a written data-retention/deletion policy. Field-level encryption (below, section 8) is now done.
 
 ---
 
-## 7. Field-level encryption (sensitive clinical data)
+## 8. Field-level encryption (sensitive clinical data)
 
-Database encryption at rest (section 6) protects against someone stealing the disk; authentication protects against unauthenticated access — but **anyone with a valid database login can still read everything through a normal query.** Field-level encryption closes that specific gap: it scrambles individual sensitive fields *inside the application*, before they ever reach MongoDB, so even a holder of valid DB credentials sees only ciphertext for these fields unless they also hold a separate, more tightly-held key.
+Database encryption at rest (section 7) protects against someone stealing the disk; authentication protects against unauthenticated access — but **anyone with a valid database login can still read everything through a normal query.** Field-level encryption closes that specific gap: it scrambles individual sensitive fields *inside the application*, before they ever reach MongoDB, so even a holder of valid DB credentials sees only ciphertext for these fields unless they also hold a separate, more tightly-held key.
 
 **What's encrypted:**
 
@@ -212,7 +252,7 @@ The stored `text` (or other encrypted field) should show `enc:...` — scrambled
 
 ---
 
-## 8. Uploaded file storage (CCS network drive)
+## 9. Uploaded file storage (CCS network drive)
 
 Uploaded files (prescriptions, lab test documents, vitals case sheets, note images, certificates) are compressed with `sharp` and written to disk by `backend/utils/diskStorage.js`, instead of being stored inside MongoDB or sent to Cloudinary. The actual storage lives on an institute-provided network share, not on the VM's own disk.
 
@@ -236,7 +276,7 @@ Uploaded files (prescriptions, lab test documents, vitals case sheets, note imag
 
 ---
 
-## 9. Keeping the server healthy (auto-maintenance)
+## 10. Keeping the server healthy (auto-maintenance)
 
 The VM has a **20 GB disk**. The site once went down repeatedly because the disk filled to 100% (a full disk crashes PM2 → backend dies → 502). We put automatic safeguards in place so it can't fill up again:
 
@@ -245,7 +285,7 @@ The VM has a **20 GB disk**. The site once went down repeatedly because the disk
 | **PM2 log rotation** (`pm2-logrotate`) | Caps backend log files (max 10 MB each, keeps 5) so app logs can't grow forever |
 | **journald size cap** (200 MB) | Limits system logs |
 | **Weekly cleanup cron** (`/usr/local/bin/disk-cleanup.sh`, Sundays 3 AM) | Clears package caches, old snap versions, vacuums logs; warns in `/var/log/disk-cleanup.log` if disk > 85% |
-| **Weekly MongoDB backup cron** (`/usr/local/bin/mongo-backup.sh`, Sundays 4 AM) | Dumps the database, compresses it, saves it to the CCS drive, keeps only the last 4 (see section 6) |
+| **Weekly MongoDB backup cron** (`/usr/local/bin/mongo-backup.sh`, Sundays 4 AM) | Dumps the database, compresses it, saves it to the CCS drive, keeps only the last 4 (see section 7) |
 | **PM2 startup service** | Backend auto-restarts if the VM reboots (`pm2 startup` + `pm2 save`) |
 
 **Manual health check anytime:**
@@ -260,7 +300,7 @@ pm2 logs backend --lines 30   # recent backend activity / errors
 
 ---
 
-## 10. Troubleshooting quick reference
+## 11. Troubleshooting quick reference
 
 | Symptom | Likely cause | Check / fix |
 |---|---|---|
@@ -275,9 +315,14 @@ pm2 logs backend --lines 30   # recent backend activity / errors
 | **File upload fails / 500 error on save** | CCS network share not mounted, or `backend/uploads` symlink missing/broken | `mount \| grep ccs-wellness` (remount with `sudo mount -a` if missing); `ls -la ~/wellness/backend/uploads` (should show `-> /mnt/ccs-wellness`, recreate with `ln -s /mnt/ccs-wellness ~/wellness/backend/uploads` if not) |
 | **Uploaded file saves but 404s when viewed** | `backend/uploads` isn't a symlink to the CCS mount — files landed on local VM disk instead | Check `ls -la ~/wellness/backend/uploads`; if it's a real folder instead of a symlink, files inside need to be moved onto `/mnt/ccs-wellness` before re-creating the symlink |
 | **"FIELD_ENCRYPTION_KEY is not set" when saving a note/prescription/test/vital** | `.env.encryption` either doesn't exist, or exists but isn't readable by the account the backend actually runs as | `ls -la ~/wellness/backend/.env.encryption` — confirm it exists; `ps aux \| grep "node.*server.js"` to see which user owns the running process; if the file is owned by a different user (e.g. `root` from a `sudo nano`), `sudo chown wc:wc .env.encryption` (or whichever user actually runs the process) then `pm2 restart backend --update-env` |
-| **A note/prescription/test/vital displays as `enc:...` gibberish in the app itself** (not just in the raw database) | A route responded with a document straight out of `.save()` before the `post('save')` decrypt hook ran — check that the relevant model actually has a `post('save')` hook, not just `post('find')`/`post('findOne')` | Confirm the model's `post('save')` hook exists (see section 7); `pm2 restart backend --update-env` after any model change |
+| **A note/prescription/test/vital displays as `enc:...` gibberish in the app itself** (not just in the raw database) | A route responded with a document straight out of `.save()` before the `post('save')` decrypt hook ran — check that the relevant model actually has a `post('save')` hook, not just `post('find')`/`post('findOne')` | Confirm the model's `post('save')` hook exists (see section 8); `pm2 restart backend --update-env` after any model change |
+| **`devteam` gets "command not allowed" / "not in the sudoers file" for anything other than the deploy script** | Expected, not a bug — `devteam`'s `sudo` is intentionally restricted to exactly `/usr/local/bin/deploy-wellness.sh` (section 3) | If a developer genuinely needs something more (e.g. the deploy script itself needs editing), that's admin (`swasti`) work, not something to widen `devteam`'s permissions for |
+| **Can't log into `wc` anymore** | Expected — its password was intentionally locked (section 3) once `devteam`/`swasti` were set up | Use `devteam` (deploying) or `swasti` (admin) instead; `wc` still runs the app in the background, it's just not a login anyone uses |
 
-**Connect to the server:** `ssh wc@10.195.250.184` (plain SSH — avoid VS Code Remote-SSH; it copies ~3 GB onto the server and can fill the disk).
+**Connect to the server:**
+- Deploying code: `ssh devteam@10.195.250.184`
+- Admin work (config, database, accounts): `ssh swasti@10.195.250.184`
+- (Plain SSH either way — avoid VS Code Remote-SSH; it copies ~3 GB onto the server and can fill the disk.)
 
 ---
 
