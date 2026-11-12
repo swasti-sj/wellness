@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Doctor = require("../models/Doctor");
@@ -26,7 +27,8 @@ const upload = multer({
 // Add a note to an appointment
 router.post("/add", async (req, res) => {
   try {
-    const { token, appointmentId, text } = req.body;
+    const { appointmentId, text } = req.body;
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Missing token" });
     if (!appointmentId || !text) return res.status(400).json({ error: "Missing appointmentId or note text" });
 
@@ -70,14 +72,15 @@ router.post("/add", async (req, res) => {
     res.json({ success: true, note });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Update an existing note
 router.put("/:noteId", async (req, res) => {
   try {
-    const { token, text } = req.body;
+    const { text } = req.body;
+    const token = getRequestToken(req);
     const { noteId } = req.params;
 
     if (!token) return res.status(400).json({ error: "Missing token" });
@@ -127,14 +130,14 @@ router.put("/:noteId", async (req, res) => {
     res.json({ success: true, note });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Add images to an existing note
 router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
   try {
-    const { token } = req.body;
+    const token = getRequestToken(req);
     const { noteId } = req.params;
 
     if (!token) return res.status(400).json({ error: "Missing token" });
@@ -206,14 +209,14 @@ router.post("/:noteId/images", upload.array('images', 5), async (req, res) => {
     }
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Delete an image from a note
 router.delete("/:noteId/images/:imageIndex", async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { noteId, imageIndex } = req.params;
 
     if (!token) return res.status(400).json({ error: "Missing token" });
@@ -278,14 +281,14 @@ router.delete("/:noteId/images/:imageIndex", async (req, res) => {
     res.json({ success: true, note });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Delete a note
 router.delete("/:noteId", async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { noteId } = req.params;
 
     if (!token) return res.status(400).json({ error: "Missing token" });
@@ -349,14 +352,14 @@ router.delete("/:noteId", async (req, res) => {
     res.json({ success: true, message: "Note and associated images deleted successfully" });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get notes for a specific appointment
 router.get("/:appointmentId", async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { appointmentId } = req.params;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
@@ -385,7 +388,7 @@ router.get("/:appointmentId", async (req, res) => {
     res.json({ notes });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -393,7 +396,7 @@ router.get("/:appointmentId", async (req, res) => {
 router.get('/patient/:patientId', async (req, res) => {
   try {
     const { patientId } = req.params;
-    const token = req.query.token;
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: 'Missing token' });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -405,7 +408,7 @@ router.get('/patient/:patientId', async (req, res) => {
     res.json({ success: true, notes });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

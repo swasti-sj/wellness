@@ -11,9 +11,7 @@ function CertificateSummary({ appointmentId }) {
     const fetchCertificate = async () => {
       if (!appointmentId) return;
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-          params: { token },
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
         if (res.data.certificate) {
           setCertificate(res.data.certificate);
         }

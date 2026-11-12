@@ -255,8 +255,7 @@ export default function ReceptionistDashboard() {
       if (manualEntry) {
         await axios.patch(`${apiBaseUrl}/api/receptionist/entries/${itemId}/status`, { status: newStatus }, authHeaders);
       } else if (appointmentEntry) {
-        const token = localStorage.getItem('token');
-        await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: newStatus, token });
+        await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: newStatus });
       }
     } catch (error) {
       const errMsg = error.response?.data?.error || error.message || 'Error updating status';
@@ -307,8 +306,7 @@ export default function ReceptionistDashboard() {
       } else if (appointmentEntry) {
         // For standard appointments, only update status if it was modified
         if (editedValues.status && editedValues.status !== appointmentEntry.status) {
-          const token = localStorage.getItem('token');
-          await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: editedValues.status, token });
+          await axios.patch(`${apiBaseUrl}/api/appointments/${itemId}/status`, { status: editedValues.status });
         }
       }
 

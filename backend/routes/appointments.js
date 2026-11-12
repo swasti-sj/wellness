@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const { google } = require('googleapis');
 const jwt = require("jsonwebtoken");
@@ -25,7 +26,8 @@ router.post("/book", async (req, res) => {
   let user, doctor;
 
   try {
-    const { token, startDateTime, endDateTime, doctorId, slotDay, slotTime, dependantId } = req.body;
+    const { startDateTime, endDateTime, doctorId, slotDay, slotTime, dependantId } = req.body;
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -255,7 +257,7 @@ router.get("/my-appointments", async (req, res) => {
   try {
     console.log("[API] GET /my-appointments called");
 
-    const { token } = req.query;
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -375,7 +377,7 @@ router.get("/my-appointments", async (req, res) => {
 
   } catch (err) {
     console.error("my-appointments error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -406,7 +408,7 @@ const ensureOAuthClient = async (entity) => {
 router.delete("/:appointmentId/cancel", async (req, res) => {
   console.log("[API] DELETE /:appointmentId/cancel called");
 
-  const { token } = req.body;
+  const token = getRequestToken(req);
   const { appointmentId } = req.params;
   const calendarDeletionErrors = [];
 
@@ -608,7 +610,9 @@ router.post("/doctor-book", async (req, res) => {
   try {
     console.log("[API] POST /doctor-book called");
 
-    const { token, patientEmail, dependantId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { patientEmail, dependantId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Missing token" });
 
     // Verify doctor
@@ -788,7 +792,7 @@ router.post("/doctor-book", async (req, res) => {
       console.log("Rolled back appointment in DB");
     }
 
-    res.status(500).json({ error: "Booking failed. " + err.message });
+    res.status(500).json({ error: 'Booking failed' });
   }
 });
 
@@ -798,7 +802,7 @@ router.post("/doctor-book", async (req, res) => {
 router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
   console.log("[API] DELETE /:appointmentId/doctor-cancel called");
 
-  const { token } = req.body;
+  const token = getRequestToken(req);
   const { appointmentId } = req.params;
 
   if (!token) return res.status(400).json({ error: "Missing token" });
@@ -889,7 +893,7 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
 
   } catch (err) {
     console.error("Doctor cancellation error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -898,7 +902,8 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
 router.patch("/:appointmentId/status", async (req, res) => {
   try {
     console.log("[API] PATCH /:appointmentId/status called");
-    const { token, status } = req.body;
+    const { status } = req.body;
+    const token = getRequestToken(req);
     const { appointmentId } = req.params;
 
     if (!token) return res.status(400).json({ error: "Missing token" });
@@ -973,7 +978,7 @@ router.patch("/:appointmentId/status", async (req, res) => {
 
   } catch (err) {
     console.error("Error in PATCH status:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -995,7 +1000,7 @@ router.get("/all-appointments", authMiddleware, async (req, res) => {
     res.json({ appointments });
   } catch (err) {
     console.error("Error fetching all appointments:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1003,7 +1008,7 @@ router.get("/all-appointments", authMiddleware, async (req, res) => {
 router.get("/doctor-appointments", async (req, res) => {
   try {
     console.log("[API] GET /doctor-appointments called");
-    const { token } = req.query;
+    const token = getRequestToken(req);
     if (!token) {
       return res.status(400).json({ error: "Missing token" });
     }
@@ -1027,7 +1032,7 @@ router.get("/doctor-appointments", async (req, res) => {
     res.json({ appointments });
   } catch (err) {
     console.error("Error fetching doctor's appointments:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1036,7 +1041,7 @@ router.get("/doctor-appointments", async (req, res) => {
 router.get("/my-slots", async (req, res) => {
   try {
     console.log("[API] GET /my-slots called");
-    const { token } = req.query;
+    const token = getRequestToken(req);
     if (!token) {
       return res.status(400).json({ error: "Missing token" });
     }
@@ -1057,7 +1062,7 @@ router.get("/my-slots", async (req, res) => {
     });
   } catch (err) {
     console.error("Error fetching doctor slots:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1105,7 +1110,7 @@ router.get("/history", async (req, res) => {
     res.json(formattedHistory);
   } catch (err) {
     console.error("Error fetching visit history:", err);
-    res.status(500).json({ error: "Server error: " + err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1161,7 +1166,8 @@ async function verifyDoctorToken(token) {
 }
 router.get("/patient-history", async (req, res) => {
   try {
-    const { token, query } = req.query;
+    const { query } = req.query;
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Token missing" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -1259,7 +1265,9 @@ router.post("/nurse-book", async (req, res) => {
   try {
     console.log("[API] POST /nurse-book called");
 
-    const { token, patientEmail, patientPhone, dependantId, doctorId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+    const { patientEmail, patientPhone, dependantId, doctorId, startDateTime, endDateTime, slotDay, slotTime } = req.body;
+
+    const token = getRequestToken(req);
     if (!token) return res.status(400).json({ error: "Missing token" });
     if (!doctorId) return res.status(400).json({ error: "Doctor ID is required" });
 
@@ -1318,7 +1326,7 @@ router.post("/nurse-book", async (req, res) => {
     res.json({ success: true, appointment: populatedAppointment });
   } catch (err) {
     console.error("Error booking appointment:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -1330,7 +1338,8 @@ router.delete("/:appointmentId/nurse-cancel", async (req, res) => {
     console.log("[API] DELETE /:appointmentId/nurse-cancel called");
 
     const { appointmentId } = req.params;
-    const { token, slotDay, slotTime } = req.body;
+    const { slotDay, slotTime } = req.body;
+    const token = getRequestToken(req);
 
     if (!token) return res.status(400).json({ error: "Missing token" });
 
@@ -1352,7 +1361,7 @@ router.delete("/:appointmentId/nurse-cancel", async (req, res) => {
     res.json({ success: true, message: "Appointment cancelled" });
   } catch (err) {
     console.error("Error cancelling appointment:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

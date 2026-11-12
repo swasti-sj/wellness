@@ -21,13 +21,12 @@ const apiBase = useApi();
   const addImgRef = useRef(null);
   const addImgNote = useRef(null);
 
-  const token = localStorage.getItem('token');
 
   const fetchNotes = async () => {
     if (!appointmentId) return;
     setIsLoading(true); setError('');
     try {
-      const r = await axios.get(`${apiBase}/api/notes/${appointmentId}`, { params: { token } });
+      const r = await axios.get(`${apiBase}/api/notes/${appointmentId}`);
       setNotes(r.data.notes || []);
     } catch (e) {
       setError('Could not load notes. ' + (e.response?.data?.error || ''));
@@ -48,12 +47,11 @@ const apiBase = useApi();
     if (!newText.trim()) { setError('Note text is required.'); return; }
     setError(''); setIsSaving(true);
     try {
-      const r = await axios.post(`${apiBase}/api/notes/add`, { token, appointmentId, text: newText });
+      const r = await axios.post(`${apiBase}/api/notes/add`, { appointmentId, text: newText });
       if (!r.data.success) throw new Error('Add failed');
       let note = r.data.note;
       if (pendingFiles.length) {
         const fd = new FormData();
-        fd.append('token', token);
         pendingFiles.forEach(f => fd.append('images', f));
         const ir = await axios.post(`${apiBase}/api/notes/${note._id}/images`, fd,
           { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -72,7 +70,7 @@ const apiBase = useApi();
     if (!editText.trim()) { setError('Note cannot be empty.'); return; }
     setError('');
     try {
-      const r = await axios.put(`${apiBase}/api/notes/${id}`, { token, text: editText });
+      const r = await axios.put(`${apiBase}/api/notes/${id}`, { text: editText });
       if (r.data.success) { setNotes(notes.map(n => n._id === id ? r.data.note : n)); cancelEdit(); }
     } catch (e) { setError('Failed to update. ' + (e.response?.data?.error || '')); }
   };
@@ -80,7 +78,7 @@ const apiBase = useApi();
   const delNote = async (id) => {
     if (!window.confirm('Delete this note?')) return;
     try {
-      const r = await axios.delete(`${apiBase}/api/notes/${id}`, { params: { token } });
+      const r = await axios.delete(`${apiBase}/api/notes/${id}`);
       if (r.data.success) setNotes(notes.filter(n => n._id !== id));
     } catch (e) { setError('Failed to delete.'); }
   };
@@ -98,7 +96,6 @@ const apiBase = useApi();
     setError('');
     try {
       const fd = new FormData();
-      fd.append('token', token);
       for (let i = 0; i < files.length; i++) fd.append('images', files[i]);
       const r = await axios.post(`${apiBase}/api/notes/${id}/images`, fd,
         { headers: { 'Content-Type': 'multipart/form-data' } });
@@ -115,7 +112,7 @@ const apiBase = useApi();
   const delImg = async (noteId, idx) => {
     if (!window.confirm('Delete this image?')) return;
     try {
-      const r = await axios.delete(`${apiBase}/api/notes/${noteId}/images/${idx}`, { params: { token } });
+      const r = await axios.delete(`${apiBase}/api/notes/${noteId}/images/${idx}`);
       if (r.data.success) setNotes(notes.map(n => n._id === noteId ? r.data.note : n));
     } catch (e) { setError('Delete image failed.'); }
   };

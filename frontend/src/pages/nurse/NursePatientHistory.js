@@ -69,7 +69,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     const fetchRecent = async () => {
       try {
         const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
-          params: { token, query: "", limit: 5 },
+          params: { query: "", limit: 5 },
         });
         const appts = res.data?.appointments || [];
         const seen = new Set(); const unique = [];
@@ -86,7 +86,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     setIsLoading(true); setError(""); setHasSearched(true);
     try {
       const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
-        params: { token, query: q },
+        params: { query: q },
       });
       const appts = res.data?.appointments || [];
       setAppointments(appts);
@@ -116,7 +116,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
     e.preventDefault();
     if (!patientInfo?.email || !doctorId) return alert("Please ensure patient email and a doctor are selected.");
     try {
-      const response = await axios.post(`${apiBaseUrl}/api/referrals`, { token, patientEmail: patientInfo.email, referredDoctorId: doctorId, reason });
+      const response = await axios.post(`${apiBaseUrl}/api/referrals`, { patientEmail: patientInfo.email, referredDoctorId: doctorId, reason });
       if (response.data?.success) { alert("Patient referred successfully!"); setDoctorId(""); setReason(""); }
       else alert(response.data?.error || "Referral failed");
     } catch (err) { alert("Failed to refer patient: " + (err.response?.data?.error || err.message)); }
@@ -125,9 +125,9 @@ export default function NursePatientHistory({ apiBaseUrl }) {
   const fetchVisitData = async (a) => {
     const [vitalsRes, notesRes, rxRes, testsRes] = await Promise.allSettled([
       axios.get(`${apiBaseUrl}/api/vitals/${a._id}`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/notes/${a._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/tests/${a._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/notes/${a._id}`).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/tests/${a._id}`).catch(() => null),
     ]);
     return {
       appt: a,

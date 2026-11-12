@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Pharmacist = require('../models/Pharmacist');
@@ -9,7 +10,7 @@ const StockTransaction = require('../models/StockTransaction');
 // Pharmacist auth middleware
 const verifyPharmacist = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+    const token = getRequestToken(req);
     if (!token) return res.status(401).json({ error: 'No token provided' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const pharmacist = await Pharmacist.findById(decoded.id);
@@ -23,7 +24,7 @@ const verifyPharmacist = async (req, res, next) => {
 
 const verifyUser = async (req, res, next) => {
   try {
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
+    const token = getRequestToken(req);
     if (!token) return res.status(401).json({ error: 'No token provided' });
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;

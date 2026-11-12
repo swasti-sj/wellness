@@ -121,9 +121,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
 
   const fetchAppointments = async () => {
     try {
-      const res = await axios.get(`${apiBaseUrl}/api/appointments/doctor-appointments`, {
-        params: { token },
-      });
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/doctor-appointments`);
       const formatted = res.data.appointments.map((appt) => {
         const user = appt.user || appt.fullData?.user;
         const dependant = appt.dependant || appt.fullData?.dependant || null;
@@ -166,7 +164,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
 
   const fetchAvailableSlots = async () => {
     try {
-      const res = await axios.get(`${apiBaseUrl}/api/appointments/my-slots`, { params: { token } });
+      const res = await axios.get(`${apiBaseUrl}/api/appointments/my-slots`);
       setAvailableSlots(res.data.slots);
     } catch (err) {
       console.error("Error fetching available slots:", err);
@@ -187,7 +185,6 @@ export default function DoctorAppointment({ apiBaseUrl }) {
       const startDateTime = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
       const endDateTime = new Date(new Date(startDateTime).getTime() + bookingData.duration * 60000).toISOString();
       const res = await axios.post(`${apiBaseUrl}/api/appointments/doctor-book`, {
-        token,
         patientEmail: bookingData.patientEmail,
         patientPhone: bookingData.patientPhone,
         dependantId: bookingData.dependantId,
@@ -214,7 +211,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
     try {
       const res = await axios.delete(`${apiBaseUrl}/api/appointments/${appointmentId}/doctor-cancel`, {
-        data: { token, slotDay, slotTime },
+        data: { slotDay, slotTime },
       });
       if (res.data.success) {
         fetchAppointments();

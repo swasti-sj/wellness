@@ -187,9 +187,7 @@ function TestPage({ apiBaseUrl }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-          params: { token }
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
 
         const savedTests = res.data.tests || [];
         setHasUnsavedTestChanges(false);
@@ -241,9 +239,7 @@ function TestPage({ apiBaseUrl }) {
   // Fetch existing hospital referral and certificate data to preserve when saving
   const fetchExistingData = async () => {
     try {
-      const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-        params: { token }
-      });
+      const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
       return {
         hospitalReferral: res.data.hospitalReferral || { refer: false },
         certificate: res.data.certificate || { issued: false }
@@ -275,7 +271,6 @@ function TestPage({ apiBaseUrl }) {
       });
 
       const formData = new FormData();
-      formData.append('token', token);
       formData.append('appointmentId', appointmentId);
       formData.append('patientId', patientId);
       formData.append('tests', JSON.stringify(selectedTests));

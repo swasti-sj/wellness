@@ -70,7 +70,7 @@ export default function PatientHistory({ apiBaseUrl }) {
     const fetchRecent = async () => {
       try {
         const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
-          params: { token, query: "", limit: 5 },
+          params: { query: "", limit: 5 },
         });
         const appts = res.data?.appointments || [];
         const seen = new Set();
@@ -95,7 +95,7 @@ export default function PatientHistory({ apiBaseUrl }) {
     setHasSearched(true);
     try {
       const res = await axios.get(`${apiBaseUrl}/api/appointments/patient-history`, {
-        params: { token, query: q },
+        params: { query: q },
       });
       const appts = res.data?.appointments || [];
       setAppointments(appts);
@@ -149,7 +149,6 @@ export default function PatientHistory({ apiBaseUrl }) {
       return alert("Please ensure patient email and a doctor are selected.");
     try {
       const response = await axios.post(`${apiBaseUrl}/api/referrals`, {
-        token,
         patientEmail: patientInfo.email,
         referredDoctorId: doctorId,
         reason,
@@ -180,9 +179,9 @@ export default function PatientHistory({ apiBaseUrl }) {
           axios.get(`${apiBaseUrl}/api/vitals/${a._id}`, {
             headers: { Authorization: `Bearer ${token}` },
           }).catch(() => null),
-          axios.get(`${apiBaseUrl}/api/notes/${a._id}`, { params: { token } }).catch(() => null),
-          axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`, { params: { token } }).catch(() => null),
-          axios.get(`${apiBaseUrl}/api/tests/${a._id}`, { params: { token } }).catch(() => null),
+          axios.get(`${apiBaseUrl}/api/notes/${a._id}`).catch(() => null),
+          axios.get(`${apiBaseUrl}/api/prescriptions/${a._id}`).catch(() => null),
+          axios.get(`${apiBaseUrl}/api/tests/${a._id}`).catch(() => null),
         ]);
         return {
           appt: a,
@@ -209,9 +208,9 @@ export default function PatientHistory({ apiBaseUrl }) {
       axios.get(`${apiBaseUrl}/api/vitals/${appt._id}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/notes/${appt._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/prescriptions/${appt._id}`, { params: { token } }).catch(() => null),
-      axios.get(`${apiBaseUrl}/api/tests/${appt._id}`, { params: { token } }).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/notes/${appt._id}`).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/prescriptions/${appt._id}`).catch(() => null),
+      axios.get(`${apiBaseUrl}/api/tests/${appt._id}`).catch(() => null),
     ]);
     const visitDataArr = [{
       appt,

@@ -8,8 +8,16 @@ dns.setServers(["8.8.8.8", "1.1.1.1"]);
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 require("dotenv").config();
+
+// Fail fast if critical secrets are missing
+for (const key of ['JWT_SECRET', 'SESSION_SECRET', 'MONGO_URI']) {
+  if (!process.env[key]) { console.error(`❌ Missing required env var: ${key}`); process.exit(1); }
+}
+
 // Loaded separately from the main .env on purpose: FIELD_ENCRYPTION_KEY
 // stays out of the shared project config every developer has, and instead
 // only exists in this second file on the VM (chmod 600, held by a small
@@ -64,7 +72,11 @@ const SHEETS = {
 
 // ================= MIDDLEWARE =================
 console.log("⚙️ Setting up middleware...");
-app.use(cors());
+const allowedOrigins = [process.env.FRONTEND_URL];
+if (process.env.NODE_ENV !== 'production') allowedOrigins.push('http://localhost:3000');
+app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(helmet());
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(auditLogger);
@@ -81,7 +93,7 @@ app.use('/api/uploads', requireFileAccess, uploadsStatic);
 app.use('/uploads', requireFileAccess, uploadsStatic);
 
 app.use(session({
-  secret: process.env.SESSION_SECRET || "my_secret_key",
+  secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   cookie: { secure: false },
@@ -217,7 +229,7 @@ app.get("/api/auth/google/callback",
       token = jwt.sign({ id: doctor._id, name: doctor.name, email, role: "doctor", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
       setFileCookie(res, token);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=doctor&firstLogin=${firstLogin}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login#token=${token}&role=doctor&firstLogin=${firstLogin}`);
     }
 
     // ================= NURSE =================
@@ -234,10 +246,12 @@ app.get("/api/auth/google/callback",
         firstLogin = true;
       }
 
+      await createSession({ userId: nurse._id, userName: nurse.name, userEmail: nurse.email, role: "nurse", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
       token = jwt.sign({ id: nurse._id, name: nurse.name, email, role: "nurse", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
       setFileCookie(res, token);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=nurse&firstLogin=${firstLogin}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login#token=${token}&role=nurse&firstLogin=${firstLogin}`);
     }
 
     // ================= RECEPTIONIST =================
@@ -254,10 +268,12 @@ app.get("/api/auth/google/callback",
         firstLogin = true;
       }
 
+      await createSession({ userId: r._id, userName: r.name, userEmail: r.email, role: "receptionist", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
       token = jwt.sign({ id: r._id, name: r.name, email, role: "receptionist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
       setFileCookie(res, token);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=receptionist&firstLogin=${firstLogin}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login#token=${token}&role=receptionist&firstLogin=${firstLogin}`);
     }
 
     // ================= PHARMACIST =================
@@ -274,10 +290,12 @@ app.get("/api/auth/google/callback",
         firstLogin = true;
       }
 
+      await createSession({ userId: p._id, userName: p.name, userEmail: p.email, role: "pharmacist", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
       token = jwt.sign({ id: p._id, name: p.name, email, role: "pharmacist", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
       setFileCookie(res, token);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=pharmacist&firstLogin=${firstLogin}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login#token=${token}&role=pharmacist&firstLogin=${firstLogin}`);
     }
 
     // ================= ADMIN =================
@@ -307,6 +325,8 @@ app.get("/api/auth/google/callback",
         }
       }
 
+      await createSession({ userId: admin._id, userName: admin.name, userEmail: admin.email, role: "admin", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
       token = jwt.sign(
         { id: admin._id, name: admin.name, email, role: "admin", sessionId },
         process.env.JWT_SECRET,
@@ -315,7 +335,7 @@ app.get("/api/auth/google/callback",
 
       setFileCookie(res, token);
       return res.redirect(
-        `${process.env.FRONTEND_URL}/login?token=${token}&role=admin&firstLogin=${firstLogin}`
+        `${process.env.FRONTEND_URL}/login#token=${token}&role=admin&firstLogin=${firstLogin}`
       );
     }
     // ================= PATIENT =================
@@ -352,10 +372,12 @@ app.get("/api/auth/google/callback",
 
       await user.save();
 
+      await createSession({ userId: user._id, userName: user.name, userEmail: user.email, role: "patient", sessionId, ipAddress: clientIp, deviceInfo, browserInfo });
+
       token = jwt.sign({ id: user._id, name: user.name, email, role: "patient", sessionId }, process.env.JWT_SECRET, { expiresIn: "1d" });
 
       setFileCookie(res, token);
-      return res.redirect(`${process.env.FRONTEND_URL}/login?token=${token}&role=patient&firstLogin=${firstLogin}`);
+      return res.redirect(`${process.env.FRONTEND_URL}/login#token=${token}&role=patient&firstLogin=${firstLogin}`);
     }
   });
 
@@ -365,6 +387,8 @@ console.log("🛣️ Mounting routes...");
 app.use('/api', dashboardRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/audit', adminAuditRoutes); // ✅ FIXED (was collision risk)
+const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, standardHeaders: true, legacyHeaders: false });
+app.use('/api/auth', authLimiter);
 app.use('/api/auth', authRoutes);
 
 app.use("/api/appointments", appointmentRoutes);

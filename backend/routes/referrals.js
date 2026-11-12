@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Referral = require('../models/Referral');
@@ -11,9 +12,7 @@ const { logActivity, getClientIp } = require('../utils/audit');
 // ------------------------------
 const verifyDoctor = (req, res, next) => {
   const token =
-    req.headers.authorization?.split(" ")[1] ||
-    req.body?.token ||
-    req.query?.token;
+    getRequestToken(req);
 
   if (!token) return res.status(400).json({ error: "Missing token" });
 
@@ -54,7 +53,7 @@ router.post('/', verifyDoctor, async (req, res) => {
 
     // Audit: Referral created
     try {
-      const decodedAudit = jwt.verify(req.body.token || req.headers.authorization?.split(' ')[1] || '', process.env.JWT_SECRET);
+      const decodedAudit = jwt.verify(getRequestToken(req) || '', process.env.JWT_SECRET);
       await logActivity({
         userId: decodedAudit.id,
         userName: decodedAudit.name || decodedAudit.email || '',
@@ -75,7 +74,7 @@ router.post('/', verifyDoctor, async (req, res) => {
     res.json({ success: true, referral });
   } catch (err) {
     console.error('Referral creation error:', err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -102,7 +101,7 @@ router.get('/patient/email/:patientEmail', verifyDoctor, async (req, res) => {
     res.json({ success: true, notes });
   } catch (err) {
     console.error("Fetch referral notes error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -130,7 +129,7 @@ router.get('/all', verifyDoctor, async (req, res) => {
     res.json({ success: true, notes });
   } catch (err) {
     console.error("Fetch incoming referral notes error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -157,7 +156,7 @@ router.get('/mine', verifyDoctor, async (req, res) => {
     res.json({ success: true, notes });
   } catch (err) {
     console.error("Fetch own referral notes error:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -180,7 +179,7 @@ router.patch('/:id/read', verifyDoctor, async (req, res) => {
 
     // Audit: Referral viewed
     try {
-      const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+      const decodedAudit = jwt.verify(getRequestToken(req) || '', process.env.JWT_SECRET);
       await logActivity({
         userId: decodedAudit.id,
         userName: decodedAudit.name || decodedAudit.email || '',
@@ -201,7 +200,7 @@ router.patch('/:id/read', verifyDoctor, async (req, res) => {
     res.json({ success: true, message: 'Referral marked as read' });
   } catch (err) {
     console.error("Error marking referral as read:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -228,7 +227,7 @@ router.patch('/:id/accept', verifyDoctor, async (req, res) => {
     // Audit: Referral accepted (only if status actually changed)
     if (beforeStatus !== 'accepted') {
       try {
-        const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+        const decodedAudit = jwt.verify(getRequestToken(req) || '', process.env.JWT_SECRET);
         await logActivity({
           userId: decodedAudit.id,
           userName: decodedAudit.name || decodedAudit.email || '',
@@ -250,7 +249,7 @@ router.patch('/:id/accept', verifyDoctor, async (req, res) => {
     res.json({ success: true, message: 'Referral accepted' });
   } catch (err) {
     console.error("Error accepting referral:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -277,7 +276,7 @@ router.patch('/:id/reject', verifyDoctor, async (req, res) => {
     // Audit: Referral rejected (only if status actually changed)
     if (beforeStatus !== 'rejected') {
       try {
-        const decodedAudit = jwt.verify(req.headers.authorization?.split(' ')[1] || req.body.token || '', process.env.JWT_SECRET);
+        const decodedAudit = jwt.verify(getRequestToken(req) || '', process.env.JWT_SECRET);
         await logActivity({
           userId: decodedAudit.id,
           userName: decodedAudit.name || decodedAudit.email || '',
@@ -299,7 +298,7 @@ router.patch('/:id/reject', verifyDoctor, async (req, res) => {
     res.json({ success: true, message: 'Referral rejected' });
   } catch (err) {
     console.error("Error rejecting referral:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

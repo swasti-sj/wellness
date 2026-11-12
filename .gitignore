@@ -1,0 +1,6 @@
+
+# Misc files that shouldn't be tracked
+*.zip
+image.png
+medapp.*.json
+schedule.json

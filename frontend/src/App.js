@@ -140,27 +140,27 @@ function LoginRedirect() {
   };
 
   useEffect(() => {
-    console.log("🔄 LoginRedirect useEffect triggered");
-    console.log("📍 Current location:", location);
-    console.log("📍 Location search string:", location.search);
-
-    const params = new URLSearchParams(location.search);
+    // The backend puts the login data after "#" so the token is never sent
+    // to the server (and never lands in nginx logs). The query string is
+    // still read as a fallback for any old-style redirect.
+    const params = new URLSearchParams(location.hash.replace(/^#/, "") || location.search);
     const token = params.get("token");
     const firstLogin = params.get("firstLogin");
     const queryRole = params.get("role");
     const jwtRole = token ? decodeJwtRole(token) : null;
     const role = queryRole || jwtRole;
 
-    console.log("🔑 Extracted login data →", { token, firstLogin, queryRole, jwtRole, role });
+    // Wipe the token from the address bar right away so it isn't kept in
+    // browser history
+    window.history.replaceState(null, "", location.pathname);
 
     if (token) {
-      console.log("✅ Token found. Saving to localStorage...");
       localStorage.setItem("token", token);
       if (role) {
         localStorage.setItem("role", role);
       }
     } else {
-      console.warn("⚠️ No token found in query params");
+      console.warn("⚠️ No login token found after redirect");
     }
 
     if (firstLogin === "true") {

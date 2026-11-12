@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require("jsonwebtoken");
 const Doctor = require("../models/Doctor");
@@ -36,7 +37,8 @@ const upload = multer({
 // Add or update a prescription for an appointment
 router.post("/save", upload.single("prescriptionDocument"), async (req, res) => {
   try {
-    const { token, appointmentId, bookNo = "", prescriptionNo = "", existingDocumentUrl = "" } = req.body;
+    const { appointmentId, bookNo = "", prescriptionNo = "", existingDocumentUrl = "" } = req.body;
+    const token = getRequestToken(req);
     const prescriptions = req.body.prescriptions
       ? (typeof req.body.prescriptions === "string" ? JSON.parse(req.body.prescriptions) : req.body.prescriptions)
       : null;
@@ -197,14 +199,14 @@ router.post("/save", upload.single("prescriptionDocument"), async (req, res) => 
     }
   } catch (err) {
     console.error("Prescription save error:", err.message, err.stack);
-    res.status(500).json({ error: `Server error: ${err.message}` });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get prescriptions for a specific appointment
 router.get("/:appointmentId", async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { appointmentId } = req.params;
     if (!token) return res.status(400).json({ error: "Missing token" });
 
@@ -242,7 +244,7 @@ router.get("/:appointmentId", async (req, res) => {
 // Get the most recent prescription for a patient to carry over
 router.get("/latest/:patientId", async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { patientId } = req.params;
     if (!token) return res.status(400).json({ error: "Missing token" });
 

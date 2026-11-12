@@ -1,8 +1,9 @@
 const jwt = require('jsonwebtoken');
+const { getRequestToken } = require('../utils/requestToken');
 const { logActivity } = require('../utils/audit');
 
 function authMiddleware(req, res, next) {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = getRequestToken(req);
   if (!token) return res.status(401).json({ error: 'No token' });
 
   try {

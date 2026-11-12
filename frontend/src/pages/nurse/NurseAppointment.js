@@ -222,7 +222,6 @@ export default function NurseAppointment({ apiBaseUrl }) {
       const startDateTime = new Date(`${bookingData.date}T${bookingData.time}:00`).toISOString();
       const endDateTime = new Date(new Date(startDateTime).getTime() + bookingData.duration * 60000).toISOString();
       const res = await axios.post(`${apiBaseUrl}/api/appointments/nurse-book`, {
-        token,
         patientEmail: bookingData.patientEmail,
         patientPhone: bookingData.patientPhone,
         dependantId: bookingData.dependantId,
@@ -249,7 +248,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
     try {
       const res = await axios.delete(`${apiBaseUrl}/api/appointments/${appointmentId}/nurse-cancel`, {
-        data: { token, slotDay, slotTime },
+        data: { slotDay, slotTime },
       });
       if (res.data.success) {
         fetchAppointments();

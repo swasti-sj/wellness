@@ -29,9 +29,9 @@ function DoctorPrescription({ appointmentId, patientId }) {
       setError('');
       try {
         const [cur, prev, meds] = await Promise.all([
-          axios.get(`${apiBaseUrl}/api/prescriptions/${appointmentId}`, { params: { token } }),
-          axios.get(`${apiBaseUrl}/api/prescriptions/latest/${patientId}`, { params: { token } }),
-          axios.get(`${apiBaseUrl}/api/medicines?inStock=true`, { params: { token } })
+          axios.get(`${apiBaseUrl}/api/prescriptions/${appointmentId}`),
+          axios.get(`${apiBaseUrl}/api/prescriptions/latest/${patientId}`),
+          axios.get(`${apiBaseUrl}/api/medicines?inStock=true`)
         ]);
 
         const medsList = meds.data.medicines || [];
@@ -117,7 +117,6 @@ function DoctorPrescription({ appointmentId, patientId }) {
     setSaving(true);
     try {
       const formData = new FormData();
-      formData.append('token', token);
       formData.append('appointmentId', appointmentId);
       formData.append('prescriptions', JSON.stringify(current));
       formData.append('bookNo', bookNo);

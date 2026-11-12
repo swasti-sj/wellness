@@ -31,9 +31,7 @@ export default function Dashboard() {
 
     const fetchAppointments = async () => {
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/appointments/my-appointments`, {
-          params: { token },
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/appointments/my-appointments`);
         const appointments = res.data.appointments || [];
         const now = new Date();
 
@@ -51,9 +49,7 @@ export default function Dashboard() {
         // Fetch prescription for last visit if it exists
         if (past) {
           try {
-            const prescriptionRes = await axios.get(`${apiBaseUrl}/api/prescriptions/${past._id}`, {
-              params: { token },
-            });
+            const prescriptionRes = await axios.get(`${apiBaseUrl}/api/prescriptions/${past._id}`);
             setLastVisitPrescription(prescriptionRes.data);
           } catch (prescriptionErr) {
             console.log("No prescription found for last visit:", prescriptionErr);

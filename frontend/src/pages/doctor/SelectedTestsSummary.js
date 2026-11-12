@@ -17,7 +17,7 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
     const load = async () => {
       if (!appointmentId) return;
       try {
-        const r = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, { params: { token } });
+        const r = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
         setTests((r.data.tests || []).filter((t) => t.selected));
         setLabTestDocumentUrl(r.data.labTestDocumentUrl || '');
       } catch (e) {
@@ -34,9 +34,8 @@ function SelectedTestsSummary({ appointmentId, onEditClick }) {
     setError('');
     setIsSaving(true);
     try {
-      const existing = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, { params: { token } });
+      const existing = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
       const formData = new FormData();
-      formData.append('token', token);
       formData.append('appointmentId', appointmentId);
       formData.append('tests', JSON.stringify(existing.data.tests || []));
       formData.append('hospitalReferral', JSON.stringify(existing.data.hospitalReferral || { refer: false }));

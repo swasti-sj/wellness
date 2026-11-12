@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Doctor = require('../models/Doctor');
@@ -189,7 +190,8 @@ router.post('/save', upload.fields([
   { name: 'referralFormDocument', maxCount: 1 }
 ]), async (req, res) => {
   try {
-    const { token, appointmentId } = req.body;
+    const { appointmentId } = req.body;
+    const token = getRequestToken(req);
 
     let tests = [];
     if (req.body.tests) {
@@ -388,7 +390,7 @@ router.post('/save', upload.fields([
 // Get tests for a specific appointment
 router.get('/:appointmentId', async (req, res) => {
   try {
-    const { token } = req.query;
+    const token = getRequestToken(req);
     const { appointmentId } = req.params;
     if (!token) return res.status(400).json({ error: 'Missing token' });
 

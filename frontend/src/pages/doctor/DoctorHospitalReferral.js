@@ -55,9 +55,7 @@ function DoctorHospitalReferral({ appointmentId }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-          params: { token }
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
 
         if (res.data.hospitalReferral) {
           const referral = res.data.hospitalReferral;
@@ -87,9 +85,7 @@ function DoctorHospitalReferral({ appointmentId }) {
   }, [appointmentId, token]);
 
   const fetchExistingData = async () => {
-    const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-      params: { token }
-    });
+    const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
     return {
       tests: res.data.tests || [],
       certificate: res.data.certificate || { issued: false }
@@ -103,7 +99,6 @@ function DoctorHospitalReferral({ appointmentId }) {
     try {
       const existingData = await fetchExistingData();
       const formData = new FormData();
-      formData.append('token', token);
       formData.append('appointmentId', appointmentId);
       formData.append('tests', JSON.stringify(existingData.tests));
       formData.append('hospitalReferral', JSON.stringify({
@@ -162,7 +157,6 @@ function DoctorHospitalReferral({ appointmentId }) {
     try {
       const existingData = await fetchExistingData();
       const response = await axios.post(`${apiBaseUrl}/api/tests/save`, {
-        token,
         appointmentId,
         tests: existingData.tests,
         hospitalReferral: {

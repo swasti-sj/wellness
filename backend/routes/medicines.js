@@ -1,4 +1,5 @@
 const express = require('express');
+const { getRequestToken } = require('../utils/requestToken');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Pharmacist = require('../models/Pharmacist');
@@ -6,38 +7,19 @@ const Medicine = require('../models/Medicine');
 const StockTransaction = require('../models/StockTransaction');
 const MedicineIssuance = require('../models/MedicineIssuance');
 const { logActivity, getClientIp } = require('../utils/audit');
+const authMiddleware = require('../middleware/auth');
 
-// Middleware: any authenticated user can READ
-const verifyUser = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
-    if (!token) return res.status(401).json({ error: 'No token provided' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
-};
-
-// Middleware: only pharmacist can WRITE
-const verifyPharmacist = async (req, res, next) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1] || req.query.token;
-    if (!token) return res.status(401).json({ error: 'No token provided' });
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.role !== 'pharmacist') return res.status(403).json({ error: 'Only pharmacists can modify medicines' });
-    const pharmacist = await Pharmacist.findById(decoded.id);
-    if (!pharmacist) return res.status(404).json({ error: 'Pharmacist not found' });
-    req.pharmacist = pharmacist;
-    next();
-  } catch (err) {
-    res.status(401).json({ error: 'Invalid token' });
-  }
+// Middleware: only pharmacist can WRITE (used after authMiddleware)
+const requirePharmacist = async (req, res, next) => {
+  if (req.user.role !== 'pharmacist') return res.status(403).json({ error: 'Only pharmacists can modify medicines' });
+  const pharmacist = await Pharmacist.findById(req.user.id);
+  if (!pharmacist) return res.status(404).json({ error: 'Pharmacist not found' });
+  req.pharmacist = pharmacist;
+  next();
 };
 
 // GET /api/medicines — list all medicines with computed fields
-router.get('/', verifyUser, async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
     const { inStock, search, category, expiringSoon, sortBy, sortOrder } = req.query;
     let query = { isActive: { $ne: false } };
@@ -69,12 +51,12 @@ router.get('/', verifyUser, async (req, res) => {
     res.json({ medicines: filtered });
   } catch (err) {
     console.error('Error in GET /medicines:', err);
-    res.status(500).json({ error: 'Server error fetching medicines', details: err.message });
+    res.status(500).json({ error: 'Server error fetching medicines', });
   }
 });
 
 // GET /api/medicines/categories — distinct categories
-router.get('/categories', verifyUser, async (req, res) => {
+router.get('/categories', authMiddleware, async (req, res) => {
   try {
     const cats = await Medicine.distinct('category');
     res.json({ categories: cats.filter(Boolean) });
@@ -85,7 +67,7 @@ router.get('/categories', verifyUser, async (req, res) => {
 });
 
 // GET /api/medicines/stats — enhanced dashboard stats
-router.get('/stats', verifyUser, async (req, res) => {
+router.get('/stats', authMiddleware, async (req, res) => {
   try {
     const today = new Date();
     const in30Days = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -155,12 +137,12 @@ router.get('/stats', verifyUser, async (req, res) => {
     });
   } catch (err) {
     console.error('Error in GET /stats:', err);
-    res.status(500).json({ error: 'Server error fetching stats', details: err.message });
+    res.status(500).json({ error: 'Server error fetching stats', });
   }
 });
 
 // POST /api/medicines — add new medicine
-router.post('/', verifyPharmacist, async (req, res) => {
+router.post('/', authMiddleware, requirePharmacist, async (req, res) => {
   try {
     const {
       name, brandName, stockCount, expiryDate, oldStockExpiryDate, batchNumber, manufacturer,
@@ -235,12 +217,12 @@ router.post('/', verifyPharmacist, async (req, res) => {
       return res.status(400).json({ error: 'Medicine name must be unique' });
     }
     console.error('Error in POST /medicines:', err);
-    res.status(500).json({ error: 'Server error creating medicine', details: err.message });
+    res.status(500).json({ error: 'Server error creating medicine', });
   }
 });
 
 // PUT /api/medicines/:id — update medicine fields with proper error handling
-router.put('/:id', verifyPharmacist, async (req, res) => {
+router.put('/:id', authMiddleware, requirePharmacist, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -374,7 +356,7 @@ router.put('/:id', verifyPharmacist, async (req, res) => {
 
 
 // DELETE /api/medicines/:id — soft delete
-router.delete('/:id', verifyPharmacist, async (req, res) => {
+router.delete('/:id', authMiddleware, requirePharmacist, async (req, res) => {
   try {
     const { id } = req.params;
     const medicine = await Medicine.findById(id);
@@ -416,12 +398,12 @@ router.delete('/:id', verifyPharmacist, async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     console.error('Error in DELETE /medicines/:id:', err);
-    res.status(500).json({ error: 'Server error deleting medicine', details: err.message });
+    res.status(500).json({ error: 'Server error deleting medicine', });
   }
 });
 
 // GET /api/medicines/:id/transactions — full stock history
-router.get('/:id/transactions', verifyUser, async (req, res) => {
+router.get('/:id/transactions', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { from, to, type, limit = 100, page = 1 } = req.query;
@@ -449,12 +431,12 @@ router.get('/:id/transactions', verifyUser, async (req, res) => {
     res.json({ transactions, total, page: parseInt(page), pages: Math.ceil(total / parseInt(limit)) });
   } catch (err) {
     console.error('Error in GET /:id/transactions:', err);
-    res.status(500).json({ error: 'Server error fetching transactions', details: err.message });
+    res.status(500).json({ error: 'Server error fetching transactions', });
   }
 });
 
 // GET /api/medicines/analytics/usage — enhanced with period and date range
-router.get('/analytics/usage', verifyUser, async (req, res) => {
+router.get('/analytics/usage', authMiddleware, async (req, res) => {
   try {
     const { period, from, to, limit = 20 } = req.query;
 
@@ -514,12 +496,12 @@ router.get('/analytics/usage', verifyUser, async (req, res) => {
     res.json({ usage, period, startDate, totalRecords: usage.length });
   } catch (err) {
     console.error('Error in GET /analytics/usage:', err);
-    res.status(500).json({ error: 'Server error fetching usage analytics', details: err.message });
+    res.status(500).json({ error: 'Server error fetching usage analytics', });
   }
 });
 
 // GET /api/medicines/analytics/stock-movement — enhanced daily movement
-router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
+router.get('/analytics/stock-movement', authMiddleware, async (req, res) => {
   try {
     const { days = 30, from, to } = req.query;
     let startDate;
@@ -603,13 +585,13 @@ router.get('/analytics/stock-movement', verifyUser, async (req, res) => {
     });
   } catch (err) {
     console.error('Error in GET /analytics/stock-movement:', err);
-    res.status(500).json({ error: 'Server error fetching stock movement', details: err.message });
+    res.status(500).json({ error: 'Server error fetching stock movement', });
   }
 });
 // ==================== MEDICINE-WISE ANALYTICS ENDPOINTS ====================
 
 // GET /api/medicines/analytics/medicine-wise-issuance - Medicine-wise issuance data
-router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => {
+router.get('/analytics/medicine-wise-issuance', authMiddleware, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
 
@@ -750,12 +732,12 @@ router.get('/analytics/medicine-wise-issuance', verifyUser, async (req, res) => 
     res.json({ dailyMovements, medicineSummary: enhancedSummary, selectedMedicine });
   } catch (err) {
     console.error('Error in GET /analytics/medicine-wise-issuance:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Server error', });
   }
 });
 
 // GET /api/medicines/analytics/medicine-wise-additions - Medicine-wise addition data
-router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) => {
+router.get('/analytics/medicine-wise-additions', authMiddleware, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
 
@@ -896,12 +878,12 @@ router.get('/analytics/medicine-wise-additions', verifyUser, async (req, res) =>
     res.json({ dailyMovements, medicineSummary: enhancedSummary, selectedMedicine });
   } catch (err) {
     console.error('Error in GET /analytics/medicine-wise-additions:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Server error', });
   }
 });
 
 // GET /api/medicines/analytics/complete-medicine-movement - Combined issuance + addition for all medicines
-router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res) => {
+router.get('/analytics/complete-medicine-movement', authMiddleware, async (req, res) => {
   try {
     const { from, to, medicineId } = req.query;
 
@@ -1009,12 +991,12 @@ router.get('/analytics/complete-medicine-movement', verifyUser, async (req, res)
     });
   } catch (err) {
     console.error('Error in GET /analytics/complete-medicine-movement:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Server error', });
   }
 });
 
 // GET /api/medicines/analytics/medicine-daily-breakdown - Detailed daily breakdown for a specific medicine
-router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) => {
+router.get('/analytics/medicine-daily-breakdown', authMiddleware, async (req, res) => {
   try {
     const { medicineId, from, to } = req.query;
 
@@ -1115,12 +1097,12 @@ router.get('/analytics/medicine-daily-breakdown', verifyUser, async (req, res) =
     });
   } catch (err) {
     console.error('Error in GET /analytics/medicine-daily-breakdown:', err);
-    res.status(500).json({ error: 'Server error', details: err.message });
+    res.status(500).json({ error: 'Server error', });
   }
 });
 
 // GET /api/medicines/analytics/expiry-summary — expiry date distribution
-router.get('/analytics/expiry-summary', verifyUser, async (req, res) => {
+router.get('/analytics/expiry-summary', authMiddleware, async (req, res) => {
   try {
     const now = new Date();
     const in30Days = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -1155,7 +1137,7 @@ router.get('/analytics/expiry-summary', verifyUser, async (req, res) => {
 
   } catch (err) {
     console.error('Error in GET /analytics/expiry-summary:', err);
-    res.status(500).json({ error: 'Server error fetching expiry summary', details: err.message });
+    res.status(500).json({ error: 'Server error fetching expiry summary', });
   }
 
 });

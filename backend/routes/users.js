@@ -2,9 +2,20 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Counter = require('../models/Counter');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const { logActivity, getClientIp } = require('../utils/audit');
+
+// Atomic UHID generator — no duplicates even under concurrent requests
+async function nextUhid() {
+  const counter = await Counter.findByIdAndUpdate(
+    'uhid',
+    { $inc: { seq: 1 } },
+    { new: true, upsert: true }
+  );
+  return String(counter.seq).padStart(4, '0');
+}
 
 const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 const PATIENT_CATEGORIES = ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
@@ -15,9 +26,7 @@ const PRIVATE_FIELDS = '-password -googleAccessToken -googleRefreshToken';
 // GET /api/users/next-uhid — returns next sequential UHID like "0001", "0002" etc.
 router.get('/next-uhid', authMiddleware, async (req, res) => {
   try {
-    const count = await User.countDocuments({ uhid: { $exists: true, $ne: null, $ne: '' } });
-    const nextNum = count + 1;
-    const uhid = String(nextNum).padStart(4, '0');
+    const uhid = await nextUhid();
     res.json({ uhid });
   } catch (err) {
     console.error('Error generating UHID:', err);
@@ -35,8 +44,7 @@ router.get('/patient-uhid/:patientId', authMiddleware, async (req, res) => {
 
     // If patient has no UHID, generate and save one now
     if (!patient.uhid) {
-      const count = await User.countDocuments({ uhid: { $exists: true, $ne: null, $ne: '' } });
-      const newUhid = String(count + 1).padStart(4, '0');
+      const newUhid = await nextUhid();
       console.log(`[UHID] Auto-assigning UHID ${newUhid} to patient ${patient.name}`);
       patient = await User.findByIdAndUpdate(
         patientId,

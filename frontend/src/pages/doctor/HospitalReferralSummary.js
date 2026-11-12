@@ -13,9 +13,7 @@ function HospitalReferralSummary({ appointmentId }) {
       if (!appointmentId) return;
 
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-          params: { token }
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
 
         if (res.data.hospitalReferral) {
           setReferral(res.data.hospitalReferral);

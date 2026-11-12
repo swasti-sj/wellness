@@ -28,7 +28,7 @@ router.post('/logout', authMiddleware, async (req, res) => {
     res.json({ success: true, message: 'Logged out successfully' });
   } catch (err) {
     console.error('Logout error:', err);
-    res.status(500).json({ error: 'Failed to log out', details: err.message });
+    res.status(500).json({ error: 'Failed to log out' });
   }
 });
 

@@ -95,11 +95,7 @@ export default function AppointmentBooking() {
   const fetchEvents = useCallback(async () => {
     try {
       const res = await axios.get(
-        `${apiBaseUrl}/api/appointments/my-appointments`,
-        {
-          params: { token },
-        }
-      );
+        `${apiBaseUrl}/api/appointments/my-appointments`);
 
       const calEvents = (res.data.appointments || []).map((ev) => ({
         id: ev._id,
@@ -116,7 +112,7 @@ export default function AppointmentBooking() {
     } catch (err) {
       console.error(err);
     }
-  }, [apiBaseUrl, token]);
+  }, [apiBaseUrl]);
 
   const fetchPatientRecords = useCallback(async () => {
     setRecordLoading(true);
@@ -178,7 +174,6 @@ export default function AppointmentBooking() {
 
     try {
       const requestBody = {
-        token,
         doctorId: selectedDoctorId,
         slotDay: new Date(selectedDate).toLocaleDateString("en-US", {
           weekday: "long",
@@ -218,11 +213,7 @@ export default function AppointmentBooking() {
     if (!window.confirm("Are you sure you want to cancel?")) return;
     try {
       await axios.delete(
-        `${apiBaseUrl}/api/appointments/${ev.id}/cancel`,
-        {
-          data: { token },
-        }
-      );
+        `${apiBaseUrl}/api/appointments/${ev.id}/cancel`);
       alert("Cancellation request processed!");
       fetchEvents();
       fetchAvailableSlots();

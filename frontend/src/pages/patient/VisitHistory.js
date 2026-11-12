@@ -63,9 +63,7 @@ export default function VisitHistory() {
     const cancelAppointment = async (appointmentId) => {
         if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
         try {
-            await axios.delete(`${apiBaseUrl}/api/appointments/${appointmentId}/cancel`, {
-                data: { token },
-            });
+            await axios.delete(`${apiBaseUrl}/api/appointments/${appointmentId}/cancel`);
             await fetchRecords();
             setExpandedAppt(null);
         } catch (err) {

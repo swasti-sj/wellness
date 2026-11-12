@@ -242,7 +242,7 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
 
   } catch (err) {
     console.error("Error creating receptionist entry:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -262,7 +262,7 @@ router.get("/entries", authMiddleware, requireReceptionist, async (req, res) => 
 
   } catch (err) {
     console.error("Error fetching receptionist entries:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -313,7 +313,7 @@ router.patch("/entries/:entryId", authMiddleware, requireReceptionist, async (re
 
   } catch (err) {
     console.error("Error updating receptionist entry:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -336,7 +336,7 @@ router.delete("/entries/:entryId", authMiddleware, requireReceptionist, async (r
 
   } catch (err) {
     console.error("Error deleting receptionist entry:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -375,7 +375,7 @@ router.patch("/entries/:entryId/status", authMiddleware, requireReceptionist, as
 
   } catch (err) {
     console.error("Error updating entry status:", err);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

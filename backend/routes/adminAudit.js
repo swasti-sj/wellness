@@ -90,7 +90,7 @@ router.get('/', authMiddleware, requireAdmin, async (req, res) => {
     });
   } catch (err) {
     console.error('Audit route error:', err);
-    res.status(500).json({ error: 'Failed to fetch audit logs', details: err.message });
+    res.status(500).json({ error: 'Failed to fetch audit logs' });
   }
 });
 
@@ -189,7 +189,7 @@ router.get('/export/csv', authMiddleware, requireAdmin, async (req, res) => {
     res.send(csv);
   } catch (err) {
     console.error('Audit export error:', err);
-    res.status(500).json({ error: 'Failed to export audit logs', details: err.message });
+    res.status(500).json({ error: 'Failed to export audit logs' });
   }
 });
 

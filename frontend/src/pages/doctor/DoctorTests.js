@@ -93,9 +93,7 @@ function DoctorTests({ appointmentId, patientId }) {
       setIsLoading(true);
       setError('');
       try {
-        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`, {
-          params: { token }
-        });
+        const res = await axios.get(`${apiBaseUrl}/api/tests/${appointmentId}`);
         if (res.data.tests && res.data.tests.length > 0) {
           const savedTests = res.data.tests;
           setCategories(prev =>
