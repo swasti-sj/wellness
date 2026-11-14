@@ -13,6 +13,7 @@ import AdminDashboardLayout from "./pages/admin/AdminDashboardLayout";
 import OthersLoginPage from "./pages/OthersLoginPage";
 import Dashboard from "./pages/patient/Dashboard";
 import Navbar from "./pages/patient/Navbar";
+import EmergencyContacts from "./pages/patient/EmergencyContacts";
 import PharmacistAnalytics from './pages/pharmacist/PharmacistAnalytics';
 // PharmacistAdvancedAnalytics and PharmacistMedicineWiseAnalytics merged into PharmacistAnalytics
 // import InitialAdminProfileForm from "./pages/admin/InitialAdminProfileForm";
@@ -104,6 +105,7 @@ function PatientDashboardLayout() {
   return (
     <>
       <LayoutWithNavbar />
+      <EmergencyContacts />
     </>
   );
 }

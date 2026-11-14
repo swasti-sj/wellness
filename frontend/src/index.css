@@ -16,7 +16,6 @@ body {
   background-position: center;
   background-repeat: no-repeat;
     -webkit-backdrop-filter: blur(1px) saturate(130%); */
-  backdrop-filter: blur(1px) saturate(130%);
   /* subtle overlay to keep text readable against the image */
   position: relative;
   overflow-x: hidden;
