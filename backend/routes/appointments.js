@@ -157,6 +157,7 @@ router.post("/book", async (req, res) => {
           _id: dependant._id,
           name: dependant.name,
           age: dependant.age,
+          dateOfBirth: dependant.dateOfBirth,
           sex: dependant.sex,
           relationship: dependant.relationship,
           bloodGroup: dependant.bloodGroup,
@@ -685,6 +686,7 @@ router.post("/doctor-book", async (req, res) => {
           _id: dependant._id,
           name: dependant.name,
           age: dependant.age,
+          dateOfBirth: dependant.dateOfBirth,
           sex: dependant.sex,
           relationship: dependant.relationship,
           bloodGroup: dependant.bloodGroup,
@@ -993,7 +995,7 @@ router.get("/all-appointments", authMiddleware, async (req, res) => {
 
     // Fetch all appointments and populate user and doctor details
     const appointments = await Appointment.find()
-      .populate("user", "name roll email phone _id")
+      .populate("user", "name roll email phone age dateOfBirth sex _id")
       .populate("doctor", "name specialization email _id")
       .sort({ startDateTime: -1 });
 
@@ -1026,7 +1028,7 @@ router.get("/doctor-appointments", async (req, res) => {
 
     // Find all appointments for this doctor and populate patient details
     const appointments = await Appointment.find({ doctor: doctor._id })
-      .populate("user", "name email phone")
+      .populate("user", "name email phone roll age dateOfBirth sex")
       .sort({ startDateTime: -1 });
 
     res.json({ appointments });
@@ -1309,6 +1311,7 @@ router.post("/nurse-book", async (req, res) => {
           _id: dependant._id,
           name: dependant.name,
           age: dependant.age,
+          dateOfBirth: dependant.dateOfBirth,
           sex: dependant.sex,
           relationship: dependant.relationship,
           bloodGroup: dependant.bloodGroup,

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import '../../styles/doctor/DoctorVitals.css';
 import DocumentUpload from './documentUpload';
+import DEPARTMENTS from '../../constants/departments';
 
 const AccSection = ({ id, title, subtitle, children, openSection, toggleSection }) => {
   const isOpen = openSection === id;
@@ -35,8 +36,10 @@ const initialFormData = {
   pastMedicalHistory: '',
   medicalAllergy: '',
   chiefComplaints: '',
+  presentMedicalHistory: '',
   systemicExamination: '',
   generalPhysicalExamination: '',
+  diagnosis: '',
   investigations: '',
   treatmentAdvice: '',
   followUpDate: '',
@@ -51,7 +54,7 @@ const initialFormData = {
   notes: ''
 };
 
-const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, readOnly = false }) => {
+const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, apiBaseUrl, readOnly = false }) => {
   const token = localStorage.getItem('token');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -81,8 +84,10 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
     pastMedicalHistory: v.pastMedicalHistory || '',
     medicalAllergy: v.medicalAllergy || '',
     chiefComplaints: v.chiefComplaints || '',
+    presentMedicalHistory: v.presentMedicalHistory || '',
     systemicExamination: v.systemicExamination || '',
     generalPhysicalExamination: v.generalPhysicalExamination || '',
+    diagnosis: v.diagnosis || '',
     investigations: v.investigations || '',
     treatmentAdvice: v.treatmentAdvice || '',
     followUpDate: v.followUpDate ? v.followUpDate.split('T')[0] : '',
@@ -97,6 +102,28 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
     notes: v.notes || ''
   });
 
+  const fetchPatientClinicalProfile = async () => {
+    if (!patientId) return null;
+    try {
+      const res = await axios.get(`${apiBaseUrl}/api/users/patient-clinical-profile/${patientId}`, {
+        params: dependantId ? { dependantId } : undefined,
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return res.data;
+    } catch (err) {
+      console.warn('Could not fetch patient clinical profile:', err.response?.data?.error || err.message);
+      return null;
+    }
+  };
+
+  const mergePatientClinicalProfile = (form, profile) => ({
+    ...form,
+    uhid: form.uhid || dependantUhid || profile.uhid || '',
+    bloodGroup: form.bloodGroup || profile.bloodGroup || '',
+    pastMedicalHistory: form.pastMedicalHistory || profile.pastMedicalHistory || '',
+    medicalAllergy: form.medicalAllergy || profile.medicalAllergy || '',
+  });
+
   const fetchVitals = async () => {
     if (!apiBaseUrl || !appointmentId) return;
     setRecordLoaded(false);
@@ -109,34 +136,21 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
         const v = res.data.vital;
         setExistingVitalId(v._id);
         setRecordLoaded(true);
-        const mapped = mapVitalToFormData(v);
-
-        // If the saved vital has no UHID, fetch from patient profile
-        if (!mapped.uhid && patientId && apiBaseUrl) {
-          try {
-            const uhidRes = await axios.get(`${apiBaseUrl}/api/users/patient-uhid/${patientId}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            mapped.uhid = dependantUhid || uhidRes.data?.uhid || '';
-          } catch (uhidErr) {
-            console.warn('Could not fetch patient UHID:', uhidErr.message);
-          }
+        let mapped = mapVitalToFormData(v);
+        const needsPatientProfile = !mapped.uhid || !mapped.bloodGroup
+          || !mapped.pastMedicalHistory || !mapped.medicalAllergy;
+        if (!readOnly && needsPatientProfile) {
+          const patientProfile = await fetchPatientClinicalProfile();
+          if (patientProfile) mapped = mergePatientClinicalProfile(mapped, patientProfile);
         }
 
         if (formEditVersionRef.current === 0) setFormData(mapped);
         if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrls(getCaseSheetUrls(v));
       } else {
-        // No saved vital yet — still fetch UHID for the blank form
-        if (patientId && apiBaseUrl) {
-          try {
-            const uhidRes = await axios.get(`${apiBaseUrl}/api/users/patient-uhid/${patientId}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (formEditVersionRef.current === 0) {
-              setFormData((prev) => ({ ...prev, uhid: dependantUhid || uhidRes.data?.uhid || '' }));
-            }
-          } catch (uhidErr) {
-            console.warn('Could not fetch patient UHID:', uhidErr.message);
+        if (!readOnly && patientId) {
+          const patientProfile = await fetchPatientClinicalProfile();
+          if (patientProfile && formEditVersionRef.current === 0) {
+            setFormData((prev) => mergePatientClinicalProfile(prev, patientProfile));
           }
         }
       }
@@ -147,20 +161,12 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
       if (status === 404) {
         setExistingVitalId(null);
         setRecordLoaded(true);
-        // No saved vital — fetch UHID for the blank form
-        if (patientId && apiBaseUrl) {
-          try {
-            const uhidRes = await axios.get(`${apiBaseUrl}/api/users/patient-uhid/${patientId}`, {
-              headers: { Authorization: `Bearer ${token}` }
-            });
-            if (formEditVersionRef.current === 0) {
-              setFormData({ ...initialFormData, uhid: dependantUhid || uhidRes.data?.uhid || '' });
-            }
-          } catch {
-            if (formEditVersionRef.current === 0) setFormData(initialFormData);
+        if (formEditVersionRef.current === 0) setFormData(initialFormData);
+        if (!readOnly && patientId) {
+          const patientProfile = await fetchPatientClinicalProfile();
+          if (patientProfile && formEditVersionRef.current === 0) {
+            setFormData((prev) => mergePatientClinicalProfile(prev, patientProfile));
           }
-        } else if (formEditVersionRef.current === 0) {
-          setFormData(initialFormData);
         }
         if (documentEditVersionRef.current === 0) setCaseSheetDocumentUrls([]);
       } else {
@@ -170,8 +176,9 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
   };
 
   useEffect(() => {
-    fetchVitals();
-  }, [appointmentId, apiBaseUrl, token, patientId, dependantUhid]);
+    const fetchTimer = setTimeout(fetchVitals, 0);
+    return () => clearTimeout(fetchTimer);
+  }, [appointmentId, apiBaseUrl, token, patientId, dependantId, dependantUhid]);
 
 
   const handleInputChange = (e) => {
@@ -257,7 +264,16 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
 
       <AccSection id="basic" title="Basic Details" subtitle="Department, UHID, blood group, time" openSection={openSection} toggleSection={setOpenSection}>
         <div className="fg2">
-          <div className="ff"><label>Department</label><input type="text" name="department" value={formData.department} onChange={handleInputChange} readOnly={readOnly} /></div>
+          <div className="ff">
+            <label>Department</label>
+            <select name="department" value={formData.department} onChange={handleInputChange} disabled={readOnly}>
+              <option value="">Select department</option>
+              {formData.department && !DEPARTMENTS.includes(formData.department) && (
+                <option value={formData.department}>{formData.department}</option>
+              )}
+              {DEPARTMENTS.map((department) => <option key={department} value={department}>{department}</option>)}
+            </select>
+          </div>
           <div className="ff">
             <label>UHID </label>
             <input
@@ -281,14 +297,30 @@ const DoctorVitals = ({ appointmentId, patientId, dependantUhid, apiBaseUrl, rea
         </div>
       </AccSection>
 
-      <AccSection id="history" title="Medical History" subtitle="Past illnesses, allergies, chief complaints" openSection={openSection} toggleSection={setOpenSection}>
+      <AccSection id="chief-complaints" title="Chief Complaints with Duration" openSection={openSection} toggleSection={setOpenSection}>
+        <div className="ff"><textarea name="chiefComplaints" value={formData.chiefComplaints} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
+      </AccSection>
+
+      <AccSection id="history" title="Past Medical History / Drug Allergies" openSection={openSection} toggleSection={setOpenSection}>
         <div className="fg1">
           <div className="ff"><label>Past Medical History</label><textarea name="pastMedicalHistory" value={formData.pastMedicalHistory} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
-          <div className="ff"><label>Medical Allergy</label><textarea name="medicalAllergy" value={formData.medicalAllergy} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
-          <div className="ff"><label>Chief Complaints with Duration</label><textarea name="chiefComplaints" value={formData.chiefComplaints} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
-          <div className="ff"><label>Systemic Examination</label><textarea name="systemicExamination" value={formData.systemicExamination} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
-          <div className="ff"><label>General Physical Examination</label><textarea name="generalPhysicalExamination" value={formData.generalPhysicalExamination} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
+          <div className="ff"><label>Drug / Medical Allergies</label><textarea name="medicalAllergy" value={formData.medicalAllergy} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
         </div>
+      </AccSection>
+
+      <AccSection id="present-history" title="Present Medical History" openSection={openSection} toggleSection={setOpenSection}>
+        <div className="ff"><textarea name="presentMedicalHistory" value={formData.presentMedicalHistory} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
+      </AccSection>
+
+      <AccSection id="examination" title="Systemic Examination / General Examination" openSection={openSection} toggleSection={setOpenSection}>
+        <div className="fg1">
+          <div className="ff"><label>Systemic Examination</label><textarea name="systemicExamination" value={formData.systemicExamination} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
+          <div className="ff"><label>General Examination</label><textarea name="generalPhysicalExamination" value={formData.generalPhysicalExamination} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
+        </div>
+      </AccSection>
+
+      <AccSection id="diagnosis" title="Diagnosis" openSection={openSection} toggleSection={setOpenSection}>
+        <div className="ff"><textarea name="diagnosis" value={formData.diagnosis} onChange={handleInputChange} rows={2} readOnly={readOnly} /></div>
       </AccSection>
 
       <AccSection id="vitals" title="Vital Signs" subtitle="Blood pressure, pulse, temperature, oxygen, weight, height" openSection={openSection} toggleSection={setOpenSection}>

@@ -12,6 +12,7 @@ import DoctorVitals from "./DoctorVitals";
 import DoctorHospitalReferral from "./DoctorHospitalReferral";
 import DoctorCertificate from "./DoctorCertificate";
 import SelectedTestsSummary from "./SelectedTestsSummary";
+import { calculateAge } from "../../utils/patientAge";
 import CustomToolbar from "./CustomToolbar";
 
 const localizer = momentLocalizer(moment);
@@ -113,10 +114,15 @@ export default function DoctorAppointment({ apiBaseUrl }) {
 
   useEffect(() => {
     if (!apiBaseUrl || !token) return;
-    fetchAppointments();
-    fetchAvailableSlots();
+    const initialFetchTimer = setTimeout(() => {
+      fetchAppointments();
+      fetchAvailableSlots();
+    }, 0);
     const interval = setInterval(fetchAppointments, 60000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(initialFetchTimer);
+      clearInterval(interval);
+    };
   }, [apiBaseUrl, token]);
 
   const fetchAppointments = async () => {
@@ -343,6 +349,10 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   <span><strong>Patient:</strong> {selectedEvent.patientDisplayName || selectedEvent.patient?.name || "N/A"}</span>
                 )}
                 <span><strong>Email:</strong> {selectedEvent.patient?.email || "N/A"}</span>
+                <span><strong>Roll No:</strong> {selectedEvent.patient?.roll || "N/A"}</span>
+                <span><strong>Age:</strong> {calculateAge(selectedEvent.dependant?.dateOfBirth || selectedEvent.patient?.dateOfBirth, selectedEvent.dependant?.age ?? selectedEvent.patient?.age) ?? "N/A"}</span>
+                <span><strong>Gender:</strong> {selectedEvent.dependant?.sex || selectedEvent.patient?.sex || "N/A"}</span>
+                <span><strong>Phone:</strong> {selectedEvent.dependant?.phone || selectedEvent.patient?.phone || "N/A"}</span>
                 <span><strong>Date:</strong> {format(selectedEvent.start, "dd MMM yyyy")}</span>
                 <span><strong>Time:</strong> {format(selectedEvent.start, "hh:mm a")} – {format(selectedEvent.end, "hh:mm a")}</span>
                 <span>
@@ -402,6 +412,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   key={selectedEvent.id}
                   appointmentId={selectedEvent.id}
                   patientId={selectedEvent.patient?._id}
+                  dependantId={selectedEvent.dependant?._id}
                   dependantUhid={selectedEvent.dependant?.uhid}
                   apiBaseUrl={apiBaseUrl}
                 />

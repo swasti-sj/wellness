@@ -1,5 +1,10 @@
 const mongoose = require("mongoose");
 
+const ClinicalHistorySchema = new mongoose.Schema({
+  pastMedicalHistory: String,
+  medicalAllergy: String,
+}, { _id: false });
+
 const userSchema = new mongoose.Schema({
   googleId: { type: String }, // Remove required: true to allow doctor-created patients
   name: String,
@@ -7,10 +12,13 @@ const userSchema = new mongoose.Schema({
   roll: String,
   picture: String,
   sex: { type: String, enum: ["Male", "Female", "Other"] },
+  dateOfBirth: Date,
   age: Number,
   phone: String,
   emergencyContactNo: { type: String, trim: true },
   uhid: String,
+  bloodGroup: String,
+  clinicalHistory: { type: ClinicalHistorySchema, select: false },
   allergies: String,
   consentAccepted: { type: Boolean, default: false },
   consentFinalized: { type: Boolean, default: false },
@@ -28,9 +36,11 @@ const userSchema = new mongoose.Schema({
     _id: { type: mongoose.Schema.Types.ObjectId, default: () => new mongoose.Types.ObjectId() },
     name: { type: String, required: true },
     age: Number,
+    dateOfBirth: Date,
     sex: { type: String, enum: ["Male", "Female", "Other"] },
     relationship: String,
     bloodGroup: String,
+    clinicalHistory: { type: ClinicalHistorySchema, select: false },
     phone: String,
     allergies: String,
     uhid: String,

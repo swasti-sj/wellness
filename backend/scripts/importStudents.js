@@ -295,6 +295,7 @@ function buildProfile(student) {
     roll: student.roll,
     sex: student.sex,
     age: student.age,
+    dateOfBirth: student.dateOfBirth,
     patientCategory: student.patientCategory,
     role: 'patient',
     profileComplete: false,
@@ -414,8 +415,11 @@ function planDatabaseActions(data, users) {
 
     const sourceProfile = buildProfile(student);
     const updates = {};
-    for (const key of ['name', 'roll', 'sex', 'age', 'phone', 'patientCategory']) {
+    for (const key of ['name', 'roll', 'sex', 'age', 'dateOfBirth', 'phone', 'patientCategory']) {
       if (!isEmpty(sourceProfile[key]) && isEmpty(user[key])) updates[key] = sourceProfile[key];
+    }
+    if (user.dateOfBirth?.toISOString?.() !== student.dateOfBirth.toISOString()) {
+      updates.dateOfBirth = student.dateOfBirth;
     }
     const correctAge = user.age !== student.age;
     if (correctAge) updates.age = student.age;

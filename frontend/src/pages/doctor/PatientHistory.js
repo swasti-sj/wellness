@@ -617,7 +617,7 @@ export default function PatientHistory({ apiBaseUrl }) {
 
                             <div className="ph-section-panel">
                               {openSection[a._id] === "vitals" && (
-                                <DoctorVitals appointmentId={a._id} patientId={a.user?._id} apiBaseUrl={apiBaseUrl} />
+                                <DoctorVitals appointmentId={a._id} patientId={a.user?._id} dependantId={a.dependant?._id} apiBaseUrl={apiBaseUrl} />
                               )}
                               {openSection[a._id] === "notes" && (
                                 <DoctorNote appointmentId={a._id} />

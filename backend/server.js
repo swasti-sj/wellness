@@ -27,7 +27,10 @@ for (const key of ['JWT_SECRET', 'SESSION_SECRET', 'MONGO_URI']) {
 // Resolved from __dirname (not process.cwd()) so it's found regardless of
 // which directory PM2 actually launched the process from — same fix as
 // the /uploads static path earlier in this file.
-require("dotenv").config({ path: require("path").join(__dirname, ".env.encryption") });
+require("dotenv").config({
+  path: require("path").join(__dirname, ".env.encryption"),
+  override: true,
+});
 const jwt = require("jsonwebtoken");
 const session = require("express-session");
 const passport = require("passport");
@@ -43,6 +46,7 @@ const { isEmailAllowed } = require("./utils/googleSheetAuth");
 const { createSession, getClientIp, parseUserAgent, uuidv4 } = require('./utils/audit');
 const auditLogger = require('./middleware/auditLogger');
 const { setFileCookie, requireFileAccess } = require('./utils/fileAccess');
+const apiRateLimitKey = require('./utils/apiRateLimitKey');
 
 const app = express();
 
@@ -76,7 +80,13 @@ const allowedOrigins = [process.env.FRONTEND_URL];
 if (process.env.NODE_ENV !== 'production') allowedOrigins.push('http://localhost:3000');
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(helmet());
-app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100, standardHeaders: true, legacyHeaders: false }));
+app.use(rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: apiRateLimitKey,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(auditLogger);

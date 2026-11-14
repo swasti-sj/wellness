@@ -2,22 +2,23 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import "../../styles/PatientProfile.css";
 import { useApi } from '../../context/ApiContext';
+import { calculateAge, dateInputValue, todayDateInputValue } from '../../utils/patientAge';
 
 const DEPENDANT_ALLOWED_CATEGORIES = ["Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 
 function PatientProfile() {
   const [profile, setProfile] = useState(null);
-  const [newDependant, setNewDependant] = useState({ name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
+  const [newDependant, setNewDependant] = useState({ name: '', age: '', dateOfBirth: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
   const [isSavingDependant, setIsSavingDependant] = useState(false);
   const [dependantError, setDependantError] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [profileForm, setProfileForm] = useState({ age: '', sex: '', phone: '', emergencyContactNo: '', allergies: '', consentAccepted: false });
+  const [profileForm, setProfileForm] = useState({ age: '', dateOfBirth: '', sex: '', phone: '', emergencyContactNo: '', allergies: '', consentAccepted: false });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
   const [editingDependantId, setEditingDependantId] = useState(null);
   const [editingDependantForm, setEditingDependantForm] = useState({
-    name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: ''
+    name: '', age: '', dateOfBirth: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: ''
   });
   const [editingDependantError, setEditingDependantError] = useState('');
   const [isSavingDependantEdit, setIsSavingDependantEdit] = useState(false);
@@ -49,7 +50,8 @@ function PatientProfile() {
     setEditingDependantId(dependant._id);
     setEditingDependantForm({
       name: dependant.name || '',
-      age: dependant.age || '',
+      age: dependant.age ?? '',
+      dateOfBirth: dateInputValue(dependant.dateOfBirth),
       sex: dependant.sex || '',
       relationship: dependant.relationship || '',
       bloodGroup: dependant.bloodGroup || '',
@@ -61,7 +63,7 @@ function PatientProfile() {
 
   const cancelDependantEdit = () => {
     setEditingDependantId(null);
-    setEditingDependantForm({ name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
+    setEditingDependantForm({ name: '', age: '', dateOfBirth: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
     setEditingDependantError('');
   };
 
@@ -91,7 +93,8 @@ function PatientProfile() {
 
   const startProfileEdit = () => {
     setProfileForm({
-      age: profile?.age || '',
+      age: profile?.age ?? '',
+      dateOfBirth: dateInputValue(profile?.dateOfBirth),
       sex: profile?.sex || '',
       phone: profile?.phone || '',
       emergencyContactNo: profile?.emergencyContactNo || '',
@@ -142,7 +145,7 @@ function PatientProfile() {
       await axios.post(`${apiBaseUrl}/api/users/dependants`, newDependant, {
         headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
       });
-      setNewDependant({ name: '', age: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
+      setNewDependant({ name: '', age: '', dateOfBirth: '', sex: '', relationship: '', bloodGroup: '', phone: '', allergies: '' });
       setShowAddForm(false);
       await fetchProfile();
     } catch (err) {
@@ -182,7 +185,7 @@ function PatientProfile() {
     { label: 'Name', value: profile.name },
     { label: 'Email', value: profile.email },
     { label: 'UHID', value: profile.uhid || 'Not assigned', highlight: true },
-    { label: 'Age', value: profile.age || 'Not set' },
+    { label: 'Age', value: calculateAge(profile.dateOfBirth, profile.age) ?? 'Not set' },
     { label: 'Sex', value: profile.sex || 'Not set' },
     { label: 'Phone', value: profile.phone || 'Not set' },
     { label: 'Emergency Contact No.', value: profile.emergencyContactNo || 'Not set' },
@@ -228,7 +231,19 @@ function PatientProfile() {
             <div className="pp-profile-form-grid">
               <label className="pp-form-field">
                 <span>Age</span>
-                <input name="age" type="number" value={profileForm.age} onChange={handleProfileFormChange} min="0" max="120" />
+                <input
+                  name="age"
+                  type="number"
+                  value={calculateAge(profileForm.dateOfBirth, profileForm.age) ?? ''}
+                  onChange={handleProfileFormChange}
+                  min="0"
+                  max="120"
+                  disabled={Boolean(profileForm.dateOfBirth)}
+                />
+              </label>
+              <label className="pp-form-field">
+                <span>Date of Birth</span>
+                <input name="dateOfBirth" type="date" value={profileForm.dateOfBirth} onChange={handleProfileFormChange} max={todayDateInputValue()} />
               </label>
 
               <label className="pp-form-field">
@@ -321,7 +336,7 @@ function PatientProfile() {
                         <div className="pp-dep-meta">
                           {dep.relationship && <span className="pp-dep-chip">{dep.relationship}</span>}
                           {dep.sex && <span className="pp-dep-chip">{dep.sex}</span>}
-                          {dep.age !== undefined && dep.age !== '' && <span className="pp-dep-chip">Age {dep.age}</span>}
+                          {calculateAge(dep.dateOfBirth, dep.age) !== null && <span className="pp-dep-chip">Age {calculateAge(dep.dateOfBirth, dep.age)}</span>}
                         </div>
                       </div>
                       <div className="pp-dep-uhid-badge">{dep.uhid || '—'}</div>
@@ -355,7 +370,19 @@ function PatientProfile() {
                           </label>
                           <label className="pp-dep-field">
                             <span>Age</span>
-                            <input name="age" type="number" min="0" max="120" value={editingDependantForm.age} onChange={handleDependantEditChange} />
+                            <input
+                              name="age"
+                              type="number"
+                              min="0"
+                              max="120"
+                              value={calculateAge(editingDependantForm.dateOfBirth, editingDependantForm.age) ?? ''}
+                              onChange={handleDependantEditChange}
+                              disabled={Boolean(editingDependantForm.dateOfBirth)}
+                            />
+                          </label>
+                          <label className="pp-dep-field">
+                            <span>Date of Birth</span>
+                            <input name="dateOfBirth" type="date" max={todayDateInputValue()} value={editingDependantForm.dateOfBirth} onChange={handleDependantEditChange} />
                           </label>
                           <label className="pp-dep-field">
                             <span>Sex</span>
@@ -421,14 +448,12 @@ function PatientProfile() {
                       />
                     </label>
                     <label className="pp-dep-field">
-                      <span>Age <span style={{ color: '#ff6b6b' }}>*</span></span>
+                      <span>Date of Birth <span style={{ color: '#ff6b6b' }}>*</span></span>
                       <input
-                        name="age"
-                        type="number"
-                        min="0"
-                        max="120"
-                        placeholder="Age"
-                        value={newDependant.age}
+                        name="dateOfBirth"
+                        type="date"
+                        max={todayDateInputValue()}
+                        value={newDependant.dateOfBirth}
                         onChange={handleChangeDependant}
                         required
                       />

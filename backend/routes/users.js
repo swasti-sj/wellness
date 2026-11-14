@@ -2,10 +2,13 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const User = require('../models/User');
+const Appointment = require('../models/Appointment');
 const Counter = require('../models/Counter');
 const router = express.Router();
 const authMiddleware = require('../middleware/auth');
 const { logActivity, getClientIp } = require('../utils/audit');
+const calculateAge = require('../utils/calculateAge');
+const { decryptField } = require('../utils/fieldEncryption');
 
 // Atomic UHID generator — no duplicates even under concurrent requests
 async function nextUhid() {
@@ -60,11 +63,53 @@ router.get('/patient-uhid/:patientId', authMiddleware, async (req, res) => {
   }
 });
 
+router.get('/patient-clinical-profile/:patientId', authMiddleware, async (req, res) => {
+  try {
+    const { patientId } = req.params;
+    const { dependantId } = req.query;
+    if (!mongoose.isValidObjectId(patientId)) {
+      return res.status(400).json({ error: 'Invalid patient ID' });
+    }
+    if (dependantId && !mongoose.isValidObjectId(dependantId)) {
+      return res.status(400).json({ error: 'Invalid dependant ID' });
+    }
+    if (!['doctor', 'nurse'].includes(req.user?.role)) {
+      return res.status(403).json({ error: 'Only doctors and nurses can access patient clinical details' });
+    }
+
+    if (req.user.role === 'doctor') {
+      const appointmentQuery = { user: patientId, doctor: req.user.id };
+      if (dependantId) appointmentQuery['dependant._id'] = dependantId;
+      const hasAppointment = await Appointment.exists(appointmentQuery);
+      if (!hasAppointment) {
+        return res.status(403).json({ error: 'You do not have permission to view this patient profile.' });
+      }
+    }
+
+    const user = await User.findById(patientId)
+      .select('+clinicalHistory +dependants.clinicalHistory');
+    if (!user) return res.status(404).json({ error: 'Patient not found' });
+
+    const patient = dependantId ? user.dependants.id(dependantId) : user;
+    if (!patient) return res.status(404).json({ error: 'Dependant not found' });
+
+    res.json({
+      uhid: patient.uhid || user.uhid || '',
+      bloodGroup: patient.bloodGroup || '',
+      pastMedicalHistory: decryptField(patient.clinicalHistory?.pastMedicalHistory || ''),
+      medicalAllergy: decryptField(patient.clinicalHistory?.medicalAllergy || ''),
+    });
+  } catch (err) {
+    console.error('Error fetching patient clinical profile:', err);
+    res.status(500).json({ error: 'Failed to fetch patient clinical profile' });
+  }
+});
+
 const normalizePhone = (value) => (value || '').replace(/\D/g, '');
 
 router.post('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name, roll, sex, age, phone, emergencyContactNo, allergies, consentAccepted, patientCategory } = req.body;
+    const { name, roll, sex, age, dateOfBirth, phone, emergencyContactNo, allergies, consentAccepted, patientCategory } = req.body;
 
     if (normalizePhone(phone) && normalizePhone(emergencyContactNo) && normalizePhone(phone) === normalizePhone(emergencyContactNo)) {
       return res.status(400).json({ error: 'Emergency contact number cannot be the same as your phone number.' });
@@ -73,6 +118,14 @@ router.post('/profile', authMiddleware, async (req, res) => {
     const before = await User.findById(req.user.id).lean();
 
     const updates = { name, roll, sex, age, phone, emergencyContactNo, allergies };
+    if (dateOfBirth) {
+      const calculatedAge = calculateAge(dateOfBirth);
+      if (calculatedAge === null) {
+        return res.status(400).json({ error: 'Date of birth must be a valid date in the past.' });
+      }
+      updates.dateOfBirth = dateOfBirth;
+      updates.age = calculatedAge;
+    }
     const consentAlreadyFinalized = Boolean(before?.consentFinalized || before?.consentAccepted);
     if (!consentAlreadyFinalized && typeof consentAccepted === 'boolean' && consentAccepted !== Boolean(before?.consentAccepted)) {
       updates.consentAccepted = consentAccepted;
@@ -192,7 +245,7 @@ router.get('/patient-dependants', authMiddleware, async (req, res) => {
         { email: new RegExp(`^${escapedValue}@iitdh\\.ac\\.in$`, 'i') }
       ];
     const users = await User.find({ $or: lookupConditions })
-      .select('name email roll patientCategory phone sex age emergencyContactNo uhid dependants')
+      .select('name email roll patientCategory phone sex age dateOfBirth emergencyContactNo uhid dependants')
       .limit(2);
     if (!users.length) return res.status(404).json({ error: 'Patient not found' });
     if (users.length > 1) return res.status(409).json({ error: 'This ID matches multiple patient records. Search by email instead.' });
@@ -206,6 +259,7 @@ router.get('/patient-dependants', authMiddleware, async (req, res) => {
       phone: user.phone,
       sex: user.sex,
       age: user.age,
+      dateOfBirth: user.dateOfBirth,
       emergencyContactNo: user.emergencyContactNo,
       uhid: user.uhid,
       dependants: user.dependants || []
@@ -224,8 +278,12 @@ router.post('/dependants', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Dependants are only allowed for faculty/staff accounts' });
     }
 
-    const { name, age, sex, relationship, bloodGroup, phone, allergies } = req.body;
+    const { name, age, dateOfBirth, sex, relationship, bloodGroup, phone, allergies } = req.body;
     if (!name) return res.status(400).json({ error: 'Dependant name is required' });
+    const dependantAge = dateOfBirth ? calculateAge(dateOfBirth) : age;
+    if (dateOfBirth && dependantAge === null) {
+      return res.status(400).json({ error: 'Date of birth must be a valid date in the past.' });
+    }
 
     // Generate a unique UHID from the shared global counter
     // Count ALL assigned UHIDs: main patients + all dependants across all users
@@ -239,7 +297,8 @@ router.post('/dependants', authMiddleware, async (req, res) => {
     const newDependant = {
       _id: new mongoose.Types.ObjectId(),
       name,
-      age,
+      age: dependantAge,
+      dateOfBirth,
       sex,
       relationship,
       bloodGroup,
@@ -271,9 +330,18 @@ router.put('/dependants/:dependantId', authMiddleware, async (req, res) => {
     const dependant = user.dependants?.find((d) => d._id.toString() === dependantId);
     if (!dependant) return res.status(404).json({ error: 'Dependant not found' });
 
-    const { name, age, sex, relationship, bloodGroup, phone, allergies, uhid } = req.body;
+    const { name, age, dateOfBirth, sex, relationship, bloodGroup, phone, allergies, uhid } = req.body;
     if (name !== undefined) dependant.name = name;
-    if (age !== undefined) dependant.age = age;
+    if (dateOfBirth) {
+      const calculatedAge = calculateAge(dateOfBirth);
+      if (calculatedAge === null) {
+        return res.status(400).json({ error: 'Date of birth must be a valid date in the past.' });
+      }
+      dependant.dateOfBirth = dateOfBirth;
+      dependant.age = calculatedAge;
+    } else if (age !== undefined) {
+      dependant.age = age;
+    }
     if (sex !== undefined) dependant.sex = sex;
     if (relationship !== undefined) dependant.relationship = relationship;
     if (bloodGroup !== undefined) dependant.bloodGroup = bloodGroup;

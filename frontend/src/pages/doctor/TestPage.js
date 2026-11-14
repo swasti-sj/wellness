@@ -250,7 +250,7 @@ function TestPage({ apiBaseUrl }) {
     }
   };
 
-  const handleSaveAll = async () => {
+  const handleSaveAll = async (navigateAfterSave = true) => {
     setError('');
     try {
       // First fetch existing data to preserve hospital referral and certificate
@@ -292,7 +292,7 @@ function TestPage({ apiBaseUrl }) {
         setLabTestDocument(null);
         setLabTestDocumentUrl(response.data.test?.labTestDocumentUrl || labTestDocumentUrl);
         // Navigate back and signal DoctorAppointment to open the Lab Tests section
-        if (returnUrl) {
+        if (navigateAfterSave && returnUrl) {
           navigate(returnUrl, {
             state: {
               openAppointmentId,
@@ -300,14 +300,21 @@ function TestPage({ apiBaseUrl }) {
             }
           });
         }
+        return true;
       }
+      return false;
     } catch (err) {
       console.error('Error saving tests:', err);
       setError('Failed to save tests. ' + (err.response?.data?.error || ''));
+      return false;
     }
   };
 
-  const handleBack = () => {
+  const handleBack = async () => {
+    if (hasUnsavedTestChanges || labTestDocument) {
+      const saved = await handleSaveAll(false);
+      if (!saved) return;
+    }
     if (returnUrl) {
       navigate(returnUrl, {
         state: { openAppointmentId, openSection }

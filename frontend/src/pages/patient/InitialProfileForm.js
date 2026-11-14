@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import '../../styles/InitialProfileForm.css';
 import { useApi } from '../../context/ApiContext';
+import { todayDateInputValue } from '../../utils/patientAge';
 
 const PATIENT_CATEGORIES = ["Student", "Faculty", "Regular Staff", "Contractual Staff", "Outsourced Staff"];
 
@@ -11,7 +12,7 @@ function InitialProfileForm() {
     name: '',
     roll: '',
     sex: '',
-    age: '',
+    dateOfBirth: '',
     phone: '',
     emergencyContactNo: '',
     patientCategory: '',
@@ -96,8 +97,8 @@ function InitialProfileForm() {
             </label>
 
             <label>
-              Age:
-              <input name="age" type="number" value={form.age} onChange={handleChange} placeholder="Years" required />
+              Date of Birth:
+              <input name="dateOfBirth" type="date" value={form.dateOfBirth} onChange={handleChange} max={todayDateInputValue()} required />
             </label>
 
             <label>

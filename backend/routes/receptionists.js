@@ -91,6 +91,7 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
         _id: dependant._id,
         name: dependant.name,
         age: dependant.age,
+        dateOfBirth: dependant.dateOfBirth,
         sex: dependant.sex,
         relationship: dependant.relationship,
         bloodGroup: dependant.bloodGroup,

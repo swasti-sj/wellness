@@ -4,7 +4,9 @@ const jwt = require('jsonwebtoken');
 const Vital = require('../models/Vital');
 const Doctor = require('../models/Doctor');
 const Appointment = require('../models/Appointment');
+const User = require('../models/User');
 const multer = require('multer');
+const { encryptField } = require('../utils/fieldEncryption');
 const { logActivity, getClientIp } = require('../utils/audit');
 const { uploadDocument, deleteImage } = require('../utils/cloudinary');
 const { saveCompressedImageToDisk, saveRawFileToDisk } = require('../utils/diskStorage');
@@ -127,6 +129,23 @@ router.post("/save", upload.fields([
       return res.status(400).json({ error: "Missing appointment or patient" });
     }
 
+    const appointment = await Appointment.findById(appointmentId).select('user doctor dependant');
+    if (!appointment) return res.status(404).json({ error: 'Appointment not found.' });
+    if (!appointment.user.equals(patientId)) {
+      return res.status(400).json({ error: 'Patient does not match appointment.' });
+    }
+    if (decoded.role === 'doctor' && !appointment.doctor?.equals(decoded.id)) {
+      return res.status(403).json({ error: 'You do not have permission to save this case sheet.' });
+    }
+
+    const patient = await User.findById(patientId)
+      .select('+clinicalHistory +dependants.clinicalHistory');
+    if (!patient) return res.status(404).json({ error: 'Patient not found.' });
+    const patientProfile = appointment.dependant?._id
+      ? patient.dependants.id(appointment.dependant._id)
+      : patient;
+    if (!patientProfile) return res.status(404).json({ error: 'Dependant profile not found.' });
+
     let vital = await Vital.findOne({ appointment: appointmentId });
 
     if (!vital) {
@@ -195,6 +214,27 @@ router.post("/save", upload.fields([
     }
 
     await vital.save();
+
+    let patientProfileChanged = false;
+    const bloodGroup = String(caseData.bloodGroup || '').trim();
+    if (bloodGroup) {
+      patientProfile.bloodGroup = bloodGroup;
+      patientProfileChanged = true;
+    }
+
+    const clinicalHistory = {};
+    const pastMedicalHistory = String(caseData.pastMedicalHistory || '').trim();
+    const medicalAllergy = String(caseData.medicalAllergy || '').trim();
+    if (pastMedicalHistory) clinicalHistory.pastMedicalHistory = encryptField(pastMedicalHistory);
+    if (medicalAllergy) clinicalHistory.medicalAllergy = encryptField(medicalAllergy);
+    if (Object.keys(clinicalHistory).length) {
+      patientProfile.clinicalHistory = {
+        ...(patientProfile.clinicalHistory?.toObject?.() || patientProfile.clinicalHistory || {}),
+        ...clinicalHistory,
+      };
+      patientProfileChanged = true;
+    }
+    if (patientProfileChanged) await patient.save();
 
     // Audit: Vitals saved/updated (only if vital data was provided)
     if (Object.keys(caseData).length > 0) {

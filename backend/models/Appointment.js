@@ -19,6 +19,7 @@ const AppointmentSchema = new mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     name: String,
     age: Number,
+    dateOfBirth: Date,
     sex: { type: String, enum: ["Male", "Female", "Other"] },
     relationship: String,
     bloodGroup: String,

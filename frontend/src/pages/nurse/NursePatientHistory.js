@@ -524,7 +524,7 @@ export default function NursePatientHistory({ apiBaseUrl }) {
                               ))}
                             </div>
                             <div className="nph-section-panel">
-                              {openSection[a._id] === "vitals" && <DoctorVitals appointmentId={a._id} patientId={a.user?._id} apiBaseUrl={apiBaseUrl} />}
+                              {openSection[a._id] === "vitals" && <DoctorVitals appointmentId={a._id} patientId={a.user?._id} dependantId={a.dependant?._id} apiBaseUrl={apiBaseUrl} />}
                               {openSection[a._id] === "notes" && <DoctorNote appointmentId={a._id} />}
                               {openSection[a._id] === "rx" && <DoctorPrescription appointmentId={a._id} patientId={a.user?._id} />}
                               {openSection[a._id] === "tests" && <SelectedTestsSummary appointmentId={a._id} onEditClick={() => navigate(`/nurse-dashboard/test-page?appointmentId=${a._id}&patientId=${a.user?._id}&returnUrl=/nurse-dashboard/patient-history`)} />}
