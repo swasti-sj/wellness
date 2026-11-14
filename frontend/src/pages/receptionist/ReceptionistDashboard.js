@@ -43,6 +43,7 @@ export default function ReceptionistDashboard() {
   const messageSourceRef = useRef(null); // 'lookup' (email check) | 'action' (add/edit result)
   const [editingRowId, setEditingRowId] = useState(null);
   const [editedValues, setEditedValues] = useState({});
+  const [deletingItemId, setDeletingItemId] = useState(null);
   const [sortBy, setSortBy] = useState('newest'); // 'newest' | 'oldest' | 'name'
   const [filterDoctor, setFilterDoctor] = useState(''); // Filter by doctor
   const [showAddEntryMobile, setShowAddEntryMobile] = useState(true);
@@ -157,7 +158,9 @@ export default function ReceptionistDashboard() {
     try {
       if (!silent) setLoading(true);
       const response = await axios.get(`${apiBaseUrl}/api/appointments/all-appointments`, authHeaders);
-      const formatted = (response.data.appointments || []).map(appt => {
+      const formatted = (response.data.appointments || [])
+        .filter(appt => appt.status !== 'cancelled by receptionist')
+        .map(appt => {
         const patient = appt.user || appt.fullData?.user;
         const dependant = appt.dependant || appt.fullData?.dependant || null;
         const patientName = patient?.name || patient?.email || patient?.roll || 'Unknown';
@@ -266,6 +269,39 @@ export default function ReceptionistDashboard() {
     setAppointments(prev => prev.map(a => a._id === itemId ? { ...a, status: newStatus } : a));
     setManualEntries(prev => prev.map(e => e._id === itemId ? { ...e, status: newStatus } : e));
     showMessage('Status updated successfully');
+  };
+
+  const handleDeleteItem = async (item) => {
+    const isManualEntry = item.source === 'manual';
+    const recordType = isManualEntry ? 'walk-in entry' : 'appointment';
+    const action = isManualEntry ? 'permanently delete this entry' : 'cancel this appointment and remove it from the active schedule';
+    if (!window.confirm(`Are you sure you want to ${action} for ${item.patientName}?`)) return;
+
+    setDeletingItemId(item._id);
+    try {
+    let response;
+    if (isManualEntry) {
+      response = await axios.delete(`${apiBaseUrl}/api/receptionist/entries/${item._id}`, authHeaders);
+    } else {
+      response = await axios.delete(`${apiBaseUrl}/api/appointments/${item._id}/receptionist-delete`, authHeaders);
+    }
+
+    setAppointments(prev => prev.filter(appointment => appointment._id !== item._id));
+    setManualEntries(prev => prev.filter(entry =>
+      entry._id !== item._id && entry.appointmentId?.toString() !== item._id.toString()
+    ));
+    if (editingRowId === item._id) {
+      setEditingRowId(null);
+      setEditedValues({});
+    }
+    if (expandedAppointmentId === item._id) setExpandedAppointmentId(null);
+    showMessage(response.data.message || `${recordType} deleted successfully`);
+    } catch (error) {
+    const errMsg = error.response?.data?.error || error.message || `Error deleting ${recordType}`;
+    showMessage(`Error: ${errMsg}`, 'error');
+    } finally {
+    setDeletingItemId(null);
+    }
   };
 
   const handleEditRow = (item) => {
@@ -949,12 +985,28 @@ export default function ReceptionistDashboard() {
                             <div className="rd-mobile-card-actions">
                               <button className="rd-btn-save" onClick={() => handleSaveChanges(item._id)}>Save</button>
                               <button className="rd-btn-cancel" onClick={() => { setEditingRowId(null); setEditedValues({}); }}>Cancel</button>
+                              <button
+                                type="button"
+                                className="rd-btn-delete"
+                                onClick={() => handleDeleteItem(item)}
+                                disabled={deletingItemId === item._id}
+                              >
+                                {deletingItemId === item._id ? 'Deleting…' : 'Delete'}
+                              </button>
                             </div>
                           </>
                         ) : (
                           <div className="rd-mobile-card-actions">
                             <button className="rd-btn-edit" onClick={() => { handleEditRow(item); setExpandedAppointmentId(item._id); }}>
                               Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="rd-btn-delete"
+                              onClick={() => handleDeleteItem(item)}
+                              disabled={deletingItemId === item._id}
+                            >
+                              {deletingItemId === item._id ? 'Deleting…' : 'Delete'}
                             </button>
                           </div>
                         )}
@@ -1079,9 +1131,27 @@ export default function ReceptionistDashboard() {
                             <>
                               <button className="rd-btn-save" onClick={() => handleSaveChanges(item._id)}>Save</button>
                               <button className="rd-btn-cancel" onClick={() => { setEditingRowId(null); setEditedValues({}); }}>Cancel</button>
+                              <button
+                                type="button"
+                                className="rd-btn-delete"
+                                onClick={() => handleDeleteItem(item)}
+                                disabled={deletingItemId === item._id}
+                              >
+                                {deletingItemId === item._id ? 'Deleting…' : 'Delete'}
+                              </button>
                             </>
                           ) : (
-                            <button className="rd-btn-edit" onClick={() => handleEditRow(item)}>Edit</button>
+                            <>
+                              <button className="rd-btn-edit" onClick={() => handleEditRow(item)}>Edit</button>
+                              <button
+                                type="button"
+                                className="rd-btn-delete"
+                                onClick={() => handleDeleteItem(item)}
+                                disabled={deletingItemId === item._id}
+                              >
+                                {deletingItemId === item._id ? 'Deleting…' : 'Delete'}
+                              </button>
+                            </>
                           )}
                         </td>
                       </tr>

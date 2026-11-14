@@ -653,7 +653,8 @@
 
 .rd-btn-edit,
 .rd-btn-save,
-.rd-btn-cancel {
+.rd-btn-cancel,
+.rd-btn-delete {
   padding: 10px 14px;
   border-radius: 10px;
   border: 1px solid transparent;
@@ -675,10 +676,22 @@
   border-color: transparent;
 }
 
+.rd-btn-delete {
+  color: #fff;
+  background: #b8243a;
+  border-color: transparent;
+}
+
 .rd-btn-edit:hover,
 .rd-btn-cancel:hover,
-.rd-btn-save:hover {
+.rd-btn-save:hover,
+.rd-btn-delete:hover:not(:disabled) {
   transform: translateY(-1px);
+}
+
+.rd-btn-delete:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .rd-table th {
@@ -1163,7 +1176,8 @@
 
   .rd-btn-edit,
   .rd-btn-save,
-  .rd-btn-cancel {
+  .rd-btn-cancel,
+  .rd-btn-delete {
     padding: 6px 10px;
     font-size: 11px;
   }
@@ -1290,14 +1304,16 @@
   .rd-btn-add,
   .rd-btn-edit,
   .rd-btn-save,
-  .rd-btn-cancel {
+  .rd-btn-cancel,
+  .rd-btn-delete {
     min-height: 44px;
     min-width: 44px;
   }
 
   .rd-btn-edit,
   .rd-btn-save,
-  .rd-btn-cancel {
+  .rd-btn-cancel,
+  .rd-btn-delete {
     padding: 10px 16px;
   }
 
@@ -1305,7 +1321,8 @@
   .rd-btn-add:hover,
   .rd-btn-edit:hover,
   .rd-btn-save:hover,
-  .rd-btn-cancel:hover {
+  .rd-btn-cancel:hover,
+  .rd-btn-delete:hover {
     transform: none;
   }
 

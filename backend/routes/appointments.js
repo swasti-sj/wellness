@@ -13,6 +13,8 @@ const Test = require("../models/Test");
 const mongoose = require("mongoose");
 const { logActivity, getClientIp, parseUserAgent } = require('../utils/audit');
 const authMiddleware = require('../middleware/auth');
+const { requireReceptionist } = require('../middleware/auth');
+const ReceptionistEntry = require("../models/ReceptionistEntry");
 
 // ===============================
 // PATIENT BOOK APPOINTMENT ENDPOINT
@@ -896,6 +898,125 @@ router.delete("/:appointmentId/doctor-cancel", async (req, res) => {
   } catch (err) {
     console.error("Doctor cancellation error:", err);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.delete("/:appointmentId/receptionist-delete", authMiddleware, requireReceptionist, async (req, res) => {
+  try {
+    const appointment = await Appointment.findById(req.params.appointmentId).populate("doctor user");
+    if (!appointment) return res.status(404).json({ error: "Appointment not found" });
+
+    const calendarDeletionErrors = [];
+    const doctor = appointment.doctor;
+    const user = appointment.user;
+    let doctorEventRemoved = !appointment.doctorCalendarEventId;
+    let patientEventRemoved = !appointment.patientCalendarEventId;
+
+    if (appointment.doctorCalendarEventId && doctor) {
+      try {
+        const doctorOAuth2Client = await ensureFreshAccessToken(doctor, "doctor");
+        if (doctorOAuth2Client) {
+          const doctorCalendar = google.calendar({ version: "v3", auth: doctorOAuth2Client });
+          await doctorCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.doctorCalendarEventId,
+          });
+          doctorEventRemoved = true;
+        } else {
+          calendarDeletionErrors.push("doctor's calendar");
+        }
+      } catch (err) {
+        console.warn("Could not remove receptionist-cancelled appointment from doctor's calendar:", err.message);
+        calendarDeletionErrors.push("doctor's calendar");
+      }
+    } else if (appointment.doctorCalendarEventId) {
+      calendarDeletionErrors.push("doctor's calendar");
+    }
+
+    if (appointment.patientCalendarEventId && user) {
+      try {
+        const patientOAuth2Client = await ensureFreshAccessToken(user, "user");
+        if (patientOAuth2Client) {
+          const patientCalendar = google.calendar({ version: "v3", auth: patientOAuth2Client });
+          await patientCalendar.events.delete({
+            calendarId: "primary",
+            eventId: appointment.patientCalendarEventId,
+          });
+          patientEventRemoved = true;
+        } else {
+          calendarDeletionErrors.push("patient's calendar");
+        }
+      } catch (err) {
+        console.warn("Could not remove receptionist-cancelled appointment from patient's calendar:", err.message);
+        calendarDeletionErrors.push("patient's calendar");
+      }
+    } else if (appointment.patientCalendarEventId) {
+      calendarDeletionErrors.push("patient's calendar");
+    }
+
+    const wasBooked = appointment.status === "booked";
+    appointment.status = "cancelled by receptionist";
+    if (doctorEventRemoved) appointment.doctorCalendarEventId = null;
+    if (patientEventRemoved) appointment.patientCalendarEventId = null;
+    await appointment.save();
+
+    let slotReleaseError = false;
+    if (wasBooked && doctor) {
+      const daySlot = doctor.weeklySlots?.find(slot => slot.day === appointment.slotDay);
+      const timeSlot = daySlot?.times.find(slot => slot.time === appointment.slotTime);
+      if (timeSlot) {
+        timeSlot.status = "available";
+        try {
+          await doctor.save();
+        } catch (err) {
+          console.error("Could not release doctor slot after receptionist cancellation:", err);
+          slotReleaseError = true;
+        }
+      }
+    }
+
+    let entryCleanupError = false;
+    try {
+      await ReceptionistEntry.deleteMany({ appointmentId: appointment._id });
+    } catch (err) {
+      console.error("Could not remove receptionist entry for cancelled appointment:", err);
+      entryCleanupError = true;
+    }
+
+    try {
+      await logActivity({
+        userId: req.user.id,
+        userName: req.user.email || "Receptionist",
+        userEmail: req.user.email || "",
+        role: req.user.role,
+        sessionId: req.user.sessionId || null,
+        module: "Appointments",
+        action: "CANCEL_APPOINTMENT",
+        description: `Appointment ${appointment._id} cancelled by receptionist`,
+        severity: "AUDIT",
+        ipAddress: getClientIp(req),
+        deviceInfo: req.headers["user-agent"] || "",
+        details: { appointmentId: appointment._id }
+      });
+    } catch (auditErr) {
+      console.warn("Failed to write receptionist appointment cancellation audit log:", auditErr.message);
+    }
+
+    const warnings = [];
+    if (calendarDeletionErrors.length) {
+      warnings.push(`Could not remove it from ${calendarDeletionErrors.join(" and ")}`);
+    }
+    if (slotReleaseError) warnings.push("the doctor's time slot could not be released");
+    if (entryCleanupError) warnings.push("the linked receptionist entry could not be removed");
+
+    const message = warnings.length
+      ? `Appointment cancelled and removed from the active schedule, but ${warnings.join("; ")}.`
+      : "Appointment cancelled and removed from the active schedule.";
+
+    res.json({ success: true, message });
+  } catch (err) {
+    console.error("Error deleting receptionist appointment:", err);
+    res.status(500).json({ error: "Failed to delete appointment" });
   }
 });
 
