@@ -23,6 +23,10 @@ const ReceptionistEntrySchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  department: {
+    type: String,
+    default: ''
+  },
   email: {
     type: String,
     default: "-"

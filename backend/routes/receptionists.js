@@ -62,12 +62,14 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
 
     let doctor = null;
     let selectedDoctorName = cleanSdmDoctorName ? `SDM (${cleanSdmDoctorName})` : 'SDM';
+    let selectedDepartment = '';
     if (!isSdmBooking) {
       doctor = await Doctor.findById(doctorId);
       if (!doctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
       selectedDoctorName = doctor.name;
+      selectedDepartment = doctor.specialization || '';
     }
 
     const isWalkInEntry = isWalkIn === true || isWalkIn === 'true';
@@ -111,6 +113,7 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
         role: role || 'Student',
         doctorId: doctor?._id || null,
         doctorName: selectedDoctorName,
+        department: selectedDepartment,
         appointmentDate: appointmentDate ? new Date(appointmentDate) : new Date(),
         appointmentTime: appointmentTime || null,
         email: email || "-",
@@ -219,6 +222,7 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
       role: role || 'Student',
       doctorId: doctor?._id || null,
       doctorName: selectedDoctorName,
+      department: selectedDepartment,
       appointmentDate: startDateTime,
       appointmentTime: appointmentTime || null,
       email: email || "-",

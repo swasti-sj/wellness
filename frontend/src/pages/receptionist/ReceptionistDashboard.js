@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import axios from 'axios';
 import Fuse from 'fuse.js';
 import ReceptionistNavbar from './ReceptionistNavbar';
+import DEPARTMENTS from '../../constants/departments';
 import '../../styles/receptionist/ReceptionistDashboard.css';
 import { useApi } from '../../context/ApiContext';
 
@@ -53,6 +54,7 @@ export default function ReceptionistDashboard() {
   const [dependantsLoading, setDependantsLoading] = useState(false);
   const [foundPatient, setFoundPatient] = useState(null);
   const [patientIdentifier, setPatientIdentifier] = useState('');
+  const [formDepartment, setFormDepartment] = useState('');
 
   // Date range filter (default: today → today + 7 days)
   const today = new Date();
@@ -173,6 +175,7 @@ export default function ReceptionistDashboard() {
           roll: appt.user?.roll || '-',
           doctorName: appt.doctor?.name || appt.doctorName || 'Unknown',
           doctorId: appt.doctor?._id || '',
+          department: appt.doctor?.specialization || '',
           email: appt.user?.email || '-',
           phone: appt.user?.phone || '-',
           date: appt.startDateTime,
@@ -205,6 +208,7 @@ export default function ReceptionistDashboard() {
         role: entry.role,
         doctorName: entry.doctorName || '-',
         doctorId: entry.doctorId?._id || entry.doctorId || '',
+        department: entry.department || '',
         date: entry.appointmentDate,
         time: entry.appointmentTime || '-',
         status: entry.status,
@@ -424,6 +428,7 @@ export default function ReceptionistDashboard() {
           roll: response.data.entry.roll,
           role: response.data.entry.role,
           doctorName: response.data.entry.doctorName,
+          department: response.data.entry.department || '',
           date: response.data.entry.appointmentDate,
           time: response.data.entry.appointmentTime || '-',
           status: response.data.entry.status,
@@ -441,6 +446,7 @@ export default function ReceptionistDashboard() {
           dependantId: ''
         });
         setPatientIdentifier('');
+        setFormDepartment('');
         const bookedName = response.data.entry.patientName;
         if (isWalkIn) {
           showMessage(`Walk-in entry added for ${bookedName}.`);
@@ -800,14 +806,25 @@ export default function ReceptionistDashboard() {
                   </select>
                 </div>
                 <div className="rd-form-group">
+                  <label>Department</label>
+                  <select value={formDepartment} onChange={(e) => { setFormDepartment(e.target.value); setFormData(c => ({ ...c, doctorId: '', doctorName: '' })); }}>
+                    <option value="">All Departments</option>
+                    {DEPARTMENTS.map(dep => (
+                      <option key={dep} value={dep}>{dep}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="rd-form-group">
                   <label>Doctor <span className="rd-required">*</span></label>
                   <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
                     <option value="">— Select Doctor —</option>
-                    {doctors.map(d => (
-                      <option key={d._id} value={d._id}>
-                        {d.name}{d.specialization ? ` (${d.specialization})` : ''}
-                      </option>
-                    ))}
+                    {doctors
+                      .filter(d => !formDepartment || (d.specialization || '').toLowerCase() === formDepartment.toLowerCase())
+                      .map(d => (
+                        <option key={d._id} value={d._id}>
+                          {d.name}{d.specialization ? ` (${d.specialization})` : ''}
+                        </option>
+                      ))}
                     <option value="sdm">SDM</option>
                   </select>
                 </div>
@@ -920,6 +937,7 @@ export default function ReceptionistDashboard() {
                       <div className="rd-mobile-card-body">
                         <div className="rd-mobile-card-row"><span>Roll No / Emp ID</span><strong>{item.roll}</strong></div>
                         <div className="rd-mobile-card-row"><span>Doctor</span><strong>{item.doctorName}</strong></div>
+                        {item.department && <div className="rd-mobile-card-row"><span>Department</span><strong>{item.department}</strong></div>}
                         <div className="rd-mobile-card-row"><span>Email</span><strong>{item.email}</strong></div>
                         <div className="rd-mobile-card-row"><span>Source</span><strong>{item.source}</strong></div>
                         <div className="rd-mobile-card-row"><span>Remarks</span><strong>{item.remarks || 'None'}</strong></div>
@@ -1027,6 +1045,7 @@ export default function ReceptionistDashboard() {
                     <th>Patient Name</th>
                     <th>Roll No / Emp ID</th>
                     <th>Doctor</th>
+                    <th>Department</th>
                     <th>Remarks</th>
                     <th>Status</th>
                     <th>Actions</th>
@@ -1089,6 +1108,7 @@ export default function ReceptionistDashboard() {
                             />
                           ) : item.doctorName}
                         </td>
+                        <td data-label="Department">{item.department || '-'}</td>
                         <td data-label="Remarks">
                           {isEditing ? (
                             <select

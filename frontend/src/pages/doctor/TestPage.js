@@ -155,6 +155,34 @@ const TEST_CATEGORIES = [
       { name: 'Thyroid Profile', selected: false },
       { name: 'Fertility Profile', selected: false }
     ]
+  },
+  {
+    name: 'Hematology',
+    tests: [
+      { name: 'CBC (Hb, TC, DC, ESR)', selected: false },
+      { name: 'Hemogram (Hb, TC, DC, ESR, PS Study)', selected: false },
+      { name: 'Complete Hemogram (Hb, PCV, RBC Count, TC, DC, ESR, PLT Count, RBC Indices, PS Study)', selected: false },
+      { name: 'Screening Hemogram (Hb, PCV, PLT Count, TC, DC)', selected: false },
+      { name: 'Bleeding Profile (BT, CT, PLT Count, PT/INR, APTT)', selected: false },
+      { name: 'Hemoglobin', selected: false },
+      { name: 'PCV (Hct)', selected: false },
+      { name: 'RBC Count', selected: false },
+      { name: 'Retic Count', selected: false },
+      { name: 'RDW', selected: false },
+      { name: 'Red Cell Indices', selected: false },
+      { name: 'Total WBC Count', selected: false },
+      { name: 'Differential WBC Count', selected: false },
+      { name: 'AEC', selected: false },
+      { name: 'Platelet Count', selected: false },
+      { name: 'ESR', selected: false },
+      { name: 'Blood Grouping (ABO & Rh)', selected: false },
+      { name: 'BT and CT', selected: false },
+      { name: 'PIH Profile (Hematology)', selected: false },
+      { name: 'PT/INR', selected: false },
+      { name: 'APTT', selected: false },
+      { name: 'PS for MP / MF', selected: false },
+      { name: 'PS Study', selected: false }
+    ]
   }
 ];
 
@@ -326,7 +354,7 @@ function TestPage({ apiBaseUrl }) {
 
   if (isLoading) return <p className="loading">Loading tests...</p>;
 
-  const CAT_ICONS = ['🩸', '🔬', '🧪', '⚗', '📊'];
+  const CAT_ICONS = ['🩸', '🔬', '🧪', '⚗', '📊', '🩻'];
 
   return (
     <div className="test-page-container">
@@ -411,6 +439,9 @@ function TestPage({ apiBaseUrl }) {
           disabled={getSelectedTestsCount() === 0 && !hasUnsavedTestChanges && !labTestDocumentUrl && !labTestDocument}
         >
           💾 Save Tests ({getSelectedTestsCount()})
+        </button>
+        <button className="back-btn" onClick={handleBack} style={{ marginLeft: '0.75rem' }}>
+          ← Back
         </button>
         {saved && <span className="save-confirmation">✓ Saved</span>}
       </div>
