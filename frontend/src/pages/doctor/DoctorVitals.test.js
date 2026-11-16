@@ -69,4 +69,24 @@ describe('DoctorVitals patient-profile autofill', () => {
       `${apiBaseUrl}/api/users/patient-clinical-profile/${patientId}`,
     ]);
   });
+
+  test('prefills the receptionist department and saves it with the case sheet', async () => {
+    const { container, getByText } = render(
+      <DoctorVitals
+        appointmentId="appointment-1"
+        patientId={patientId}
+        initialDepartment="ENT"
+        apiBaseUrl={apiBaseUrl}
+      />
+    );
+
+    await waitFor(() => {
+      expect(container.querySelector('[name="department"]').value).toBe('ENT');
+    });
+
+    fireEvent.click(getByText('Save Case Sheet'));
+
+    await waitFor(() => expect(axios.post).toHaveBeenCalledTimes(1));
+    expect(axios.post.mock.calls[0][1].get('department')).toBe('ENT');
+  });
 });

@@ -164,6 +164,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
           patientName,
           doctor: appt.doctor,
           doctorName: appt.doctor?.name || appt.doctorName || "",
+          caseSheetDepartment: appt.caseSheetDepartment || "",
           dependant,
           dependantLabel,
           slotDay: appt.slotDay,
@@ -489,6 +490,7 @@ export default function NurseAppointment({ apiBaseUrl }) {
                   patientId={selectedEvent.patient?._id}
                   dependantId={selectedEvent.dependant?._id}
                   dependantUhid={selectedEvent.dependant?.uhid}
+                  initialDepartment={selectedEvent.caseSheetDepartment}
                   apiBaseUrl={apiBaseUrl}
                 />
               </AppointmentSubSection>

@@ -154,6 +154,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
           patientDisplayName,
           dependant,
           dependantLabel,
+          caseSheetDepartment: appt.caseSheetDepartment || "",
           slotDay: appt.slotDay,
           slotTime: appt.slotTime,
           fullData: appt,
@@ -414,6 +415,7 @@ export default function DoctorAppointment({ apiBaseUrl }) {
                   patientId={selectedEvent.patient?._id}
                   dependantId={selectedEvent.dependant?._id}
                   dependantUhid={selectedEvent.dependant?.uhid}
+                  initialDepartment={selectedEvent.caseSheetDepartment}
                   apiBaseUrl={apiBaseUrl}
                 />
               </AppointmentSubSection>

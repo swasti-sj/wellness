@@ -16,6 +16,20 @@ const authMiddleware = require('../middleware/auth');
 const { requireReceptionist } = require('../middleware/auth');
 const ReceptionistEntry = require("../models/ReceptionistEntry");
 
+const addCaseSheetDepartments = async (appointments) => {
+  const entries = await ReceptionistEntry.find({
+    appointmentId: { $in: appointments.map((appointment) => appointment._id) }
+  }).select('appointmentId department').lean();
+  const departmentsByAppointmentId = new Map(
+    entries.map((entry) => [entry.appointmentId.toString(), entry.department || ''])
+  );
+
+  return appointments.map((appointment) => ({
+    ...appointment.toObject(),
+    caseSheetDepartment: departmentsByAppointmentId.get(appointment._id.toString()) || ''
+  }));
+};
+
 // ===============================
 // PATIENT BOOK APPOINTMENT ENDPOINT
 // ===============================
@@ -1120,7 +1134,7 @@ router.get("/all-appointments", authMiddleware, async (req, res) => {
       .populate("doctor", "name specialization email _id")
       .sort({ startDateTime: -1 });
 
-    res.json({ appointments });
+    res.json({ appointments: await addCaseSheetDepartments(appointments) });
   } catch (err) {
     console.error("Error fetching all appointments:", err);
     res.status(500).json({ error: 'Internal server error' });
@@ -1152,7 +1166,7 @@ router.get("/doctor-appointments", async (req, res) => {
       .populate("user", "name email phone roll age dateOfBirth sex")
       .sort({ startDateTime: -1 });
 
-    res.json({ appointments });
+    res.json({ appointments: await addCaseSheetDepartments(appointments) });
   } catch (err) {
     console.error("Error fetching doctor's appointments:", err);
     res.status(500).json({ error: 'Internal server error' });
