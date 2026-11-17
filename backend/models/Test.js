@@ -59,6 +59,30 @@ TestSchema.pre('save', function (next) {
   next();
 });
 
+// routes/tests.js saves via Test.findOneAndUpdate (upsert), which does NOT
+// run pre('save') — so the same two fields must also be encrypted here, on
+// the update payload, or they'd be stored as plain text. encryptField()
+// skips values already tagged "enc:", so this never double-encrypts.
+TestSchema.pre('findOneAndUpdate', function (next) {
+  const update = this.getUpdate() || {};
+  [update, update.$set].forEach((target) => {
+    if (!target) return;
+    if (target.hospitalReferral && target.hospitalReferral.remarks) {
+      target.hospitalReferral.remarks = encryptField(target.hospitalReferral.remarks);
+    }
+    if (target['hospitalReferral.remarks']) {
+      target['hospitalReferral.remarks'] = encryptField(target['hospitalReferral.remarks']);
+    }
+    if (target.certificate && target.certificate.clinicalDetails) {
+      target.certificate.clinicalDetails = encryptField(target.certificate.clinicalDetails);
+    }
+    if (target['certificate.clinicalDetails']) {
+      target['certificate.clinicalDetails'] = encryptField(target['certificate.clinicalDetails']);
+    }
+  });
+  next();
+});
+
 // Decrypt both fields back for legitimate app requests. Plain-text values
 // saved before this existed pass through unchanged.
 function decryptTestDoc(doc) {

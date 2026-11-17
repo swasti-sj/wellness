@@ -73,6 +73,25 @@ PrescriptionSchema.pre('save', function (next) {
   next();
 });
 
+// routes/prescriptions.js saves via Prescription.findOneAndUpdate (upsert),
+// which does NOT run pre('save') — so the item fields must also be
+// encrypted here, on the update payload, or they'd be stored as plain text.
+// encryptField() skips values already tagged "enc:", so this never
+// double-encrypts.
+PrescriptionSchema.pre('findOneAndUpdate', function (next) {
+  const update = this.getUpdate() || {};
+  [update, update.$set].forEach((target) => {
+    if (!target || !Array.isArray(target.prescriptions)) return;
+    target.prescriptions.forEach((item) => {
+      if (!item) return;
+      SENSITIVE_ITEM_FIELDS.forEach((field) => {
+        if (item[field]) item[field] = encryptField(item[field]);
+      });
+    });
+  });
+  next();
+});
+
 function decryptPrescriptionDoc(doc) {
   if (!doc || !Array.isArray(doc.prescriptions)) return;
   doc.prescriptions.forEach((item) => {
