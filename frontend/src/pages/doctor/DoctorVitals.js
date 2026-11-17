@@ -54,7 +54,7 @@ const initialFormData = {
   notes: ''
 };
 
-const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, apiBaseUrl, readOnly = false }) => {
+const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, initialDepartment = '', apiBaseUrl, readOnly = false }) => {
   const token = localStorage.getItem('token');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -63,7 +63,10 @@ const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, ap
   const [caseSheetDocuments, setCaseSheetDocuments] = useState([]);
   const [caseSheetDocumentUrls, setCaseSheetDocumentUrls] = useState([]);
   const existingCaseSheetDocumentCount = Math.max(caseSheetDocumentUrls.length - caseSheetDocuments.length, 0);
-  const [formData, setFormData] = useState(initialFormData);
+  const [formData, setFormData] = useState(() => ({
+    ...initialFormData,
+    department: initialDepartment
+  }));
   const [recordLoaded, setRecordLoaded] = useState(false);
   const formEditVersionRef = useRef(0);
   const documentEditVersionRef = useRef(0);
@@ -76,7 +79,7 @@ const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, ap
   };
 
   const mapVitalToFormData = (v) => ({
-    department: v.department || '',
+    department: v.department || initialDepartment,
     uhid: dependantUhid || v.uhid || '',
     tokenNumber: v.tokenNumber || '',
     bloodGroup: v.bloodGroup || '',
@@ -161,7 +164,9 @@ const DoctorVitals = ({ appointmentId, patientId, dependantId, dependantUhid, ap
       if (status === 404) {
         setExistingVitalId(null);
         setRecordLoaded(true);
-        if (formEditVersionRef.current === 0) setFormData(initialFormData);
+        if (formEditVersionRef.current === 0) {
+          setFormData({ ...initialFormData, department: initialDepartment });
+        }
         if (!readOnly && patientId) {
           const patientProfile = await fetchPatientClinicalProfile();
           if (patientProfile && formEditVersionRef.current === 0) {

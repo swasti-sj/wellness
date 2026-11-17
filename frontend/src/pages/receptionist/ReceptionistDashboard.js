@@ -175,7 +175,7 @@ export default function ReceptionistDashboard() {
           roll: appt.user?.roll || '-',
           doctorName: appt.doctor?.name || appt.doctorName || 'Unknown',
           doctorId: appt.doctor?._id || '',
-          department: appt.doctor?.specialization || '',
+          department: appt.department || appt.doctor?.specialization || '',
           email: appt.user?.email || '-',
           phone: appt.user?.phone || '-',
           date: appt.startDateTime,
@@ -409,6 +409,7 @@ export default function ReceptionistDashboard() {
         doctorId: formData.doctorId,
         doctorName: formData.doctorName,
         sdmDoctorName: formData.sdmDoctorName,
+        department: formDepartment,
         appointmentDate: appointmentDateRaw,
         appointmentTime: timeToSend || null,
         startDateTime,
@@ -483,7 +484,11 @@ export default function ReceptionistDashboard() {
   const canonicalAppointments = appointments.map(appointment => {
     const linkedEntry = linkedEntriesByAppointmentId.get(appointment._id.toString());
     return linkedEntry
-      ? { ...appointment, remarks: linkedEntry.remarks || appointment.remarks }
+      ? {
+        ...appointment,
+        department: linkedEntry.department || appointment.department,
+        remarks: linkedEntry.remarks || appointment.remarks
+      }
       : appointment;
   });
 
@@ -807,8 +812,8 @@ export default function ReceptionistDashboard() {
                 </div>
                 <div className="rd-form-group">
                   <label>Department</label>
-                  <select value={formDepartment} onChange={(e) => { setFormDepartment(e.target.value); setFormData(c => ({ ...c, doctorId: '', doctorName: '' })); }}>
-                    <option value="">All Departments</option>
+                  <select value={formDepartment} onChange={(e) => setFormDepartment(e.target.value)}>
+                    <option value="">Select Department</option>
                     {DEPARTMENTS.map(dep => (
                       <option key={dep} value={dep}>{dep}</option>
                     ))}
@@ -818,13 +823,11 @@ export default function ReceptionistDashboard() {
                   <label>Doctor <span className="rd-required">*</span></label>
                   <select name="doctorId" value={formData.doctorId} onChange={handleFormChange} required>
                     <option value="">— Select Doctor —</option>
-                    {doctors
-                      .filter(d => !formDepartment || (d.specialization || '').toLowerCase() === formDepartment.toLowerCase())
-                      .map(d => (
-                        <option key={d._id} value={d._id}>
-                          {d.name}{d.specialization ? ` (${d.specialization})` : ''}
-                        </option>
-                      ))}
+                    {doctors.map(d => (
+                      <option key={d._id} value={d._id}>
+                        {d.name}{d.specialization ? ` (${d.specialization})` : ''}
+                      </option>
+                    ))}
                     <option value="sdm">SDM</option>
                   </select>
                 </div>

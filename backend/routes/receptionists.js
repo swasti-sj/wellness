@@ -51,7 +51,7 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
   try {
     console.log("[API] POST /receptionist/entries called");
 
-    const { patientName, roll, role, doctorId, doctorName, sdmDoctorName, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
+    const { patientName, roll, role, doctorId, doctorName, sdmDoctorName, department, appointmentDate, appointmentTime, startDateTime: startDateTimeRaw, email, phone, isWalkIn, remarks, dependantId } = req.body;
 
     // Validate required fields
     const isSdmBooking = doctorId === 'sdm';
@@ -62,14 +62,13 @@ router.post("/entries", authMiddleware, requireReceptionist, async (req, res) =>
 
     let doctor = null;
     let selectedDoctorName = cleanSdmDoctorName ? `SDM (${cleanSdmDoctorName})` : 'SDM';
-    let selectedDepartment = '';
+    const selectedDepartment = typeof department === 'string' ? department.trim() : '';
     if (!isSdmBooking) {
       doctor = await Doctor.findById(doctorId);
       if (!doctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
       selectedDoctorName = doctor.name;
-      selectedDepartment = doctor.specialization || '';
     }
 
     const isWalkInEntry = isWalkIn === true || isWalkIn === 'true';

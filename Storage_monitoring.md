@@ -2,269 +2,342 @@
 
 ## 1. Overview
 
-A storage monitoring system has been set up to track storage usage for the Wellness project infrastructure.
+The Wellness storage monitoring system tracks disk usage and available storage on the VM and mounted network filesystem.
 
-The system consists of two separate scripts:
+It consists of two independent components:
 
-1. **VM collection script (`collect.sh`)** — runs automatically every four hours and records storage statistics in a CSV file on the VM.
-2. **Local reporting script (`plot_storage.py`)** — processes a downloaded copy of the CSV file and generates graphs and a text report on a local computer.
+1. **`collect.sh`** – Runs automatically on the VM every four hours and records storage measurements in a CSV file.
+2. **`plot_storage.py`** – Runs locally in Windows/WSL, processes a downloaded CSV copy, and generates four graphs and a storage report.
 
-The collection script runs on the VM. The graph-generation script runs locally and does not need to be installed or executed on the VM.
+Graph generation is performed locally, so Matplotlib is not required on the VM.
+
+### Architecture
+
+```text
+             WELLNESS VM
+                  |
+                  v
+              collect.sh
+                  |
+             Every 4 Hours
+                  |
+                  v
+          storage_history.csv
+                  |
+             Manual SCP
+                  |
+                  v
+           WINDOWS / WSL
+                  |
+                  v
+           plot_storage.py
+                  |
+             +----+----+
+             |         |
+             v         v
+          4 Graphs   Text Report
+           (.png)   growth_report.txt
+```
+
+CSV retrieval and report generation are manual. VM collection is automatic.
 
 ## 2. File Locations
 
-### On the VM
+### VM
 
-Directory:
-
-`/home/wc/wellness-monitoring/`
+Directory: `/home/wc/wellness-monitoring/`
 
 | File | Purpose |
 |---|---|
-| `collect.sh` | Collects storage statistics |
+| `collect.sh` | Collects VM and network storage statistics |
 | `storage_history.csv` | Stores historical measurements |
-| `collector.log` | Stores scheduled execution output and errors |
+| `collector.log` | Records collection output and errors |
 
-### On a local computer
+The directory belongs to the `wc` user. The `admin` account requires `sudo` to access the original files.
 
-Project directory:
+### Network Storage
 
-`C:\Users\RENUSRI\wellness-graphs\`
+- Network share: `//10.250.200.50/wellness`
+- VM mount point: `/mnt/ccs-wellness`
+
+### Local Reporting Directory
+
+Example: `wellness-graphs/`
 
 | File | Purpose |
 |---|---|
-| `plot_storage.py` | Generates graphs and the report |
-| `storage_history.csv` | Downloaded copy of the VM's CSV |
-| `vm_storage_usage.png` | VM disk usage graph |
-| `network_storage_usage.png` | Network storage usage graph |
-| `storage_usage_percentage.png` | Storage usage percentage comparison |
+| `plot_storage.py` | Generates graphs and report |
+| `storage_history.csv` | Downloaded VM measurement history |
+| `vm_storage_usage.png` | VM usage over time |
+| `network_storage_usage.png` | Network storage usage over time |
+| `storage_usage_percentage.png` | VM and network utilization comparison |
 | `storage_available_space.png` | Available storage comparison |
-| `growth_report.txt` | Summary of storage usage and historical changes |
+| `growth_report.txt` | Historical analysis and future projections |
 
-The local Windows directory above is an example of the current development environment. Team members should substitute their own local directory where necessary.
+## 3. VM Storage Collection
 
-## 3. VM Collection Script
+### What Is Collected?
 
-The script is located at:
+The script monitors:
 
-`/home/wc/wellness-monitoring/collect.sh`
+- **VM:** Total capacity, used space, available space and usage percentage.
+- **Network:** Mount status, total capacity, used space, available space and usage percentage.
+- **Timestamp:** Date and time of each measurement.
 
-It collects the following information:
+Measurements are stored in bytes in the CSV. The local reporting script converts them into decimal GB.
 
-- Total VM disk capacity.
-- VM disk space used and available.
-- VM disk usage percentage.
-- Network-drive mount status.
-- Total, used and available network storage.
-- Network storage usage percentage.
-- Timestamp of each measurement.
+Network statistics represent the entire mounted filesystem, not just the Wellness project directory.
 
-The script appends each measurement to `storage_history.csv`, preserving the previous measurements.
+### CSV Columns
 
-### Inspect the script
+| Column | Description |
+|---|---|
+| `timestamp` | Measurement date and time |
+| `vm_total_bytes` | Total VM filesystem capacity |
+| `vm_used_bytes` | VM space used |
+| `vm_available_bytes` | VM space available |
+| `vm_used_pct` | VM utilization percentage |
+| `network_status` | Network mount status |
+| `network_total_bytes` | Total network filesystem capacity |
+| `network_used_bytes` | Network space used |
+| `network_available_bytes` | Network space available |
+| `network_used_pct` | Network utilization percentage |
 
-After connecting to the VM using the approved SSH method, run:
+Network status can be:
 
-```bash
-cd /home/wc/wellness-monitoring
-ls -lh
-cat collect.sh
-```
+- `MOUNTED` – Network filesystem statistics collected successfully.
+- `NOT_MOUNTED` – Network share is not mounted.
+- `UNREADABLE` – Mount exists, but statistics could not be obtained.
 
-To inspect the script page by page:
+Unavailable network measurements are recorded as empty fields.
 
-```bash
-less /home/wc/wellness-monitoring/collect.sh
-```
+### Automatic Schedule
 
-Press `q` to exit.
-
-### Check the automatic schedule
-
-```bash
-crontab -l
-```
-
-The configured schedule is:
+The verified cron entry belongs to the `wc` user:
 
 ```cron
 0 */4 * * * /bin/bash /home/wc/wellness-monitoring/collect.sh >> /home/wc/wellness-monitoring/collector.log 2>&1
 ```
 
-This executes the script at 00:00, 04:00, 08:00, 12:00, 16:00 and 20:00 according to the VM's local timezone, provided the VM and cron service are running.
+Collection runs at 00:00, 04:00, 08:00, 12:00, 16:00 and 20:00, according to the VM's local timezone.
 
-An SSH terminal does not need to remain open.
-
-### Check collected measurements
+Check the installed schedule:
 
 ```bash
-cat /home/wc/wellness-monitoring/storage_history.csv
+sudo crontab -u wc -l
 ```
 
-To display the latest rows:
+The VM and cron service must be running. An SSH session does not need to remain open.
+
+### Useful VM Commands
+
+Run these commands from an SSH session with appropriate permissions:
 
 ```bash
-tail -n 10 /home/wc/wellness-monitoring/storage_history.csv
+# List monitoring files
+sudo ls -lh /home/wc/wellness-monitoring/
+
+# View collection script
+sudo cat /home/wc/wellness-monitoring/collect.sh
+
+# View latest CSV measurements
+sudo tail -n 10 /home/wc/wellness-monitoring/storage_history.csv
+
+# View collection log
+sudo tail -n 30 /home/wc/wellness-monitoring/collector.log
+
+# Run collection manually
+sudo -u wc /bin/bash /home/wc/wellness-monitoring/collect.sh
 ```
 
-### Run a manual collection
+## 4. Network Storage Verification
+
+The network share is mounted at `/mnt/ccs-wellness`.
 
 ```bash
-/bin/bash /home/wc/wellness-monitoring/collect.sh
+# Check mount status
+mountpoint /mnt/ccs-wellness
+
+# Check network filesystem usage
+df -h /mnt/ccs-wellness
+
+# Check VM root filesystem usage
+df -h /
+
+# Check directory-level usage
+sudo du -sh /mnt/ccs-wellness
 ```
 
-This records an additional measurement immediately without waiting for the next scheduled run.
+**Difference between `df` and `du`:**
 
-### Check the scheduler log
+- `df` reports usage of the entire filesystem.
+- `du` reports the space occupied by files in a directory.
+
+Therefore, network filesystem usage reported by `df` should not be interpreted as Wellness application data alone.
+
+## 5. Download the Historical CSV
+
+The original CSV is protected under the `wc` user's directory. The current retrieval method uses the `admin` account to create a temporary copy without changing the original file permissions.
+
+### Step 1: Create a temporary copy on the VM
+
+Connect using the authorized `admin` SSH account:
 
 ```bash
-tail -n 30 /home/wc/wellness-monitoring/collector.log
+sudo cp /home/wc/wellness-monitoring/storage_history.csv /tmp/storage_history.csv
+sudo chown admin:admin /tmp/storage_history.csv
+chmod 600 /tmp/storage_history.csv
 ```
 
-The log is created when output is written by the scheduled command.
-
-## 4. Download the CSV from the VM
-
-The local reporting script requires a copy of the CSV generated on the VM.
-
-Run the following command in **Windows PowerShell**, not inside the VM terminal or WSL:
+### Step 2: Download using Windows PowerShell
 
 ```powershell
-scp wc@10.195.250.184:/home/wc/wellness-monitoring/storage_history.csv "$HOME\Downloads\storage_history.csv"
+scp admin@<VM_IP>:/tmp/storage_history.csv "$env:USERPROFILE\Downloads\storage_history.csv"
 ```
 
-Use the approved VM address and account if the connection details change.
+Replace `<VM_IP>` with the approved VM address.
 
-If SSH reports a host-key verification problem, verify the server fingerprint through the VM administrator or trusted IT documentation before accepting it.
+### Step 3: Remove the temporary copy
 
-After downloading, the file should be available at:
-
-`C:\Users\RENUSRI\Downloads\storage_history.csv`
-
-Downloading the CSV creates a local copy; it does not delete or modify the original VM file.
-
-## 5. Local Graph-Generation Script
-
-The Python script `plot_storage.py` reads the CSV and generates four graphs and one text report.
-
-### Step 1: Open WSL/Ubuntu
-
-Open the local WSL/Ubuntu terminal.
-
-### Step 2: Navigate to the local directory
+After confirming the download, reconnect to the VM and run:
 
 ```bash
-cd /mnt/c/Users/RENUSRI/wellness-graphs
+sudo rm /tmp/storage_history.csv
 ```
 
-### Step 3: Copy the downloaded CSV into the project directory
+The original CSV remains unchanged in `/home/wc/wellness-monitoring/`.
+
+## 6. Local Report Generation
+
+The reporting script runs in WSL/Ubuntu and requires Python and Matplotlib.
+
+### Local Setup
+
+Navigate to the reporting directory:
 
 ```bash
-cp /mnt/c/Users/RENUSRI/Downloads/storage_history.csv .
+cd /mnt/c/Users/<WINDOWS_USERNAME>/wellness-graphs
 ```
 
-The CSV must be in the same directory as `plot_storage.py`.
-
-### Step 4: Verify the input files
+Copy the downloaded CSV from Windows Downloads:
 
 ```bash
-ls -lh
+cp /mnt/c/Users/<WINDOWS_USERNAME>/Downloads/storage_history.csv .
 ```
 
-Confirm that both `plot_storage.py` and `storage_history.csv` are present.
-
-### Step 5: Check Python and Matplotlib
+Install Matplotlib if required:
 
 ```bash
-python3 --version
-python3 -c "import matplotlib; print(matplotlib.__version__)"
+python3 -m pip install matplotlib
 ```
 
-If Matplotlib is not installed in the current WSL Python environment:
-
-```bash
-python3 -m pip install --user matplotlib
-```
-
-### Step 6: Generate the graphs and report
+Generate the graphs and report:
 
 ```bash
 python3 plot_storage.py
 ```
 
-The script reads the downloaded CSV and saves the output files in the same local directory.
-
-### Step 7: Verify the generated files
+Verify the output:
 
 ```bash
 ls -lh *.png growth_report.txt
 ```
 
-### Step 8: Open the output directory
+Open the directory in Windows Explorer:
 
 ```bash
 explorer.exe .
 ```
 
-Open the PNG files to view the graphs and `growth_report.txt` to read the summary.
+The local script reads `storage_history.csv` from its own directory. It does not automatically download or synchronize data from the VM.
 
-## 6. Generated Graphs and Report
+## 7. Generated Graphs and Report
 
-The local script generates the following outputs:
+The script generates four graphs:
 
-1. **VM Storage Usage (`vm_storage_usage.png`)** — shows how VM disk usage changes over time.
-2. **Network Storage Usage (`network_storage_usage.png`)** — shows changes in used network storage.
-3. **Storage Usage Percentage (`storage_usage_percentage.png`)** — compares VM and network storage usage percentages.
-4. **Available Storage (`storage_available_space.png`)** — compares the available space on both filesystems.
-5. **Growth Report (`growth_report.txt`)** — includes measurement count, first and latest measurements, current storage statistics, and the difference between the first and latest valid measurements.
+| Output | Information |
+|---|---|
+| `vm_storage_usage.png` | VM used storage over time |
+| `network_storage_usage.png` | Network used storage over time |
+| `storage_usage_percentage.png` | VM and network utilization percentages |
+| `storage_available_space.png` | Available VM and network storage |
 
-The report displays a notice when VM disk usage reaches 80% and a warning when it reaches 90%.
+### `growth_report.txt`
 
-Growth calculations are historical averages based on collected measurements, not predictions of future usage.
+The report includes:
 
-## 7. Updating the Graphs
+- Number of valid measurements and measurement period.
+- Latest VM storage status.
+- Latest network mount status and available mounted measurements.
+- Historical storage changes and average daily growth.
+- VM and network storage projections for the next 7 and 30 days.
+- VM storage utilization notices.
 
-The VM continues collecting data automatically, but the local CSV copy does not update by itself.
+**Storage projections**
 
-Whenever updated graphs are needed:
+The script estimates future storage consumption using the average daily change between the first and latest valid measurements.
 
-1. Download the latest CSV from the VM using the PowerShell `scp` command.
-2. Open WSL/Ubuntu.
-3. Copy the downloaded CSV into the local reporting directory.
-4. Run the Python script again.
+For both VM and network storage, it calculates:
 
-Commands for steps 3 and 4:
+- Current usage.
+- Average daily change.
+- Estimated additional usage over 7 days and 30 days.
+- Projected total usage after each period.
+
+These are historical-average estimates, not guaranteed forecasts or rolling 7-day/30-day growth calculations.
+
+**VM storage notices**
+
+| VM utilization | Status |
+|---|---|
+| Below 80% | No notice |
+| 80% to below 90% | NOTICE |
+| 90% or above | WARNING |
+
+These thresholds apply only to VM storage. They are informational and do not trigger automatic cleanup or capacity expansion.
+
+Network statistics are included only for mounted measurements. If the latest record shows an unmounted network share, the report displays that status while network usage details may reflect the most recent earlier mounted measurement.
+
+All graph and report storage values use decimal GB (1 GB = 1,000,000,000 bytes).
+
+## 8. Updating Graphs and Reports
+
+VM collection continues automatically, but the local CSV must be manually refreshed.
+
+Whenever an updated report is required:
+
+1. Create a temporary CSV copy on the VM using Section 5.
+2. Download it to Windows using SCP.
+3. Remove the temporary VM copy.
+4. Copy the downloaded CSV into the local `wellness-graphs` directory.
+5. Run the reporting script:
 
 ```bash
-cd /mnt/c/Users/RENUSRI/wellness-graphs
-cp /mnt/c/Users/RENUSRI/Downloads/storage_history.csv .
+cd /mnt/c/Users/<WINDOWS_USERNAME>/wellness-graphs
+cp /mnt/c/Users/<WINDOWS_USERNAME>/Downloads/storage_history.csv .
 python3 plot_storage.py
 ```
 
-The output files will be regenerated using all valid measurements present in the downloaded CSV.
+The graphs and report are regenerated using the measurements in the updated local CSV.
 
-## 8. Storage and Application Safety
+## 9. Safety and Limitations
 
-- The collection script reads filesystem statistics and appends them to a CSV.
-- It does not read patient records or query MongoDB collections.
-- It does not modify the Wellness application's source code, database or configuration.
-- The CSV and log files consume a small amount of storage on the VM.
-- The generated graphs and report are stored locally.
-- The network-drive measurements represent filesystem usage reported by Linux `df`, not exclusively files belonging to the Wellness project.
-- `df` and `du` can report different usage values because they measure different things.
+- The collection script reads filesystem statistics and appends measurements to a CSV.
+- It does not query patient records or MongoDB collections.
+- It does not modify application source code, configuration, patient records or appointment data.
+- Network measurements represent the entire mounted filesystem.
+- The original monitoring CSV remains under the `wc` user's directory.
+- Local reporting operates on a downloaded CSV copy and does not directly access the VM.
+- Updated reports require manual CSV retrieval.
+- Growth projections are estimates based on historical measurements.
+- Storage notices are informational; no automatic alerts, cleanup or capacity expansion are implemented.
 
-## 9. Complete Workflow
+## 10. Summary
 
-**Automatic collection on the VM**
+The Wellness storage monitoring system automatically records VM and mounted network filesystem usage every four hours.
 
-`collect.sh` → executes every four hours → appends measurements to `storage_history.csv`
+The measurements are retained in a historical CSV on the VM. The team can download the CSV when required and process it locally using Python and Matplotlib.
 
-**Manual transfer**
+The system provides periodic storage monitoring, historical usage analysis, four visual reports, 7-day and 30-day storage projections, and informational VM utilization notices.
 
-VM CSV → downloaded to the local computer using PowerShell and `scp`
-
-**Local reporting**
-
-Downloaded CSV → `plot_storage.py` → four graphs and `growth_report.txt`
-
-This setup maintains a historical record of storage usage on the VM while allowing the team to generate and inspect graphs locally without running the reporting script on the VM.
+The collection and reporting components operate independently, allowing storage history to be maintained automatically while updated reports can be generated whenever needed.
